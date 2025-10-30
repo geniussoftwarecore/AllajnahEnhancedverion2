@@ -52,7 +52,7 @@ class User(Base):
     assigned_complaints = relationship("Complaint", back_populates="assigned_to_user", foreign_keys="Complaint.assigned_to_id")
     comments = relationship("Comment", back_populates="user")
     subscriptions = relationship("Subscription", back_populates="user")
-    payments = relationship("Payment", back_populates="user")
+    payments = relationship("Payment", back_populates="user", foreign_keys="Payment.user_id")
     feedbacks = relationship("ComplaintFeedback", back_populates="user")
     audit_logs = relationship("AuditLog", back_populates="actor")
 
@@ -160,7 +160,8 @@ class Payment(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     approved_at = Column(DateTime)
     
-    user = relationship("User", back_populates="payments", foreign_keys=[user_id])
+    user = relationship("User", foreign_keys=[user_id], back_populates="payments")
+    approved_by = relationship("User", foreign_keys=[approved_by_id])
 
 class ComplaintFeedback(Base):
     __tablename__ = "complaint_feedbacks"

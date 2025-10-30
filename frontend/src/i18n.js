@@ -1,0 +1,126 @@
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+const resources = {
+  ar: {
+    translation: {
+      login: 'تسجيل الدخول',
+      register: 'إنشاء حساب',
+      logout: 'تسجيل الخروج',
+      email: 'البريد الإلكتروني',
+      password: 'كلمة المرور',
+      firstName: 'الاسم الأول',
+      lastName: 'الاسم الأخير',
+      phone: 'رقم الهاتف',
+      dashboard: 'لوحة التحكم',
+      complaints: 'الشكاوى',
+      newComplaint: 'شكوى جديدة',
+      myComplaints: 'شكاواي',
+      status: 'الحالة',
+      submitted: 'مقدمة',
+      underReview: 'قيد المراجعة',
+      escalated: 'محولة للجنة العليا',
+      resolved: 'محلولة',
+      rejected: 'مرفوضة',
+      title: 'العنوان',
+      description: 'الوصف',
+      category: 'التصنيف',
+      submit: 'إرسال',
+      cancel: 'إلغاء',
+      save: 'حفظ',
+      delete: 'حذف',
+      edit: 'تعديل',
+      view: 'عرض',
+      search: 'بحث',
+      filter: 'تصفية',
+      loading: 'جاري التحميل...',
+      noData: 'لا توجد بيانات',
+      error: 'حدث خطأ',
+      success: 'تم بنجاح',
+      subscription: 'الاشتراك',
+      payment: 'الدفع',
+      feedback: 'التقييم',
+      rating: 'التقييم',
+      comment: 'تعليق',
+      analytics: 'التحليلات',
+      users: 'المستخدمين',
+      categories: 'التصنيفات',
+      pending: 'معلق',
+      approved: 'موافق عليه',
+      active: 'نشط',
+      expired: 'منتهي',
+      priority: 'الأولوية',
+      low: 'منخفضة',
+      medium: 'متوسطة',
+      high: 'عالية',
+      urgent: 'عاجلة'
+    }
+  },
+  en: {
+    translation: {
+      login: 'Login',
+      register: 'Register',
+      logout: 'Logout',
+      email: 'Email',
+      password: 'Password',
+      firstName: 'First Name',
+      lastName: 'Last Name',
+      phone: 'Phone',
+      dashboard: 'Dashboard',
+      complaints: 'Complaints',
+      newComplaint: 'New Complaint',
+      myComplaints: 'My Complaints',
+      status: 'Status',
+      submitted: 'Submitted',
+      underReview: 'Under Review',
+      escalated: 'Escalated',
+      resolved: 'Resolved',
+      rejected: 'Rejected',
+      title: 'Title',
+      description: 'Description',
+      category: 'Category',
+      submit: 'Submit',
+      cancel: 'Cancel',
+      save: 'Save',
+      delete: 'Delete',
+      edit: 'Edit',
+      view: 'View',
+      search: 'Search',
+      filter: 'Filter',
+      loading: 'Loading...',
+      noData: 'No Data',
+      error: 'Error',
+      success: 'Success',
+      subscription: 'Subscription',
+      payment: 'Payment',
+      feedback: 'Feedback',
+      rating: 'Rating',
+      comment: 'Comment',
+      analytics: 'Analytics',
+      users: 'Users',
+      categories: 'Categories',
+      pending: 'Pending',
+      approved: 'Approved',
+      active: 'Active',
+      expired: 'Expired',
+      priority: 'Priority',
+      low: 'Low',
+      medium: 'Medium',
+      high: 'High',
+      urgent: 'Urgent'
+    }
+  }
+};
+
+i18n
+  .use(initReactI18next)
+  .init({
+    resources,
+    lng: 'ar',
+    fallbackLng: 'ar',
+    interpolation: {
+      escapeValue: false
+    }
+  });
+
+export default i18n;
