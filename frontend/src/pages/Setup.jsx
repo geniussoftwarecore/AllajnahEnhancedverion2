@@ -31,7 +31,7 @@ function Setup() {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/setup/initialize', {
+      const response = await axios.post('/setup/initialize', {
         email: formData.email,
         password: formData.password,
         first_name: formData.first_name,
@@ -41,6 +41,7 @@ function Setup() {
 
       localStorage.setItem('token', response.data.access_token);
       navigate('/');
+      window.location.reload();
     } catch (err) {
       setError(err.response?.data?.detail || 'فشل في إنشاء الحساب');
     } finally {
