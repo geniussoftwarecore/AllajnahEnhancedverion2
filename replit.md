@@ -112,9 +112,11 @@ Allajnah Enhanced is a comprehensive complaint management system designed for Ye
 - Arabic language support with RTL layout
 - Authentication and authorization system
 - Complaint submission and management workflow
-- **Security Fix**: Public registration now restricted to trader role only
-- Added admin-only endpoint for creating committee users
-- Removed role selection from public registration form
+- **Security Fix**: Public registration now disabled completely
+- Added admin-only endpoint (`/api/admin/users`) for creating all user types
+- Fixed bcrypt compatibility issue by truncating passwords to 72 bytes
+- Created initial admin account: admin@allajnah.sd (password: Admin123)
+- Both frontend and backend workflows running successfully
 
 ## Environment Variables
 The following environment variables are configured:
