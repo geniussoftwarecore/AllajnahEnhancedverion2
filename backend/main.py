@@ -43,6 +43,17 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 @app.post("/api/auth/register", response_model=Token)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Public registration is disabled. Please contact the administrator to create an account."
+    )
+
+@app.post("/api/admin/users", response_model=UserResponse)
+def create_user(
+    user_data: UserCreate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
         raise HTTPException(
@@ -56,7 +67,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         hashed_password=hashed_password,
         first_name=user_data.first_name,
         last_name=user_data.last_name,
-        role=UserRole.TRADER,
+        role=user_data.role,
         phone=user_data.phone,
         whatsapp=user_data.whatsapp,
         telegram=user_data.telegram,
@@ -67,10 +78,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
     
-    access_token = create_access_token(data={"sub": new_user.id})
-    user_response = UserResponse.from_orm(new_user)
-    
-    return Token(access_token=access_token, token_type="bearer", user=user_response)
+    return UserResponse.from_orm(new_user)
 
 @app.post("/api/auth/login", response_model=Token)
 def login(credentials: UserLogin, db: Session = Depends(get_db)):
