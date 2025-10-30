@@ -46,10 +46,16 @@ def auto_assign_complaint(db: Session, complaint: Complaint) -> Optional[User]:
         return None
 
 
-def check_sla_violations(db: Session) -> int:
+def check_sla_violations(db: Session, actor_id: Optional[int] = None) -> int:
     escalation_count = 0
     
     try:
+        if actor_id is None:
+            system_user = db.query(User).filter(User.role == UserRole.HIGHER_COMMITTEE).first()
+            if not system_user:
+                raise ValueError("No Higher Committee user found to act as system actor. Please create an admin user first.")
+            actor_id = system_user.id
+        
         default_escalation_hours = int(get_setting(db, "default_escalation_hours", "72"))
         
         complaints = db.query(Complaint).filter(
@@ -74,7 +80,7 @@ def check_sla_violations(db: Session) -> int:
                 
                 create_audit_log(
                     db,
-                    1,
+                    actor_id,
                     "AUTO_ESCALATE",
                     "complaint",
                     complaint.id,
@@ -95,10 +101,16 @@ def check_sla_violations(db: Session) -> int:
     return escalation_count
 
 
-def auto_close_resolved_complaints(db: Session) -> int:
+def auto_close_resolved_complaints(db: Session, actor_id: Optional[int] = None) -> int:
     closed_count = 0
     
     try:
+        if actor_id is None:
+            system_user = db.query(User).filter(User.role == UserRole.HIGHER_COMMITTEE).first()
+            if not system_user:
+                raise ValueError("No Higher Committee user found to act as system actor. Please create an admin user first.")
+            actor_id = system_user.id
+        
         auto_close_days = int(get_setting(db, "auto_close_after_days", "7"))
         reopen_window_days = int(get_setting(db, "reopen_window_days", "7"))
         
@@ -117,7 +129,7 @@ def auto_close_resolved_complaints(db: Session) -> int:
             
             create_audit_log(
                 db,
-                1,
+                actor_id,
                 "AUTO_CLOSE",
                 "complaint",
                 complaint.id,
@@ -138,11 +150,11 @@ def auto_close_resolved_complaints(db: Session) -> int:
     return closed_count
 
 
-def run_periodic_tasks(db: Session):
+def run_periodic_tasks(db: Session, actor_id: Optional[int] = None):
     print(f"\n=== Running periodic workflow automation tasks at {datetime.utcnow()} ===")
     
-    escalated = check_sla_violations(db)
-    closed = auto_close_resolved_complaints(db)
+    escalated = check_sla_violations(db, actor_id)
+    closed = auto_close_resolved_complaints(db, actor_id)
     
     print(f"Summary: {escalated} complaints escalated, {closed} complaints closed")
     print("=" * 70 + "\n")

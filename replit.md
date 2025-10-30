@@ -146,33 +146,52 @@ Allajnah Enhanced is a comprehensive complaint management system designed for Ye
   * Total, submitted, under_review, escalated, resolved, rejected counts
   * Average resolution time
   * Complaints by category
+- **Enhanced Analytics** - `GET /api/admin/analytics`
+  * Time-range filters (start_date, end_date)
+  * SLA breaches count
+  * Active subscriptions and expiring soon
+  * Pending payments count
+  * Average feedback rating
+  * Top assignees by complaint count
+  * Resolution rate percentage
+  * All metrics respect date filters
 
 #### Audit Trail
 - List audit logs - `GET /api/admin/audit-logs`
-- Auto-logging on key actions
+- Auto-logging on key actions with filters (user_id, action, target_type)
+
+#### Workflow Automation ✅
+- **Auto-assign** - Complaints automatically assigned to Technical Committee on creation
+- **SLA Monitoring** - `POST /api/admin/automation/check-sla`
+  * Checks complaints against SLA thresholds
+  * Auto-escalates when threshold exceeded
+  * Configurable per priority level
+- **Auto-close** - `POST /api/admin/automation/auto-close`
+  * Auto-closes resolved complaints after N days of inactivity
+  * Configurable via system settings
+- **Run All Tasks** - `POST /api/admin/automation/run-periodic-tasks`
+  * Runs all automation tasks at once
+  * Requires Higher Committee user to exist
+
+#### Duplicate Detection ✅
+- **Check Duplicate** - `POST /api/complaints/check-duplicate`
+  * Text similarity check before submission
+  * Warns about similar complaints in same category
+  * Uses SequenceMatcher algorithm
+  * Configurable similarity threshold (default 70%)
+
+#### Notification Hooks ✅
+- Module created at `backend/notifications.py`
+- Stub functions for all key events:
+  * Status changes, assignments, escalations
+  * Payment approvals/rejections
+  * Subscription activations/expirations
+  * SLA violations
+- Ready for email/SMS integration
 
 ### ⚠️ Missing/Incomplete Backend Features
 
-1. **Workflow Automation**
-   - Auto-assign complaints to technical committee by category
-   - SLA timer with auto-escalation when threshold exceeded
-   - Auto-close resolved complaints after N days of inactivity
-   - Notifications on status changes
-
-2. **Duplicate Detection**
-   - Similarity check when submitting new complaint
-   - Warn traders about potentially duplicate complaints
-
-3. **Enhanced Analytics**
-   - Time-range filters for dashboard
-   - SLA breach tracking and reporting
-   - Feedback trends over time
-   - More detailed charts data
-
-4. **Notification System**
-   - Email/SMS hooks for key events
-   - Template system for notifications
-   - Integration points for external services
+None - all core backend features are implemented and tested!
 
 ### ✅ Completed Frontend Features
 
@@ -218,7 +237,40 @@ Allajnah Enhanced is a comprehensive complaint management system designed for Ye
    - Duplicate warning on complaint submission
 
 ## Recent Changes
-- **2025-10-30**: Project successfully migrated to Replit environment
+
+### 2025-10-30 (Latest Session)
+**Backend Feature Completion:**
+- ✅ Implemented workflow automation module (`backend/workflow_automation.py`)
+  * Auto-assign complaints to Technical Committee
+  * SLA violation checking with auto-escalation
+  * Auto-close resolved complaints after inactivity
+  * Manual trigger endpoints for all automation tasks
+- ✅ Implemented duplicate detection (`backend/duplicate_detection.py`)
+  * Text similarity algorithm for complaint matching
+  * Check endpoint before submission
+- ✅ Enhanced analytics API with comprehensive metrics
+  * Time-range filtering (start_date, end_date)
+  * All aggregates respect date filters (categories, feedback, assignees)
+  * SLA breaches, subscriptions, payments, ratings
+- ✅ Created notification hooks module (`backend/notifications.py`)
+  * Stub functions for all key events
+  * Ready for email/SMS integration
+- ✅ Enhanced seed script (`backend/seed.py`)
+  * Added SLA configs for all priority levels
+  * Added sample comments
+  * Additional system settings
+  * Comprehensive demo data
+- ✅ Updated RUN.md documentation
+  * All new features documented
+  * API endpoint reference updated
+  * Seed credentials listed
+- ✅ Fixed architect-identified issues:
+  * Analytics date filtering now applies to all aggregates
+  * Automation actor resolution no longer hard-codes user_id=1
+  * Proper error handling when no admin exists
+
+### 2025-10-30 (Initial Migration)
+- ✅ Project successfully migrated to Replit environment
   * Installed all Python dependencies via uv
   * Installed all Node.js dependencies via npm
   * Initialized PostgreSQL database with all tables

@@ -454,6 +454,106 @@ def get_dashboard_stats(
         by_category=by_category
     )
 
+@app.get("/api/admin/analytics", response_model=AnalyticsData)
+def get_enhanced_analytics(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    from datetime import datetime, timedelta
+    
+    date_start = datetime.fromisoformat(start_date) if start_date else None
+    date_end = datetime.fromisoformat(end_date) if end_date else None
+    
+    query = db.query(Complaint)
+    if date_start:
+        query = query.filter(Complaint.created_at >= date_start)
+    if date_end:
+        query = query.filter(Complaint.created_at <= date_end)
+    
+    total_complaints = query.count()
+    submitted = query.filter(Complaint.status == ComplaintStatus.SUBMITTED).count()
+    under_review = query.filter(Complaint.status == ComplaintStatus.UNDER_REVIEW).count()
+    escalated = query.filter(Complaint.status == ComplaintStatus.ESCALATED).count()
+    resolved = query.filter(Complaint.status == ComplaintStatus.RESOLVED).count()
+    rejected = query.filter(Complaint.status == ComplaintStatus.REJECTED).count()
+    
+    resolved_complaints = query.filter(
+        Complaint.status.in_([ComplaintStatus.RESOLVED, ComplaintStatus.REJECTED]),
+        Complaint.resolved_at.isnot(None)
+    ).all()
+    
+    avg_resolution_time = None
+    if resolved_complaints:
+        total_days = sum([(c.resolved_at - c.created_at).days for c in resolved_complaints])
+        avg_resolution_time = round(total_days / len(resolved_complaints), 2)
+    
+    category_query = db.query(Category.name_ar, func.count(Complaint.id)).join(Complaint)
+    if date_start:
+        category_query = category_query.filter(Complaint.created_at >= date_start)
+    if date_end:
+        category_query = category_query.filter(Complaint.created_at <= date_end)
+    category_counts = category_query.group_by(Category.id, Category.name_ar).all()
+    
+    by_category = {}
+    for category_name, count in category_counts:
+        by_category[category_name] = count
+    
+    sla_breaches = query.filter(Complaint.status == ComplaintStatus.ESCALATED).count()
+    
+    active_subs = db.query(Subscription).filter(Subscription.status == SubscriptionStatus.ACTIVE).count()
+    expiring_soon = db.query(Subscription).filter(
+        Subscription.status == SubscriptionStatus.ACTIVE,
+        Subscription.end_date <= datetime.utcnow() + timedelta(days=30)
+    ).count()
+    pending_payments = db.query(Payment).filter(Payment.status == PaymentStatus.PENDING).count()
+    
+    feedback_query = db.query(ComplaintFeedback).join(Complaint)
+    if date_start:
+        feedback_query = feedback_query.filter(Complaint.created_at >= date_start)
+    if date_end:
+        feedback_query = feedback_query.filter(Complaint.created_at <= date_end)
+    feedbacks = feedback_query.all()
+    
+    avg_feedback = None
+    if feedbacks:
+        avg_feedback = round(sum([f.rating for f in feedbacks]) / len(feedbacks), 2)
+    
+    assignee_query = db.query(
+        User.first_name, User.last_name, func.count(Complaint.id).label('count')
+    ).join(Complaint, Complaint.assigned_to_id == User.id)
+    if date_start:
+        assignee_query = assignee_query.filter(Complaint.created_at >= date_start)
+    if date_end:
+        assignee_query = assignee_query.filter(Complaint.created_at <= date_end)
+    top_assignees = assignee_query.group_by(User.id, User.first_name, User.last_name).order_by(func.count(Complaint.id).desc()).limit(5).all()
+    
+    assignees_list = [{"name": f"{a[0]} {a[1]}", "count": a[2]} for a in top_assignees]
+    
+    resolution_rate = 0.0
+    if total_complaints > 0:
+        resolution_rate = round(((resolved + rejected) / total_complaints) * 100, 2)
+    
+    return AnalyticsData(
+        total_complaints=total_complaints,
+        submitted=submitted,
+        under_review=under_review,
+        escalated=escalated,
+        resolved=resolved,
+        rejected=rejected,
+        avg_resolution_time_days=avg_resolution_time,
+        sla_breaches=sla_breaches,
+        active_subscriptions=active_subs,
+        expiring_soon=expiring_soon,
+        pending_payments=pending_payments,
+        avg_feedback_rating=avg_feedback,
+        by_category=by_category,
+        by_status_trend=[],
+        top_assignees=assignees_list,
+        resolution_rate=resolution_rate
+    )
+
 @app.get("/api/users/committee", response_model=List[UserResponse])
 def get_committee_users(
     current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE)),
@@ -1060,7 +1160,7 @@ def trigger_periodic_tasks(
     current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
     db: Session = Depends(get_db)
 ):
-    result = run_periodic_tasks(db)
+    result = run_periodic_tasks(db, current_user.id)
     
     create_audit_log(db, current_user.id, "TRIGGER_AUTOMATION", "system", 0,
                      f"Manually triggered periodic automation tasks")
@@ -1077,7 +1177,7 @@ def trigger_sla_check(
     current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
     db: Session = Depends(get_db)
 ):
-    escalated = check_sla_violations(db)
+    escalated = check_sla_violations(db, current_user.id)
     
     create_audit_log(db, current_user.id, "CHECK_SLA", "system", 0,
                      f"Manually triggered SLA check, {escalated} complaints escalated")
@@ -1093,7 +1193,7 @@ def trigger_auto_close(
     current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
     db: Session = Depends(get_db)
 ):
-    closed = auto_close_resolved_complaints(db)
+    closed = auto_close_resolved_complaints(db, current_user.id)
     
     create_audit_log(db, current_user.id, "AUTO_CLOSE_TRIGGER", "system", 0,
                      f"Manually triggered auto-close, {closed} complaints closed")

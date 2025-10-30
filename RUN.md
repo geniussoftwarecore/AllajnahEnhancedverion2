@@ -79,23 +79,43 @@ npm run dev
 # Frontend will run on http://0.0.0.0:5000
 ```
 
-## Test Credentials
+## Test Credentials (After Running seed.py)
 
-### Create Admin Account
-Run `python backend/create_admin.py` and create a Higher Committee user with your chosen credentials.
+**IMPORTANT**: Public registration is DISABLED for security. All users must be created by admin.
 
-Example:
-- Email: admin@allajnah.com
-- Password: Admin@123
-- First Name: محمد
-- Last Name: الإداري
+### Seed Database with Demo Data
+```bash
+uv run python backend/seed.py
+```
 
-### Register Trader Account
-After the app is running:
-1. Navigate to the frontend URL
-2. Click "ليس لديك حساب؟ سجل الآن" (Don't have an account? Register now)
-3. Fill in the registration form
-4. All public registrations are automatically assigned the "trader" role
+This creates the following test accounts:
+
+### Higher Committee (Admin)
+- **Email**: `admin@allajnah.com`
+- **Password**: `admin123`
+- Full system access
+
+### Technical Committee
+- **Email**: `tech@allajnah.com`
+- **Password**: `tech123`
+- Review and manage complaints
+
+### Traders
+**Trader 1** (with active subscription):
+- **Email**: `trader1@example.com`
+- **Password**: `trader123`
+
+**Trader 2** (no subscription):
+- **Email**: `trader2@example.com`
+- **Password**: `trader123`
+
+The seed also creates:
+- 4 categories
+- 2 payment methods
+- System settings
+- SLA configurations
+- 2 sample complaints
+- Sample comments
 
 ## User Roles & Features
 
@@ -137,9 +157,15 @@ After the app is running:
 ## API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - Public trader registration
+- ~~`POST /api/auth/register`~~ - **DISABLED** (all users created by admin)
 - `POST /api/auth/login` - User login
 - `GET /api/auth/me` - Get current user info
+
+### Workflow Automation (NEW)
+- `POST /api/complaints/check-duplicate` - Check for similar complaints before submission
+- `POST /api/admin/automation/run-periodic-tasks` - Run all automation tasks (Higher Committee)
+- `POST /api/admin/automation/check-sla` - Check SLA violations and escalate (Higher Committee)
+- `POST /api/admin/automation/auto-close` - Auto-close inactive resolved complaints (Higher Committee)
 
 ### Complaints
 - `GET /api/complaints` - List complaints (role-filtered)
@@ -173,7 +199,26 @@ After the app is running:
   - Breakdown by category
 
 ### Admin
-- `POST /api/admin/users` - Create committee users (Higher Committee only)
+- `GET /api/admin/users` - List all users with filters (role, status, search)
+- `POST /api/admin/users` - Create users (all roles)
+- `GET /api/admin/users/{id}` - Get user details
+- `PATCH /api/admin/users/{id}` - Update user
+- `DELETE /api/admin/users/{id}` - Deactivate user
+- `POST /api/admin/users/{id}/reset-password` - Reset user password
+- `GET /api/admin/analytics` - Enhanced analytics with time-range filters
+- `GET /api/admin/audit-logs` - Audit log viewer with filters
+- `GET /api/admin/payment-methods` - List payment methods
+- `POST /api/admin/payment-methods` - Create payment method
+- `PATCH /api/admin/payment-methods/{id}` - Update payment method
+- `DELETE /api/admin/payment-methods/{id}` - Delete payment method
+- `GET /api/admin/sla-configs` - List SLA configurations
+- `POST /api/admin/sla-configs` - Create SLA config
+- `PATCH /api/admin/sla-configs/{id}` - Update SLA config
+- `DELETE /api/admin/sla-configs/{id}` - Delete SLA config
+- `GET /api/admin/settings` - List system settings
+- `POST /api/admin/settings` - Create setting
+- `PATCH /api/admin/settings/{key}` - Update setting
+- `DELETE /api/admin/settings/{key}` - Delete setting
 - `GET /api/users/committee` - List committee members
 
 ## Default Categories
@@ -265,16 +310,25 @@ allajnah-enhanced/
 ✅ i18n support (Arabic/English)
 
 ### Advanced Features
+✅ **Workflow Automation**:
+  - Auto-assign complaints to technical committee on creation
+  - SLA monitoring with auto-escalation when thresholds exceeded
+  - Auto-close resolved complaints after inactivity period
+✅ **Duplicate Detection**: Text similarity check warns about similar complaints
+✅ **Enhanced Analytics**: Time-range filters, SLA breaches, feedback ratings, top assignees
+✅ **Notification Hooks**: Email/SMS stubs ready for integration
 ✅ Subscription management system
 ✅ Payment proof submission and approval workflow
 ✅ Complaint feedback system (1-5 star rating + comment)
 ✅ Priority levels for complaints (Low, Medium, High, Urgent)
-✅ Enhanced analytics (avg resolution time, category breakdown)
 ✅ Complaint status tracking through full lifecycle
 ✅ Assignment system for committee members
 ✅ Escalation workflow to Higher Committee
 ✅ Admin-only user creation for committee members
-✅ Audit log infrastructure (models ready)
+✅ Audit log with full tracking
+✅ Complaint reopen functionality within configured window
+✅ SLA configuration per priority level
+✅ System settings (key-value configuration store)
 
 ## Troubleshooting
 

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from database import SessionLocal
 from models import (
     User, Category, Complaint, Payment, Subscription,
-    PaymentMethod, SystemSettings,
+    PaymentMethod, SystemSettings, SLAConfig, Comment,
     UserRole, ComplaintStatus, SubscriptionStatus, PaymentStatus, Priority
 )
 from auth import get_password_hash
@@ -133,6 +133,16 @@ def seed_database():
                     description="Number of days traders can reopen resolved complaints"
                 ),
                 SystemSettings(
+                    setting_key="auto_close_after_days",
+                    setting_value="7",
+                    description="Auto-close resolved complaints after N days of inactivity"
+                ),
+                SystemSettings(
+                    setting_key="default_escalation_hours",
+                    setting_value="72",
+                    description="Default SLA escalation time in hours"
+                ),
+                SystemSettings(
                     setting_key="enable_duplicate_detection",
                     setting_value="true",
                     description="Enable duplicate complaint detection"
@@ -147,6 +157,36 @@ def seed_database():
                 db.add(setting)
             db.commit()
             print(f"Created {len(settings)} system settings")
+        
+        print("Creating SLA configs...")
+        if db.query(SLAConfig).count() == 0:
+            sla_configs = [
+                SLAConfig(
+                    category_id=None,
+                    priority=Priority.URGENT,
+                    response_time_hours=4,
+                    resolution_time_hours=24,
+                    escalation_time_hours=48
+                ),
+                SLAConfig(
+                    category_id=None,
+                    priority=Priority.HIGH,
+                    response_time_hours=8,
+                    resolution_time_hours=48,
+                    escalation_time_hours=72
+                ),
+                SLAConfig(
+                    category_id=None,
+                    priority=Priority.MEDIUM,
+                    response_time_hours=24,
+                    resolution_time_hours=120,
+                    escalation_time_hours=168
+                ),
+            ]
+            for sla in sla_configs:
+                db.add(sla)
+            db.commit()
+            print(f"Created {len(sla_configs)} SLA configs")
         
         print("Creating subscriptions...")
         subscription1 = Subscription(
@@ -193,6 +233,26 @@ def seed_database():
         
         db.commit()
         print(f"Created sample complaints")
+        
+        print("Creating sample comments...")
+        comment1 = Comment(
+            complaint_id=complaint2.id,
+            user_id=tech1.id,
+            content="تم مراجعة الشكوى وجاري التواصل مع وزارة البنية التحتية",
+            is_internal=0
+        )
+        db.add(comment1)
+        
+        comment2 = Comment(
+            complaint_id=complaint2.id,
+            user_id=trader2.id,
+            content="شكراً على المتابعة. المشكلة لا تزال قائمة",
+            is_internal=0
+        )
+        db.add(comment2)
+        
+        db.commit()
+        print(f"Created sample comments")
         
         print("✅ Database seeded successfully!")
         print("\n" + "="*50)
