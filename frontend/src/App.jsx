@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import axios from './api/axios';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Setup from './pages/Setup';
 import TraderDashboard from './pages/TraderDashboard';
 import TechnicalCommitteeDashboard from './pages/TechnicalCommitteeDashboard';
 import HigherCommitteeDashboard from './pages/HigherCommitteeDashboard';
@@ -31,9 +33,44 @@ function PrivateRoute({ children, allowedRoles }) {
 
 function AppRoutes() {
   const { user } = useAuth();
+  const [needsSetup, setNeedsSetup] = useState(false);
+  const [setupLoading, setSetupLoading] = useState(true);
+
+  useEffect(() => {
+    const checkSetupStatus = async () => {
+      try {
+        const response = await axios.get('/setup/status');
+        setNeedsSetup(response.data.needs_setup);
+      } catch (error) {
+        console.error('Failed to check setup status:', error);
+      } finally {
+        setSetupLoading(false);
+      }
+    };
+
+    checkSetupStatus();
+  }, []);
+
+  if (setupLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">جاري التحميل...</div>
+      </div>
+    );
+  }
+
+  if (needsSetup) {
+    return (
+      <Routes>
+        <Route path="/setup" element={<Setup />} />
+        <Route path="*" element={<Navigate to="/setup" />} />
+      </Routes>
+    );
+  }
 
   return (
     <Routes>
+      <Route path="/setup" element={<Navigate to="/login" />} />
       <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
       <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
       

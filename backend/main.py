@@ -41,6 +41,50 @@ app.add_middleware(
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
+@app.get("/api/setup/status")
+def get_setup_status(db: Session = Depends(get_db)):
+    higher_committee_count = db.query(User).filter(User.role == UserRole.HIGHER_COMMITTEE).count()
+    return {"needs_setup": higher_committee_count == 0}
+
+@app.post("/api/setup/initialize", response_model=Token)
+def initialize_setup(user_data: UserCreate, db: Session = Depends(get_db)):
+    higher_committee_count = db.query(User).filter(User.role == UserRole.HIGHER_COMMITTEE).count()
+    
+    if higher_committee_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Setup has already been completed. Admin users already exist."
+        )
+    
+    existing_user = db.query(User).filter(User.email == user_data.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    hashed_password = get_password_hash(user_data.password)
+    new_user = User(
+        email=user_data.email,
+        hashed_password=hashed_password,
+        first_name=user_data.first_name,
+        last_name=user_data.last_name,
+        role=UserRole.HIGHER_COMMITTEE,
+        phone=user_data.phone,
+        whatsapp=user_data.whatsapp,
+        telegram=user_data.telegram,
+        address=user_data.address
+    )
+    
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    access_token = create_access_token(data={"sub": new_user.id})
+    user_response = UserResponse.from_orm(new_user)
+    
+    return Token(access_token=access_token, token_type="bearer", user=user_response)
+
 @app.post("/api/auth/register", response_model=Token)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     raise HTTPException(
