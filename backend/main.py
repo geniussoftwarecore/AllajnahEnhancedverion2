@@ -81,7 +81,7 @@ def initialize_setup(user_data: UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     
     access_token = create_access_token(data={"sub": new_user.id})
-    user_response = UserResponse.from_orm(new_user)
+    user_response = UserResponse.model_validate(new_user)
     
     return Token(access_token=access_token, token_type="bearer", user=user_response)
 
@@ -122,7 +122,7 @@ def create_user(
     db.commit()
     db.refresh(new_user)
     
-    return UserResponse.from_orm(new_user)
+    return UserResponse.model_validate(new_user)
 
 @app.post("/api/auth/login", response_model=Token)
 def login(credentials: UserLogin, db: Session = Depends(get_db)):
@@ -134,13 +134,13 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
         )
     
     access_token = create_access_token(data={"sub": user.id})
-    user_response = UserResponse.from_orm(user)
+    user_response = UserResponse.model_validate(user)
     
     return Token(access_token=access_token, token_type="bearer", user=user_response)
 
 @app.get("/api/auth/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
-    return UserResponse.from_orm(current_user)
+    return UserResponse.model_validate(current_user)
 
 @app.get("/api/categories", response_model=List[CategoryResponse])
 def get_categories(db: Session = Depends(get_db)):
@@ -162,7 +162,7 @@ def create_complaint(
     db.commit()
     db.refresh(new_complaint)
     
-    return ComplaintResponse.from_orm(new_complaint)
+    return ComplaintResponse.model_validate(new_complaint)
 
 @app.get("/api/complaints", response_model=List[ComplaintResponse])
 def get_complaints(
@@ -203,7 +203,7 @@ def get_complaint(
     if current_user.role == UserRole.TRADER and complaint.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    return ComplaintResponse.from_orm(complaint)
+    return ComplaintResponse.model_validate(complaint)
 
 @app.patch("/api/complaints/{complaint_id}", response_model=ComplaintResponse)
 def update_complaint(
@@ -230,7 +230,7 @@ def update_complaint(
     db.commit()
     db.refresh(complaint)
     
-    return ComplaintResponse.from_orm(complaint)
+    return ComplaintResponse.model_validate(complaint)
 
 @app.post("/api/complaints/{complaint_id}/comments", response_model=CommentResponse)
 def create_comment(
@@ -260,7 +260,7 @@ def create_comment(
     db.commit()
     db.refresh(new_comment)
     
-    return CommentResponse.from_orm(new_comment)
+    return CommentResponse.model_validate(new_comment)
 
 @app.get("/api/complaints/{complaint_id}/comments", response_model=List[CommentResponse])
 def get_comments(
@@ -318,7 +318,7 @@ async def upload_attachment(
     db.commit()
     db.refresh(new_attachment)
     
-    return AttachmentResponse.from_orm(new_attachment)
+    return AttachmentResponse.model_validate(new_attachment)
 
 @app.get("/api/complaints/{complaint_id}/attachments", response_model=List[AttachmentResponse])
 def get_attachments(
@@ -433,7 +433,7 @@ def create_committee_user(
     db.commit()
     db.refresh(new_user)
     
-    return UserResponse.from_orm(new_user)
+    return UserResponse.model_validate(new_user)
 
 @app.post("/api/categories", response_model=CategoryResponse)
 def create_category(
@@ -445,7 +445,7 @@ def create_category(
     db.add(new_category)
     db.commit()
     db.refresh(new_category)
-    return CategoryResponse.from_orm(new_category)
+    return CategoryResponse.model_validate(new_category)
 
 @app.patch("/api/categories/{category_id}", response_model=CategoryResponse)
 def update_category(
@@ -463,7 +463,7 @@ def update_category(
     
     db.commit()
     db.refresh(category)
-    return CategoryResponse.from_orm(category)
+    return CategoryResponse.model_validate(category)
 
 @app.delete("/api/categories/{category_id}")
 def delete_category(
@@ -535,7 +535,7 @@ async def submit_payment(
     db.commit()
     db.refresh(new_payment)
     
-    return PaymentResponse.from_orm(new_payment)
+    return PaymentResponse.model_validate(new_payment)
 
 @app.get("/api/payments", response_model=List[PaymentResponse])
 def get_payments(
@@ -582,7 +582,7 @@ def update_payment(
     db.commit()
     db.refresh(payment)
     
-    return PaymentResponse.from_orm(payment)
+    return PaymentResponse.model_validate(payment)
 
 @app.post("/api/complaints/{complaint_id}/feedback", response_model=FeedbackResponse)
 def create_feedback(
@@ -623,7 +623,7 @@ def create_feedback(
     db.commit()
     db.refresh(new_feedback)
     
-    return FeedbackResponse.from_orm(new_feedback)
+    return FeedbackResponse.model_validate(new_feedback)
 
 @app.get("/api/complaints/{complaint_id}/feedback", response_model=Optional[FeedbackResponse])
 def get_feedback(

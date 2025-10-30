@@ -40,8 +40,8 @@ function Setup() {
       });
 
       localStorage.setItem('token', response.data.access_token);
-      navigate('/');
-      window.location.reload();
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      window.location.href = '/';
     } catch (err) {
       setError(err.response?.data?.detail || 'فشل في إنشاء الحساب');
     } finally {
