@@ -51,10 +51,6 @@ externalPort = 5000
 localPort = 8000
 externalPort = 8000
 
-[[ports]]
-localPort = 38799
-externalPort = 80
-
 [nix]
 channel = "stable-25_05"
 packages = ["libxcrypt"]

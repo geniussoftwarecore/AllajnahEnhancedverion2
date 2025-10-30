@@ -1,5 +1,9 @@
 from database import engine, Base
-from models import User, Category, Complaint, Comment, Attachment, UserRole
+from models import (
+    User, Category, Complaint, Comment, Attachment,
+    Subscription, Payment, ComplaintFeedback, AuditLog,
+    UserRole
+)
 
 def init_db():
     Base.metadata.create_all(bind=engine)

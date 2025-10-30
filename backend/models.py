@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum as SQLEnum, Float, Boolean, Numeric
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -14,6 +14,23 @@ class ComplaintStatus(str, enum.Enum):
     UNDER_REVIEW = "under_review"
     ESCALATED = "escalated"
     RESOLVED = "resolved"
+    REJECTED = "rejected"
+
+class Priority(str, enum.Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+class SubscriptionStatus(str, enum.Enum):
+    ACTIVE = "active"
+    EXPIRED = "expired"
+    PENDING = "pending"
+    CANCELLED = "cancelled"
+
+class PaymentStatus(str, enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
     REJECTED = "rejected"
 
 class User(Base):
@@ -34,6 +51,10 @@ class User(Base):
     complaints = relationship("Complaint", back_populates="user", foreign_keys="Complaint.user_id")
     assigned_complaints = relationship("Complaint", back_populates="assigned_to_user", foreign_keys="Complaint.assigned_to_id")
     comments = relationship("Comment", back_populates="user")
+    subscriptions = relationship("Subscription", back_populates="user")
+    payments = relationship("Payment", back_populates="user")
+    feedbacks = relationship("ComplaintFeedback", back_populates="user")
+    audit_logs = relationship("AuditLog", back_populates="actor")
 
 class Category(Base):
     __tablename__ = "categories"
@@ -74,6 +95,7 @@ class Complaint(Base):
     previous_complaint_filed = Column(String)
     legal_proceedings = Column(String)
     
+    priority = Column(SQLEnum(Priority), default=Priority.MEDIUM)
     status = Column(SQLEnum(ComplaintStatus), default=ComplaintStatus.SUBMITTED)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -84,6 +106,7 @@ class Complaint(Base):
     category = relationship("Category", back_populates="complaints")
     comments = relationship("Comment", back_populates="complaint", cascade="all, delete-orphan")
     attachments = relationship("Attachment", back_populates="complaint", cascade="all, delete-orphan")
+    feedbacks = relationship("ComplaintFeedback", back_populates="complaint", cascade="all, delete-orphan")
 
 class Comment(Base):
     __tablename__ = "comments"
@@ -110,3 +133,57 @@ class Attachment(Base):
     uploaded_at = Column(DateTime, default=datetime.utcnow)
     
     complaint = relationship("Complaint", back_populates="attachments")
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+    status = Column(SQLEnum(SubscriptionStatus), default=SubscriptionStatus.PENDING)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="subscriptions")
+
+class Payment(Base):
+    __tablename__ = "payments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    subscription_id = Column(Integer, ForeignKey("subscriptions.id"), nullable=True)
+    amount = Column(Numeric(10, 2), nullable=False)
+    method = Column(String, nullable=False)
+    proof_path = Column(String)
+    approved_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    status = Column(SQLEnum(PaymentStatus), default=PaymentStatus.PENDING)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    approved_at = Column(DateTime)
+    
+    user = relationship("User", back_populates="payments", foreign_keys=[user_id])
+
+class ComplaintFeedback(Base):
+    __tablename__ = "complaint_feedbacks"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    complaint_id = Column(Integer, ForeignKey("complaints.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    rating = Column(Integer, nullable=False)
+    comment = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    complaint = relationship("Complaint", back_populates="feedbacks")
+    user = relationship("User", back_populates="feedbacks")
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    actor_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    action = Column(String, nullable=False)
+    target_type = Column(String, nullable=False)
+    target_id = Column(Integer, nullable=False)
+    details = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    actor = relationship("User", back_populates="audit_logs")

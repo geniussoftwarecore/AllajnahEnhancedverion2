@@ -1,0 +1,67 @@
+You will FIX and COMPLETE the current “Allajnah Enhanced” project from the repo state I provide. Several files are truncated with “…” and won’t compile. Your tasks:
+
+GENERAL
+- Do NOT rewrite everything. Repair and complete the existing files. Remove all “…” placeholders and finish the code blocks cleanly.
+- Ensure the app runs locally without Docker (backend + frontend). Provide run instructions at the end.
+
+BACKEND (repair + complete)
+1) Models (ORM): Complete lean, working versions of:
+   - User (role enum: trader, technical_committee, higher_committee; contact fields; created_at).
+   - Category (name_ar, name_en, government_entity, description_ar, description_en).
+   - Complaint (title, description, status enum: submitted, under_review, escalated, resolved; priority; category_id; user_id; assigned_to_id; timestamps).
+   - Comment (complaint_id, user_id, text, is_internal, created_at).
+   - Attachment (complaint_id, filename, filepath, file_type, file_size, uploaded_at).
+   - Subscription (user_id, start_date, end_date, status).
+   - Payment (user_id, amount, method, proof_path, approved_by, status, created_at).
+   - ComplaintFeedback (complaint_id, user_id, rating 1..5, comment, created_at).
+   - AuditLog (actor_user_id, action, target_type, target_id, created_at).
+
+2) Schemas (DTOs): Create Pydantic models for create/update/response aligned with the ORM above.
+
+3) Auth:
+   - Implement password hashing/verification.
+   - JWT issue/verify; `get_current_user` + `require_role`.
+   - Admin-only user creation endpoint.
+
+4) API Endpoints:
+   - Categories: list (public), admin CRUD.
+   - Complaints:
+      - Trader create (with attachment upload), list own, view detail.
+      - Technical Committee list all, assign/unassign, status update, add comments (public/internal), escalate to Higher Committee.
+      - Higher Committee list escalated, finalize resolution.
+   - Attachments: upload to backend/uploads/, return URL.
+   - Subscriptions: get status; submit payment proof (file + fields); admin approve/reject; enforce gate on trader actions.
+   - Feedback: trader can submit rating/comment after resolution.
+   - Dashboard stats: counts by status, category, avg resolution time; return minimal JSON for charts.
+
+5) Config:
+   - `.env.example` with DATABASE_URL (use SQLite by default) and SESSION_SECRET.
+   - `init_db.py` to create tables; `create_admin.py` to seed super admin from env.
+
+FRONTEND (repair + complete)
+1) AuthContext: login, token storage, role in context; 401 interceptor → logout.
+2) PrivateRoute: block unauth roles; show loading spinner while restoring auth.
+3) Trader pages:
+   - ComplaintForm: include fields (title, description, category, contact info, dates; attachments).
+   - ComplaintList + ComplaintDetail: show status, comments; allow add comment, reopen (if allowed).
+   - SubscriptionGate: show status, expiry countdown; payment proof upload form.
+   - Feedback modal after resolution (1–5 stars + optional text).
+4) Technical Committee pages:
+   - Dashboard: queues (new, assigned to me, pending, resolved).
+   - Detail: assign to self, status change, escalate, public/internal notes.
+5) Higher Committee pages:
+   - Escalations list + finalize resolution.
+   - Users management (create basic users with role).
+   - Payments review (approve/reject); subscriptions overview.
+   - Analytics: simple charts (status/category/resolution time/feedback avg).
+6) i18n + RTL: add basic Arabic + English resources; apply RTL when Arabic.
+7) Finish axios baseURL and API calls; handle toasts and form validation.
+
+QUALITY BAR
+- Eliminate all syntax errors and “…” fragments.
+- App must run end-to-end locally:
+  - Backend: install deps, load `.env` (SQLite default), run server, create tables, create admin.
+  - Frontend: install deps, run dev, login as seeded admin, exercise full flow.
+- Provide a brief RUN.md with exact commands and test credentials.
+
+Now perform the repairs and additions. Keep code concise and production-safe.

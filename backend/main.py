@@ -9,12 +9,19 @@ import shutil
 from datetime import datetime
 
 from database import get_db
-from models import User, Complaint, Comment, Attachment, Category, UserRole, ComplaintStatus
+from models import (
+    User, Complaint, Comment, Attachment, Category, 
+    Subscription, Payment, ComplaintFeedback,
+    UserRole, ComplaintStatus, SubscriptionStatus, PaymentStatus, Priority
+)
 from schemas import (
     UserCreate, UserLogin, UserResponse, Token,
     ComplaintCreate, ComplaintUpdate, ComplaintResponse,
     CommentCreate, CommentResponse,
-    AttachmentResponse, CategoryResponse, DashboardStats
+    AttachmentResponse, CategoryResponse, CategoryCreate, CategoryUpdate, DashboardStats,
+    SubscriptionCreate, SubscriptionResponse,
+    PaymentCreate, PaymentUpdate, PaymentResponse,
+    FeedbackCreate, FeedbackResponse
 )
 from auth import (
     get_password_hash, verify_password, create_access_token,
@@ -294,13 +301,37 @@ def get_dashboard_stats(
     resolved = query.filter(Complaint.status == ComplaintStatus.RESOLVED).count()
     rejected = query.filter(Complaint.status == ComplaintStatus.REJECTED).count()
     
+    avg_resolution_time = None
+    resolved_complaints = query.filter(
+        Complaint.status.in_([ComplaintStatus.RESOLVED, ComplaintStatus.REJECTED]),
+        Complaint.resolved_at.isnot(None)
+    ).all()
+    
+    if resolved_complaints:
+        total_days = sum([
+            (c.resolved_at - c.created_at).days 
+            for c in resolved_complaints
+        ])
+        avg_resolution_time = round(total_days / len(resolved_complaints), 2)
+    
+    by_category = {}
+    category_counts = db.query(
+        Category.name_ar, 
+        func.count(Complaint.id)
+    ).join(Complaint).group_by(Category.id, Category.name_ar).all()
+    
+    for category_name, count in category_counts:
+        by_category[category_name] = count
+    
     return DashboardStats(
         total_complaints=total_complaints,
         submitted=submitted,
         under_review=under_review,
         escalated=escalated,
         resolved=resolved,
-        rejected=rejected
+        rejected=rejected,
+        avg_resolution_time_days=avg_resolution_time,
+        by_category=by_category
     )
 
 @app.get("/api/users/committee", response_model=List[UserResponse])
@@ -351,6 +382,215 @@ def create_committee_user(
     db.refresh(new_user)
     
     return UserResponse.from_orm(new_user)
+
+@app.post("/api/categories", response_model=CategoryResponse)
+def create_category(
+    category_data: CategoryCreate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    new_category = Category(**category_data.dict())
+    db.add(new_category)
+    db.commit()
+    db.refresh(new_category)
+    return CategoryResponse.from_orm(new_category)
+
+@app.patch("/api/categories/{category_id}", response_model=CategoryResponse)
+def update_category(
+    category_id: int,
+    update_data: CategoryUpdate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    for key, value in update_data.dict(exclude_unset=True).items():
+        setattr(category, key, value)
+    
+    db.commit()
+    db.refresh(category)
+    return CategoryResponse.from_orm(category)
+
+@app.delete("/api/categories/{category_id}")
+def delete_category(
+    category_id: int,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    db.delete(category)
+    db.commit()
+    return {"message": "Category deleted successfully"}
+
+@app.get("/api/subscriptions/me", response_model=Optional[SubscriptionResponse])
+def get_my_subscription(
+    current_user: User = Depends(require_role(UserRole.TRADER)),
+    db: Session = Depends(get_db)
+):
+    subscription = db.query(Subscription).filter(
+        Subscription.user_id == current_user.id,
+        Subscription.status == SubscriptionStatus.ACTIVE
+    ).order_by(Subscription.end_date.desc()).first()
+    
+    if subscription and subscription.end_date < datetime.utcnow():
+        subscription.status = SubscriptionStatus.EXPIRED
+        db.commit()
+        db.refresh(subscription)
+    
+    return subscription
+
+@app.get("/api/subscriptions", response_model=List[SubscriptionResponse])
+def get_all_subscriptions(
+    status: Optional[SubscriptionStatus] = None,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Subscription)
+    if status:
+        query = query.filter(Subscription.status == status)
+    subscriptions = query.order_by(Subscription.created_at.desc()).all()
+    return subscriptions
+
+@app.post("/api/payments", response_model=PaymentResponse)
+async def submit_payment(
+    amount: float = Form(...),
+    method: str = Form(...),
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_role(UserRole.TRADER)),
+    db: Session = Depends(get_db)
+):
+    file_extension = os.path.splitext(file.filename)[1]
+    filename = f"payment_{current_user.id}_{datetime.utcnow().timestamp()}{file_extension}"
+    filepath = os.path.join("uploads", filename)
+    
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    new_payment = Payment(
+        user_id=current_user.id,
+        amount=amount,
+        method=method,
+        proof_path=filepath,
+        status=PaymentStatus.PENDING
+    )
+    
+    db.add(new_payment)
+    db.commit()
+    db.refresh(new_payment)
+    
+    return PaymentResponse.from_orm(new_payment)
+
+@app.get("/api/payments", response_model=List[PaymentResponse])
+def get_payments(
+    status: Optional[PaymentStatus] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Payment)
+    
+    if current_user.role == UserRole.TRADER:
+        query = query.filter(Payment.user_id == current_user.id)
+    elif status:
+        query = query.filter(Payment.status == status)
+    
+    payments = query.order_by(Payment.created_at.desc()).all()
+    return payments
+
+@app.patch("/api/payments/{payment_id}", response_model=PaymentResponse)
+def update_payment(
+    payment_id: int,
+    update_data: PaymentUpdate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    payment = db.query(Payment).filter(Payment.id == payment_id).first()
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    
+    payment.status = update_data.status
+    payment.approved_by_id = current_user.id
+    payment.approved_at = datetime.utcnow()
+    
+    if update_data.status == PaymentStatus.APPROVED:
+        from dateutil.relativedelta import relativedelta
+        subscription = Subscription(
+            user_id=payment.user_id,
+            start_date=datetime.utcnow(),
+            end_date=datetime.utcnow() + relativedelta(months=1),
+            status=SubscriptionStatus.ACTIVE
+        )
+        db.add(subscription)
+        payment.subscription_id = subscription.id
+    
+    db.commit()
+    db.refresh(payment)
+    
+    return PaymentResponse.from_orm(payment)
+
+@app.post("/api/complaints/{complaint_id}/feedback", response_model=FeedbackResponse)
+def create_feedback(
+    complaint_id: int,
+    feedback_data: FeedbackCreate,
+    current_user: User = Depends(require_role(UserRole.TRADER)),
+    db: Session = Depends(get_db)
+):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    if complaint.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    if complaint.status not in [ComplaintStatus.RESOLVED, ComplaintStatus.REJECTED]:
+        raise HTTPException(status_code=400, detail="Can only provide feedback on resolved/rejected complaints")
+    
+    existing_feedback = db.query(ComplaintFeedback).filter(
+        ComplaintFeedback.complaint_id == complaint_id,
+        ComplaintFeedback.user_id == current_user.id
+    ).first()
+    
+    if existing_feedback:
+        raise HTTPException(status_code=400, detail="Feedback already submitted")
+    
+    if feedback_data.rating < 1 or feedback_data.rating > 5:
+        raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
+    
+    new_feedback = ComplaintFeedback(
+        complaint_id=complaint_id,
+        user_id=current_user.id,
+        rating=feedback_data.rating,
+        comment=feedback_data.comment
+    )
+    
+    db.add(new_feedback)
+    db.commit()
+    db.refresh(new_feedback)
+    
+    return FeedbackResponse.from_orm(new_feedback)
+
+@app.get("/api/complaints/{complaint_id}/feedback", response_model=Optional[FeedbackResponse])
+def get_feedback(
+    complaint_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    if current_user.role == UserRole.TRADER and complaint.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    feedback = db.query(ComplaintFeedback).filter(
+        ComplaintFeedback.complaint_id == complaint_id
+    ).first()
+    
+    return feedback
 
 @app.get("/")
 def root():

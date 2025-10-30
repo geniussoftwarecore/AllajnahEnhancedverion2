@@ -1,7 +1,8 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
-from models import UserRole, ComplaintStatus
+from decimal import Decimal
+from models import UserRole, ComplaintStatus, Priority, SubscriptionStatus, PaymentStatus
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -70,6 +71,7 @@ class ComplaintCreate(BaseModel):
 class ComplaintUpdate(BaseModel):
     status: Optional[ComplaintStatus] = None
     assigned_to_id: Optional[int] = None
+    priority: Optional[Priority] = None
 
 class ComplaintResponse(BaseModel):
     id: int
@@ -91,6 +93,7 @@ class ComplaintResponse(BaseModel):
     desired_resolution: Optional[str] = None
     previous_complaint_filed: Optional[str] = None
     legal_proceedings: Optional[str] = None
+    priority: Priority
     status: ComplaintStatus
     created_at: datetime
     updated_at: datetime
@@ -138,3 +141,74 @@ class DashboardStats(BaseModel):
     escalated: int
     resolved: int
     rejected: int
+    avg_resolution_time_days: Optional[float] = None
+    by_category: Optional[dict] = None
+
+class SubscriptionCreate(BaseModel):
+    start_date: datetime
+    end_date: datetime
+
+class SubscriptionResponse(BaseModel):
+    id: int
+    user_id: int
+    start_date: datetime
+    end_date: datetime
+    status: SubscriptionStatus
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class PaymentCreate(BaseModel):
+    amount: Decimal
+    method: str
+    subscription_id: Optional[int] = None
+
+class PaymentUpdate(BaseModel):
+    status: PaymentStatus
+    
+class PaymentResponse(BaseModel):
+    id: int
+    user_id: int
+    subscription_id: Optional[int] = None
+    amount: Decimal
+    method: str
+    proof_path: Optional[str] = None
+    approved_by_id: Optional[int] = None
+    status: PaymentStatus
+    created_at: datetime
+    approved_at: Optional[datetime] = None
+    user: Optional[UserResponse] = None
+    
+    class Config:
+        from_attributes = True
+
+class FeedbackCreate(BaseModel):
+    rating: int
+    comment: Optional[str] = None
+
+class FeedbackResponse(BaseModel):
+    id: int
+    complaint_id: int
+    user_id: int
+    rating: int
+    comment: Optional[str] = None
+    created_at: datetime
+    user: Optional[UserResponse] = None
+    
+    class Config:
+        from_attributes = True
+
+class CategoryCreate(BaseModel):
+    name_ar: str
+    name_en: str
+    government_entity: str
+    description_ar: Optional[str] = None
+    description_en: Optional[str] = None
+
+class CategoryUpdate(BaseModel):
+    name_ar: Optional[str] = None
+    name_en: Optional[str] = None
+    government_entity: Optional[str] = None
+    description_ar: Optional[str] = None
+    description_en: Optional[str] = None
