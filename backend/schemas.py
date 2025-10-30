@@ -29,7 +29,9 @@ class UserResponse(BaseModel):
     whatsapp: Optional[str] = None
     telegram: Optional[str] = None
     address: Optional[str] = None
+    is_active: bool = True
     created_at: datetime
+    updated_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
@@ -98,6 +100,8 @@ class ComplaintResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     resolved_at: Optional[datetime] = None
+    closed_at: Optional[datetime] = None
+    can_reopen_until: Optional[datetime] = None
     user: Optional[UserResponse] = None
     category: Optional[CategoryResponse] = None
     assigned_to_user: Optional[UserResponse] = None
@@ -166,6 +170,7 @@ class PaymentCreate(BaseModel):
 
 class PaymentUpdate(BaseModel):
     status: PaymentStatus
+    approval_notes: Optional[str] = None
     
 class PaymentResponse(BaseModel):
     id: int
@@ -176,6 +181,7 @@ class PaymentResponse(BaseModel):
     proof_path: Optional[str] = None
     approved_by_id: Optional[int] = None
     status: PaymentStatus
+    approval_notes: Optional[str] = None
     created_at: datetime
     approved_at: Optional[datetime] = None
     user: Optional[UserResponse] = None
@@ -212,3 +218,101 @@ class CategoryUpdate(BaseModel):
     government_entity: Optional[str] = None
     description_ar: Optional[str] = None
     description_en: Optional[str] = None
+
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+    whatsapp: Optional[str] = None
+    telegram: Optional[str] = None
+    address: Optional[str] = None
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
+
+class PasswordReset(BaseModel):
+    new_password: str
+
+class AuditLogResponse(BaseModel):
+    id: int
+    actor_user_id: int
+    action: str
+    target_type: str
+    target_id: int
+    details: Optional[str] = None
+    created_at: datetime
+    actor: Optional[UserResponse] = None
+    
+    class Config:
+        from_attributes = True
+
+class PaymentMethodCreate(BaseModel):
+    name_ar: str
+    name_en: str
+    instructions_ar: Optional[str] = None
+    instructions_en: Optional[str] = None
+    is_active: bool = True
+
+class PaymentMethodUpdate(BaseModel):
+    name_ar: Optional[str] = None
+    name_en: Optional[str] = None
+    instructions_ar: Optional[str] = None
+    instructions_en: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class PaymentMethodResponse(BaseModel):
+    id: int
+    name_ar: str
+    name_en: str
+    instructions_ar: Optional[str] = None
+    instructions_en: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class SLAConfigCreate(BaseModel):
+    category_id: Optional[int] = None
+    priority: Optional[Priority] = None
+    response_time_hours: int
+    resolution_time_hours: int
+    escalation_time_hours: int
+
+class SLAConfigUpdate(BaseModel):
+    response_time_hours: Optional[int] = None
+    resolution_time_hours: Optional[int] = None
+    escalation_time_hours: Optional[int] = None
+
+class SLAConfigResponse(BaseModel):
+    id: int
+    category_id: Optional[int] = None
+    priority: Optional[Priority] = None
+    response_time_hours: int
+    resolution_time_hours: int
+    escalation_time_hours: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    category: Optional[CategoryResponse] = None
+    
+    class Config:
+        from_attributes = True
+
+class SystemSettingsCreate(BaseModel):
+    setting_key: str
+    setting_value: str
+    description: Optional[str] = None
+
+class SystemSettingsUpdate(BaseModel):
+    setting_value: str
+    description: Optional[str] = None
+
+class SystemSettingsResponse(BaseModel):
+    id: int
+    setting_key: str
+    setting_value: str
+    description: Optional[str] = None
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True

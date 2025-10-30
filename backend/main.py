@@ -11,22 +11,27 @@ from datetime import datetime
 from database import get_db
 from models import (
     User, Complaint, Comment, Attachment, Category, 
-    Subscription, Payment, ComplaintFeedback,
+    Subscription, Payment, ComplaintFeedback, AuditLog,
+    PaymentMethod, SLAConfig, SystemSettings,
     UserRole, ComplaintStatus, SubscriptionStatus, PaymentStatus, Priority
 )
 from schemas import (
-    UserCreate, UserLogin, UserResponse, Token,
+    UserCreate, UserLogin, UserResponse, Token, UserUpdate, PasswordReset,
     ComplaintCreate, ComplaintUpdate, ComplaintResponse,
     CommentCreate, CommentResponse,
     AttachmentResponse, CategoryResponse, CategoryCreate, CategoryUpdate, DashboardStats,
     SubscriptionCreate, SubscriptionResponse,
     PaymentCreate, PaymentUpdate, PaymentResponse,
-    FeedbackCreate, FeedbackResponse
+    FeedbackCreate, FeedbackResponse, AuditLogResponse,
+    PaymentMethodCreate, PaymentMethodUpdate, PaymentMethodResponse,
+    SLAConfigCreate, SLAConfigUpdate, SLAConfigResponse,
+    SystemSettingsCreate, SystemSettingsUpdate, SystemSettingsResponse
 )
 from auth import (
     get_password_hash, verify_password, create_access_token,
     get_current_user, require_role
 )
+from audit_helper import create_audit_log
 
 app = FastAPI(title="Allajnah Enhanced API")
 
@@ -220,6 +225,8 @@ def update_complaint(
         complaint.status = update_data.status
         if update_data.status in [ComplaintStatus.RESOLVED, ComplaintStatus.REJECTED]:
             complaint.resolved_at = datetime.utcnow()
+            from dateutil.relativedelta import relativedelta
+            complaint.can_reopen_until = datetime.utcnow() + relativedelta(days=7)
     
     if update_data.assigned_to_id is not None:
         complaint.assigned_to_id = update_data.assigned_to_id
@@ -227,6 +234,39 @@ def update_complaint(
             complaint.status = ComplaintStatus.UNDER_REVIEW
     
     complaint.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(complaint)
+    
+    create_audit_log(db, current_user.id, "UPDATE_COMPLAINT", "complaint", complaint.id, 
+                     f"Updated complaint status to {complaint.status}")
+    db.commit()
+    
+    return ComplaintResponse.model_validate(complaint)
+
+@app.post("/api/complaints/{complaint_id}/reopen", response_model=ComplaintResponse)
+def reopen_complaint(
+    complaint_id: int,
+    current_user: User = Depends(require_role(UserRole.TRADER)),
+    db: Session = Depends(get_db)
+):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    if complaint.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    if complaint.status not in [ComplaintStatus.RESOLVED, ComplaintStatus.REJECTED]:
+        raise HTTPException(status_code=400, detail="Only resolved or rejected complaints can be reopened")
+    
+    if not complaint.can_reopen_until or datetime.utcnow() > complaint.can_reopen_until:
+        raise HTTPException(status_code=400, detail="Reopen window has expired")
+    
+    complaint.status = ComplaintStatus.SUBMITTED
+    complaint.resolved_at = None
+    complaint.can_reopen_until = None
+    complaint.updated_at = datetime.utcnow()
+    
     db.commit()
     db.refresh(complaint)
     
@@ -397,6 +437,31 @@ def get_committee_users(
     ).all()
     return users
 
+@app.get("/api/admin/users", response_model=List[UserResponse])
+def list_all_users(
+    role: Optional[UserRole] = None,
+    is_active: Optional[bool] = None,
+    search: Optional[str] = None,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    query = db.query(User)
+    
+    if role:
+        query = query.filter(User.role == role)
+    if is_active is not None:
+        query = query.filter(User.is_active == is_active)
+    if search:
+        search_filter = f"%{search}%"
+        query = query.filter(
+            (User.first_name.ilike(search_filter)) |
+            (User.last_name.ilike(search_filter)) |
+            (User.email.ilike(search_filter))
+        )
+    
+    users = query.order_by(User.created_at.desc()).all()
+    return users
+
 @app.post("/api/admin/users", response_model=UserResponse)
 def create_committee_user(
     user_data: UserCreate,
@@ -410,12 +475,6 @@ def create_committee_user(
             detail="Email already registered"
         )
     
-    if user_data.role not in [UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid role for committee user"
-        )
-    
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
         email=user_data.email,
@@ -426,14 +485,133 @@ def create_committee_user(
         phone=user_data.phone,
         whatsapp=user_data.whatsapp,
         telegram=user_data.telegram,
-        address=user_data.address
+        address=user_data.address,
+        is_active=True
     )
     
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     
+    create_audit_log(db, current_user.id, "CREATE_USER", "user", new_user.id, 
+                     f"Created user {new_user.email} with role {new_user.role}")
+    db.commit()
+    
     return UserResponse.model_validate(new_user)
+
+@app.get("/api/admin/users/{user_id}", response_model=UserResponse)
+def get_user_by_id(
+    user_id: int,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return UserResponse.model_validate(user)
+
+@app.patch("/api/admin/users/{user_id}", response_model=UserResponse)
+def update_user(
+    user_id: int,
+    update_data: UserUpdate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.id == current_user.id and update_data.is_active == False:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot deactivate your own account"
+        )
+    
+    if user.id == current_user.id and update_data.role and update_data.role != UserRole.HIGHER_COMMITTEE:
+        admins_count = db.query(User).filter(
+            User.role == UserRole.HIGHER_COMMITTEE,
+            User.is_active == True,
+            User.id != current_user.id
+        ).count()
+        if admins_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot change role - you are the last active admin"
+            )
+    
+    for key, value in update_data.dict(exclude_unset=True).items():
+        setattr(user, key, value)
+    
+    user.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
+    
+    create_audit_log(db, current_user.id, "UPDATE_USER", "user", user.id, 
+                     f"Updated user {user.email}")
+    db.commit()
+    
+    return UserResponse.model_validate(user)
+
+@app.delete("/api/admin/users/{user_id}")
+def deactivate_user(
+    user_id: int,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot deactivate your own account"
+        )
+    
+    if user.role == UserRole.HIGHER_COMMITTEE:
+        active_admins = db.query(User).filter(
+            User.role == UserRole.HIGHER_COMMITTEE,
+            User.is_active == True,
+            User.id != user_id
+        ).count()
+        if active_admins == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot deactivate the last active admin"
+            )
+    
+    user.is_active = False
+    user.updated_at = datetime.utcnow()
+    db.commit()
+    
+    create_audit_log(db, current_user.id, "DEACTIVATE_USER", "user", user.id, 
+                     f"Deactivated user {user.email}")
+    db.commit()
+    
+    return {"message": "User deactivated successfully"}
+
+@app.post("/api/admin/users/{user_id}/reset-password")
+def reset_user_password(
+    user_id: int,
+    password_data: PasswordReset,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if len(password_data.new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 6 characters long"
+        )
+    
+    user.hashed_password = get_password_hash(password_data.new_password)
+    user.updated_at = datetime.utcnow()
+    db.commit()
+    
+    return {"message": "Password reset successfully"}
 
 @app.post("/api/categories", response_model=CategoryResponse)
 def create_category(
@@ -567,18 +745,22 @@ def update_payment(
     payment.status = update_data.status
     payment.approved_by_id = current_user.id
     payment.approved_at = datetime.utcnow()
+    if update_data.approval_notes:
+        payment.approval_notes = update_data.approval_notes
     
     if update_data.status == PaymentStatus.APPROVED:
         from dateutil.relativedelta import relativedelta
         subscription = Subscription(
             user_id=payment.user_id,
             start_date=datetime.utcnow(),
-            end_date=datetime.utcnow() + relativedelta(months=1),
+            end_date=datetime.utcnow() + relativedelta(years=1),
             status=SubscriptionStatus.ACTIVE
         )
         db.add(subscription)
         payment.subscription_id = subscription.id
     
+    create_audit_log(db, current_user.id, "APPROVE_PAYMENT", "payment", payment.id, 
+                     f"Payment {payment.status} for user ID {payment.user_id}, amount {payment.amount}")
     db.commit()
     db.refresh(payment)
     
@@ -643,6 +825,207 @@ def get_feedback(
     ).first()
     
     return feedback
+
+@app.get("/api/admin/payment-methods", response_model=List[PaymentMethodResponse])
+def get_payment_methods(
+    is_active: Optional[bool] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = db.query(PaymentMethod)
+    if is_active is not None:
+        query = query.filter(PaymentMethod.is_active == is_active)
+    methods = query.order_by(PaymentMethod.created_at.desc()).all()
+    return methods
+
+@app.post("/api/admin/payment-methods", response_model=PaymentMethodResponse)
+def create_payment_method(
+    method_data: PaymentMethodCreate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    new_method = PaymentMethod(**method_data.dict())
+    db.add(new_method)
+    db.commit()
+    db.refresh(new_method)
+    return PaymentMethodResponse.model_validate(new_method)
+
+@app.patch("/api/admin/payment-methods/{method_id}", response_model=PaymentMethodResponse)
+def update_payment_method(
+    method_id: int,
+    update_data: PaymentMethodUpdate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    method = db.query(PaymentMethod).filter(PaymentMethod.id == method_id).first()
+    if not method:
+        raise HTTPException(status_code=404, detail="Payment method not found")
+    
+    for key, value in update_data.dict(exclude_unset=True).items():
+        setattr(method, key, value)
+    
+    method.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(method)
+    return PaymentMethodResponse.model_validate(method)
+
+@app.delete("/api/admin/payment-methods/{method_id}")
+def delete_payment_method(
+    method_id: int,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    method = db.query(PaymentMethod).filter(PaymentMethod.id == method_id).first()
+    if not method:
+        raise HTTPException(status_code=404, detail="Payment method not found")
+    
+    db.delete(method)
+    db.commit()
+    return {"message": "Payment method deleted successfully"}
+
+@app.get("/api/admin/sla-configs", response_model=List[SLAConfigResponse])
+def get_sla_configs(
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    configs = db.query(SLAConfig).order_by(SLAConfig.created_at.desc()).all()
+    return configs
+
+@app.post("/api/admin/sla-configs", response_model=SLAConfigResponse)
+def create_sla_config(
+    config_data: SLAConfigCreate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    new_config = SLAConfig(**config_data.dict())
+    db.add(new_config)
+    db.commit()
+    db.refresh(new_config)
+    return SLAConfigResponse.model_validate(new_config)
+
+@app.patch("/api/admin/sla-configs/{config_id}", response_model=SLAConfigResponse)
+def update_sla_config(
+    config_id: int,
+    update_data: SLAConfigUpdate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    config = db.query(SLAConfig).filter(SLAConfig.id == config_id).first()
+    if not config:
+        raise HTTPException(status_code=404, detail="SLA config not found")
+    
+    for key, value in update_data.dict(exclude_unset=True).items():
+        setattr(config, key, value)
+    
+    config.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(config)
+    return SLAConfigResponse.model_validate(config)
+
+@app.delete("/api/admin/sla-configs/{config_id}")
+def delete_sla_config(
+    config_id: int,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    config = db.query(SLAConfig).filter(SLAConfig.id == config_id).first()
+    if not config:
+        raise HTTPException(status_code=404, detail="SLA config not found")
+    
+    db.delete(config)
+    db.commit()
+    return {"message": "SLA config deleted successfully"}
+
+@app.get("/api/admin/settings", response_model=List[SystemSettingsResponse])
+def get_all_settings(
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    settings = db.query(SystemSettings).all()
+    return settings
+
+@app.get("/api/admin/settings/{setting_key}", response_model=SystemSettingsResponse)
+def get_setting(
+    setting_key: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    setting = db.query(SystemSettings).filter(SystemSettings.setting_key == setting_key).first()
+    if not setting:
+        raise HTTPException(status_code=404, detail="Setting not found")
+    return SystemSettingsResponse.model_validate(setting)
+
+@app.post("/api/admin/settings", response_model=SystemSettingsResponse)
+def create_setting(
+    setting_data: SystemSettingsCreate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    existing = db.query(SystemSettings).filter(SystemSettings.setting_key == setting_data.setting_key).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Setting with this key already exists")
+    
+    new_setting = SystemSettings(**setting_data.dict())
+    db.add(new_setting)
+    db.commit()
+    db.refresh(new_setting)
+    return SystemSettingsResponse.model_validate(new_setting)
+
+@app.patch("/api/admin/settings/{setting_key}", response_model=SystemSettingsResponse)
+def update_setting(
+    setting_key: str,
+    update_data: SystemSettingsUpdate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    setting = db.query(SystemSettings).filter(SystemSettings.setting_key == setting_key).first()
+    if not setting:
+        raise HTTPException(status_code=404, detail="Setting not found")
+    
+    setting.setting_value = update_data.setting_value
+    if update_data.description is not None:
+        setting.description = update_data.description
+    setting.updated_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(setting)
+    return SystemSettingsResponse.model_validate(setting)
+
+@app.delete("/api/admin/settings/{setting_key}")
+def delete_setting(
+    setting_key: str,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    setting = db.query(SystemSettings).filter(SystemSettings.setting_key == setting_key).first()
+    if not setting:
+        raise HTTPException(status_code=404, detail="Setting not found")
+    
+    db.delete(setting)
+    db.commit()
+    return {"message": "Setting deleted successfully"}
+
+@app.get("/api/admin/audit-logs", response_model=List[AuditLogResponse])
+def get_audit_logs(
+    user_id: Optional[int] = None,
+    action: Optional[str] = None,
+    target_type: Optional[str] = None,
+    limit: int = 100,
+    offset: int = 0,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    query = db.query(AuditLog)
+    
+    if user_id:
+        query = query.filter(AuditLog.actor_user_id == user_id)
+    if action:
+        query = query.filter(AuditLog.action.ilike(f"%{action}%"))
+    if target_type:
+        query = query.filter(AuditLog.target_type == target_type)
+    
+    logs = query.order_by(AuditLog.created_at.desc()).limit(limit).offset(offset).all()
+    return logs
 
 @app.get("/")
 def root():

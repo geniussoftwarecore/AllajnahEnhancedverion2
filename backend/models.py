@@ -46,7 +46,9 @@ class User(Base):
     whatsapp = Column(String)
     telegram = Column(String)
     address = Column(String)
+    is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     complaints = relationship("Complaint", back_populates="user", foreign_keys="Complaint.user_id")
     assigned_complaints = relationship("Complaint", back_populates="assigned_to_user", foreign_keys="Complaint.assigned_to_id")
@@ -79,6 +81,9 @@ class Complaint(Base):
     title = Column(String, nullable=False)
     description = Column(Text, nullable=False)
     complaint_summary = Column(Text, nullable=False)
+    
+    closed_at = Column(DateTime)
+    can_reopen_until = Column(DateTime)
     
     complaining_on_behalf_of = Column(String, nullable=False)
     behalf_person_name = Column(String)
@@ -157,6 +162,7 @@ class Payment(Base):
     proof_path = Column(String)
     approved_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     status = Column(SQLEnum(PaymentStatus), default=PaymentStatus.PENDING)
+    approval_notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     approved_at = Column(DateTime)
     
@@ -188,3 +194,38 @@ class AuditLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     actor = relationship("User", back_populates="audit_logs")
+
+class PaymentMethod(Base):
+    __tablename__ = "payment_methods"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name_ar = Column(String, nullable=False)
+    name_en = Column(String, nullable=False)
+    instructions_ar = Column(Text)
+    instructions_en = Column(Text)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class SLAConfig(Base):
+    __tablename__ = "sla_configs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+    priority = Column(SQLEnum(Priority), nullable=True)
+    response_time_hours = Column(Integer, nullable=False)
+    resolution_time_hours = Column(Integer, nullable=False)
+    escalation_time_hours = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    category = relationship("Category")
+
+class SystemSettings(Base):
+    __tablename__ = "system_settings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    setting_key = Column(String, unique=True, nullable=False, index=True)
+    setting_value = Column(Text, nullable=False)
+    description = Column(Text)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
