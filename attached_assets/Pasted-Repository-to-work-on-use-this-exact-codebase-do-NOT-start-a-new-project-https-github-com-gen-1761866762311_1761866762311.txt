@@ -1,0 +1,129 @@
+Repository to work on (use this exact codebase, do NOT start a new project):
+https://github.com/geniussoftwarecore/AllajnahEnhancedverion2
+
+Goal:
+Finish and harden the existing app into a fully working, production-ready complaint platform. Many features are incomplete or missing, especially for the Higher Committee (Admin). You must complete all modules end-to-end so that each role (Trader, Technical Committee, Higher Committee) can perform their full workflows.
+
+General rules:
+- Repair and complete existing files instead of rewriting the project.
+- Remove any “…” placeholders and incomplete code blocks; fix all syntax or missing-import errors.
+- Keep current structure; only add new files/folders where necessary.
+- Provide a concise RUN.md at the end with exact commands and seed credentials.
+
+==================================================
+A) CORE DOMAIN COMPLETION
+==================================================
+
+1) Roles & Permissions (must be enforced everywhere)
+- Roles: Trader, Technical Committee, Higher Committee (Admin).
+- Gate every action and page by role; unauthorized actions must be blocked at API and UI levels.
+
+2) Complaints (end-to-end)
+- Traders: create complaints with full details (title, description, category, when it happened, how discovered, attachments); list own; view detail; comment; reopen within a limited window after resolution.
+- Technical Committee: list all, filter (status/category/assignee), open detail, assign/unassign to self or others, add public or internal comments, update status (submitted → under_review → resolved or escalated).
+- Higher Committee: see escalations queue; finalize resolutions; override/close; view all complaints.
+- Attachments: upload, preview/download; file size/type validation.
+- Duplicate detection: warn if a trader tries to submit a very similar complaint (title + category + short text similarity).
+
+3) Workflow Automation
+- Auto-assign on create based on category (configurable rule set).
+- SLA timers: if a complaint stays under_review too long, auto-escalate to Higher Committee and notify involved users.
+- Auto-close rule: after resolution, if trader doesn’t respond within N days, close automatically (configurable).
+- Reopen: allow trader to reopen closed complaint once within N days.
+
+==================================================
+B) HIGHER COMMITTEE (ADMIN) — MISSING PIECES TO BUILD
+==================================================
+
+4) Users & Roles Management (Admin UI + API)
+- Create/edit/deactivate users; set/reset password; assign role.
+- List users with filters (role/status/search).
+- Prevent deletion of own super-admin account; prevent role downgrade if it leaves system without any admin.
+
+5) Settings (Admin UI + API)
+- Complaint Categories (name in AR/EN; owning authority if applicable).
+- Priorities & SLA thresholds (per priority/category).
+- Subscription & billing settings (annual price, grace period days, renewal reminder days).
+- Payment Methods (display name, instructions for mobile money/bank; active flag).
+- System toggles: enable duplicate-check; enable feedback; default reopen window; allowed attachment types & max size.
+
+6) Payments & Subscriptions (Admin + Trader)
+- Trader side: view current status; upload payment proof; see expiry countdown; renewal reminders.
+- Admin side: review queue with filters; approve/reject proofs; auto-update subscription dates/status; note field for decisions.
+- History: show past payments (user and admin views).
+- Enforce subscription gate for trader actions when expired.
+
+7) Analytics & Audit
+- Admin dashboard with charts/tables:
+  * Complaints by status and by category (time range filter).
+  * Average resolution time; SLA breach count.
+  * Top root causes (if captured).
+  * Subscriptions: active/expired/expiring soon.
+  * Feedback average over time.
+- Audit log: who did what and when (logins, status changes, assignments, approvals). Provide a simple viewer with filters (user/date/action).
+
+8) Feedback (Post-Resolution)
+- After a complaint is resolved, prompt trader for 1–5 star rating and optional comment; store and show aggregate on analytics.
+
+==================================================
+C) FRONTEND COMPLETION (ROLE-BASED UI)
+==================================================
+
+9) Dashboards & Navigation
+- Role-aware side navigation and landing dashboard for each role.
+- Loading states, empty states, error toasts everywhere.
+
+10) Pages to complete
+- Trader: Dashboard, New Complaint, My Complaints (list + detail), Subscription page (status + payment proof), Feedback modal.
+- Technical Committee: Inbox (new), Assigned to me, All complaints (filters), Complaint detail (public/internal comments, status changes, assign, escalate).
+- Admin (Higher Committee): 
+  * Users (list/create/edit/deactivate, reset password).
+  * Settings (categories, priorities/SLA, subscription, payment methods, toggles).
+  * Payments review (approve/reject + history).
+  * Escalations queue and finalize resolution.
+  * Analytics (charts) + Audit Log viewer.
+
+11) Internationalization & Accessibility
+- Arabic + English UI; apply RTL for Arabic; persist language choice.
+- Form validation messages translated; accessible labels and focus order.
+
+==================================================
+D) QUALITY, OPERABILITY, POLISH
+==================================================
+
+12) Notifications
+- Email or SMS stubs for key events (status update, escalation, payment approval/rejection, upcoming expiry). Provide hook functions so integration can be added later.
+
+13) Reliability & Safety
+- Graceful handling of expired sessions: auto-logout and redirect to login with a toast.
+- Form-level validation and server error surfacing (don’t swallow errors).
+- Prevent double submissions on slow networks.
+
+14) Seed & Demo Data
+- Seeder script: 
+  * One admin (Higher Committee), one technical member, two traders (with passwords).
+  * A few categories and priorities with SLA settings.
+  * One payment method.
+- Optional demo complaints to populate dashboards.
+
+15) RUN.md (required)
+- Exact install/run steps for backend and frontend (no containers).
+- How to seed data and log in.
+- Where to find each admin page (Users, Settings, Payments, Analytics).
+- Known limitations and configuration flags.
+
+==================================================
+E) ACCEPTANCE TESTS (MANUAL FLOWS YOU MUST VERIFY)
+==================================================
+
+A1) Admin creates a Technical Committee user and a Trader user.
+A2) Trader renews subscription by uploading payment proof → Admin approves → Trader becomes active.
+A3) Trader files a complaint with attachment.
+A4) Technical Committee auto-assigned; edits, comments (public and internal), and resolves. If no response, auto-close triggers.
+A5) Trader reopens within the allowed window; Technical Committee escalates to Admin; Admin finalizes.
+A6) Trader submits feedback (stars + comment).
+A7) Admin changes a category SLA → dashboard stats reflect changes.
+A8) Audit log shows key events above with actor and timestamps.
+
+Deliverable:
+- Updated repository with all modules completed and wired end-to-end, plus a clear RUN.md. Do not leave TODOs or “…” anywhere. Fix every compile or runtime error. Ship a complete MVP ready for real users.
