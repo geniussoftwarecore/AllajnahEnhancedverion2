@@ -19,7 +19,7 @@ from schemas import (
     UserCreate, UserLogin, UserResponse, Token, UserUpdate, PasswordReset,
     ComplaintCreate, ComplaintUpdate, ComplaintResponse,
     CommentCreate, CommentResponse,
-    AttachmentResponse, CategoryResponse, CategoryCreate, CategoryUpdate, DashboardStats,
+    AttachmentResponse, CategoryResponse, CategoryCreate, CategoryUpdate, DashboardStats, AnalyticsData,
     SubscriptionCreate, SubscriptionResponse,
     PaymentCreate, PaymentUpdate, PaymentResponse,
     FeedbackCreate, FeedbackResponse, AuditLogResponse,
@@ -32,6 +32,11 @@ from auth import (
     get_current_user, require_role
 )
 from audit_helper import create_audit_log
+from workflow_automation import (
+    auto_assign_complaint, check_sla_violations,
+    auto_close_resolved_complaints, run_periodic_tasks
+)
+from duplicate_detection import check_duplicate_warning
 
 app = FastAPI(title="Allajnah Enhanced API")
 
@@ -152,6 +157,22 @@ def get_categories(db: Session = Depends(get_db)):
     categories = db.query(Category).all()
     return categories
 
+@app.post("/api/complaints/check-duplicate")
+def check_complaint_duplicate(
+    complaint_data: ComplaintCreate,
+    current_user: User = Depends(require_role(UserRole.TRADER)),
+    db: Session = Depends(get_db)
+):
+    result = check_duplicate_warning(
+        db,
+        title=complaint_data.title,
+        category_id=complaint_data.category_id,
+        description=complaint_data.description,
+        summary=complaint_data.complaint_summary,
+        threshold=0.7
+    )
+    return result
+
 @app.post("/api/complaints", response_model=ComplaintResponse)
 def create_complaint(
     complaint_data: ComplaintCreate,
@@ -166,6 +187,13 @@ def create_complaint(
     db.add(new_complaint)
     db.commit()
     db.refresh(new_complaint)
+    
+    auto_assign_complaint(db, new_complaint)
+    db.refresh(new_complaint)
+    
+    create_audit_log(db, current_user.id, "CREATE_COMPLAINT", "complaint", new_complaint.id,
+                     f"Created complaint #{new_complaint.id}")
+    db.commit()
     
     return ComplaintResponse.model_validate(new_complaint)
 
@@ -1026,6 +1054,55 @@ def get_audit_logs(
     
     logs = query.order_by(AuditLog.created_at.desc()).limit(limit).offset(offset).all()
     return logs
+
+@app.post("/api/admin/automation/run-periodic-tasks")
+def trigger_periodic_tasks(
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    result = run_periodic_tasks(db)
+    
+    create_audit_log(db, current_user.id, "TRIGGER_AUTOMATION", "system", 0,
+                     f"Manually triggered periodic automation tasks")
+    db.commit()
+    
+    return {
+        "message": "Periodic tasks executed successfully",
+        "escalated_complaints": result["escalated"],
+        "closed_complaints": result["closed"]
+    }
+
+@app.post("/api/admin/automation/check-sla")
+def trigger_sla_check(
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    escalated = check_sla_violations(db)
+    
+    create_audit_log(db, current_user.id, "CHECK_SLA", "system", 0,
+                     f"Manually triggered SLA check, {escalated} complaints escalated")
+    db.commit()
+    
+    return {
+        "message": "SLA check completed",
+        "escalated_complaints": escalated
+    }
+
+@app.post("/api/admin/automation/auto-close")
+def trigger_auto_close(
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    closed = auto_close_resolved_complaints(db)
+    
+    create_audit_log(db, current_user.id, "AUTO_CLOSE_TRIGGER", "system", 0,
+                     f"Manually triggered auto-close, {closed} complaints closed")
+    db.commit()
+    
+    return {
+        "message": "Auto-close completed",
+        "closed_complaints": closed
+    }
 
 @app.get("/")
 def root():

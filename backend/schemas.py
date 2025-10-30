@@ -148,6 +148,24 @@ class DashboardStats(BaseModel):
     avg_resolution_time_days: Optional[float] = None
     by_category: Optional[dict] = None
 
+class AnalyticsData(BaseModel):
+    total_complaints: int
+    submitted: int
+    under_review: int
+    escalated: int
+    resolved: int
+    rejected: int
+    avg_resolution_time_days: Optional[float] = None
+    sla_breaches: int
+    active_subscriptions: int
+    expiring_soon: int
+    pending_payments: int
+    avg_feedback_rating: Optional[float] = None
+    by_category: dict
+    by_status_trend: List[dict] = []
+    top_assignees: List[dict] = []
+    resolution_rate: float = 0.0
+
 class SubscriptionCreate(BaseModel):
     start_date: datetime
     end_date: datetime
