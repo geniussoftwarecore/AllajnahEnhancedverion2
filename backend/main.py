@@ -80,7 +80,7 @@ def initialize_setup(user_data: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
     
-    access_token = create_access_token(data={"sub": new_user.id})
+    access_token = create_access_token(data={"sub": str(new_user.id)})
     user_response = UserResponse.model_validate(new_user)
     
     return Token(access_token=access_token, token_type="bearer", user=user_response)
@@ -133,7 +133,7 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
             detail="Incorrect email or password"
         )
     
-    access_token = create_access_token(data={"sub": user.id})
+    access_token = create_access_token(data={"sub": str(user.id)})
     user_response = UserResponse.model_validate(user)
     
     return Token(access_token=access_token, token_type="bearer", user=user_response)
