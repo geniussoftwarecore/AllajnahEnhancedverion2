@@ -1,9 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Header from '../components/Header';
+import { ResponsivePageShell, StatCard, Alert, CTAButton } from '../components/ui';
 import ComplaintList from '../components/ComplaintList';
 import { useWebSocket } from '../hooks/useWebSocket';
 import api from '../api/axios';
+import { 
+  DocumentTextIcon, 
+  ClockIcon, 
+  ArrowTrendingUpIcon, 
+  CheckCircleIcon, 
+  XCircleIcon,
+  UserGroupIcon,
+  CreditCardIcon,
+  CogIcon,
+  ChartBarIcon,
+  ClipboardDocumentListIcon
+} from '@heroicons/react/24/outline';
 
 function HigherCommitteeDashboard() {
   const [stats, setStats] = useState(null);
@@ -12,7 +24,10 @@ function HigherCommitteeDashboard() {
 
   const { isConnected } = useWebSocket((message) => {
     if (message.type === 'complaint_update' || message.type === 'new_complaint' || message.type === 'new_comment') {
-      setNotification(`تحديث جديد: ${message.message || 'تم تحديث شكوى'}`);
+      setNotification({
+        message: message.message || 'تم تحديث شكوى',
+        type: 'info'
+      });
       setTimeout(() => setNotification(null), 5000);
       loadStats();
     }
@@ -33,103 +48,114 @@ function HigherCommitteeDashboard() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-3xl font-bold text-gray-900">لوحة اللجنة العليا</h2>
-          <div className="flex items-center gap-2">
-            <span className={`inline-block w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-400'}`}></span>
-            <span className="text-sm text-gray-600">{isConnected ? 'متصل' : 'غير متصل'}</span>
-          </div>
-        </div>
+  const statsConfig = [
+    {
+      title: 'إجمالي الشكاوى',
+      value: stats?.total_complaints || 0,
+      icon: DocumentTextIcon,
+      color: 'gray',
+    },
+    {
+      title: 'قيد المراجعة',
+      value: stats?.under_review || 0,
+      icon: ClockIcon,
+      color: 'primary',
+    },
+    {
+      title: 'تم التصعيد',
+      value: stats?.escalated || 0,
+      icon: ArrowTrendingUpIcon,
+      color: 'warning',
+    },
+    {
+      title: 'محلولة',
+      value: stats?.resolved || 0,
+      icon: CheckCircleIcon,
+      color: 'success',
+    },
+    {
+      title: 'مرفوضة',
+      value: stats?.rejected || 0,
+      icon: XCircleIcon,
+      color: 'danger',
+    },
+  ];
 
+  const adminLinks = [
+    { to: '/admin/users', label: 'إدارة المستخدمين', icon: UserGroupIcon, color: 'primary' },
+    { to: '/admin/payments', label: 'مراجعة الدفعات', icon: CreditCardIcon, color: 'success' },
+    { to: '/admin/analytics', label: 'التحليلات', icon: ChartBarIcon, color: 'secondary' },
+    { to: '/admin/audit-log', label: 'سجل التدقيق', icon: ClipboardDocumentListIcon, color: 'gray' },
+    { to: '/admin/settings', label: 'الإعدادات', icon: CogIcon, color: 'gray' },
+  ];
+
+  return (
+    <ResponsivePageShell 
+      title="لوحة اللجنة العليا"
+      notificationCount={notification ? 1 : 0}
+    >
+      <div className="space-y-6">
         {notification && (
-          <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg mb-4 animate-pulse">
-            {notification}
-          </div>
+          <Alert
+            type={notification.type}
+            message={notification.message}
+            onClose={() => setNotification(null)}
+          />
         )}
 
-        {/* Admin Navigation */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="flex gap-3 flex-wrap">
-            <Link 
-              to="/admin/users" 
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              إدارة المستخدمين
-            </Link>
-            <Link 
-              to="/admin/payments" 
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              مراجعة الدفعات
-            </Link>
-            <Link 
-              to="/admin/settings" 
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              الإعدادات
-            </Link>
-            <Link 
-              to="/admin/analytics" 
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              التحليلات
-            </Link>
-            <Link 
-              to="/admin/audit-log" 
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              سجل التدقيق
-            </Link>
+        <div className="flex items-center gap-2 text-sm">
+          <span className={`inline-block w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-success-500' : 'bg-gray-400'} animate-pulse`}></span>
+          <span className="text-gray-600 font-medium">{isConnected ? 'متصل' : 'غير متصل'}</span>
+        </div>
+
+        <div className="card p-4">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">الإدارة</h3>
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {adminLinks.map((link) => (
+              <Link key={link.to} to={link.to}>
+                <CTAButton
+                  variant="outline"
+                  fullWidth
+                  size="sm"
+                  rightIcon={<link.icon className="w-4 h-4" />}
+                >
+                  {link.label}
+                </CTAButton>
+              </Link>
+            ))}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-5 gap-4">
           {loading ? (
             <>
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="bg-white p-6 rounded-lg shadow animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-24 mb-3"></div>
-                  <div className="h-8 bg-gray-200 rounded w-16"></div>
-                </div>
+                <StatCard key={i} loading={true} />
               ))}
             </>
           ) : (
-            <>
-              <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-                <h3 className="text-sm text-gray-600 mb-2">إجمالي الشكاوى</h3>
-                <p className="text-3xl font-bold text-gray-900">{stats?.total_complaints || 0}</p>
-              </div>
-              <div className="bg-blue-50 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-                <h3 className="text-sm text-gray-600 mb-2">قيد المراجعة</h3>
-                <p className="text-3xl font-bold text-blue-600">{stats?.under_review || 0}</p>
-              </div>
-              <div className="bg-yellow-50 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-                <h3 className="text-sm text-gray-600 mb-2">تم التصعيد</h3>
-                <p className="text-3xl font-bold text-yellow-600">{stats?.escalated || 0}</p>
-              </div>
-              <div className="bg-green-50 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-                <h3 className="text-sm text-gray-600 mb-2">محلولة</h3>
-                <p className="text-3xl font-bold text-green-600">{stats?.resolved || 0}</p>
-              </div>
-              <div className="bg-red-50 p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-                <h3 className="text-sm text-gray-600 mb-2">مرفوضة</h3>
-                <p className="text-3xl font-bold text-red-600">{stats?.rejected || 0}</p>
-              </div>
-            </>
+            statsConfig.map((stat, index) => (
+              <StatCard
+                key={index}
+                title={stat.title}
+                value={stat.value}
+                icon={stat.icon}
+                color={stat.color}
+              />
+            ))
           )}
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">جميع الشكاوى</h3>
-          <ComplaintList onUpdate={loadStats} role="higher_committee" />
+        <div className="card p-4 sm:p-6 space-y-6">
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+            جميع الشكاوى
+          </h3>
+          <div className="animate-enter">
+            <ComplaintList onUpdate={loadStats} role="higher_committee" />
+          </div>
         </div>
       </div>
-    </div>
+    </ResponsivePageShell>
   );
 }
 

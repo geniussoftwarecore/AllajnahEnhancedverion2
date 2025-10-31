@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../api/axios';
+import FormField from '../components/ui/FormField';
+import CTAButton from '../components/ui/CTAButton';
+import Alert from '../components/ui/Alert';
+import { EnvelopeIcon, LockClosedIcon, UserIcon } from '@heroicons/react/24/outline';
 
 function Setup() {
   const navigate = useNavigate();
@@ -71,118 +75,101 @@ function Setup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-2xl">
-        <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-600 py-8 px-4 sm:px-6 lg:px-8 animate-fade-in">
+      <div className="max-w-md w-full space-y-6 bg-white p-6 sm:p-10 rounded-2xl shadow-strong animate-scale-in">
+        <div className="text-center">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+            <UserIcon className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">
             إعداد النظام الأولي
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             إنشاء حساب المسؤول الأول
           </p>
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800">
-              مرحباً بك في نظام الاجنة المحسنة. يرجى إنشاء حساب المسؤول الأول للبدء في استخدام النظام.
-            </p>
-          </div>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+
+        <Alert
+          type="info"
+          message="مرحباً بك في نظام الاجنة المحسنة. يرجى إنشاء حساب المسؤول الأول للبدء في استخدام النظام."
+        />
+
+        <form className="space-y-5" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded whitespace-pre-line">
-              {error}
-            </div>
+            <Alert
+              type="error"
+              message={error}
+              onClose={() => setError('')}
+            />
           )}
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-2">
-                الاسم الأول
-              </label>
-              <input
-                id="first_name"
-                name="first_name"
-                type="text"
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="أدخل الاسم الأول"
-                value={formData.first_name}
-                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-              />
-            </div>
-            <div>
-              <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-2">
-                الاسم الأخير
-              </label>
-              <input
-                id="last_name"
-                name="last_name"
-                type="text"
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="أدخل الاسم الأخير"
-                value={formData.last_name}
-                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                البريد الإلكتروني
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="أدخل بريدك الإلكتروني"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                كلمة المرور
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                minLength={8}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="أدخل كلمة المرور"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                يجب أن تحتوي على 8 أحرف على الأقل، حرف كبير وصغير، رقم، ورمز خاص
-              </p>
-            </div>
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                تأكيد كلمة المرور
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="أدخل كلمة المرور مرة أخرى"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              />
-            </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              label="الاسم الأول"
+              name="first_name"
+              type="text"
+              required
+              placeholder="أدخل الاسم الأول"
+              value={formData.first_name}
+              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+              rightIcon={<UserIcon className="w-5 h-5" />}
+            />
+
+            <FormField
+              label="الاسم الأخير"
+              name="last_name"
+              type="text"
+              required
+              placeholder="أدخل الاسم الأخير"
+              value={formData.last_name}
+              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+              rightIcon={<UserIcon className="w-5 h-5" />}
+            />
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-            >
-              {loading ? 'جاري الإنشاء...' : 'إنشاء حساب المسؤول'}
-            </button>
-          </div>
+          <FormField
+            label="البريد الإلكتروني"
+            name="email"
+            type="email"
+            required
+            placeholder="أدخل بريدك الإلكتروني"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            rightIcon={<EnvelopeIcon className="w-5 h-5" />}
+          />
+
+          <FormField
+            label="كلمة المرور"
+            name="password"
+            type="password"
+            required
+            placeholder="أدخل كلمة المرور"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            rightIcon={<LockClosedIcon className="w-5 h-5" />}
+            helperText="يجب أن تحتوي على 8 أحرف على الأقل، حرف كبير وصغير، رقم، ورمز خاص"
+          />
+
+          <FormField
+            label="تأكيد كلمة المرور"
+            name="confirmPassword"
+            type="password"
+            required
+            placeholder="أدخل كلمة المرور مرة أخرى"
+            value={formData.confirmPassword}
+            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+            rightIcon={<LockClosedIcon className="w-5 h-5" />}
+          />
+
+          <CTAButton
+            type="submit"
+            variant="primary"
+            size="lg"
+            fullWidth
+            loading={loading}
+          >
+            {loading ? 'جاري الإنشاء...' : 'إنشاء حساب المسؤول'}
+          </CTAButton>
         </form>
       </div>
     </div>
