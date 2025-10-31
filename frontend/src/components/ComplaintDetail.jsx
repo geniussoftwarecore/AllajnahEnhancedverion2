@@ -10,13 +10,25 @@ function ComplaintDetail({ complaint, onBack, role }) {
   const [committeeUsers, setCommitteeUsers] = useState([]);
   const [selectedAssignee, setSelectedAssignee] = useState(complaint.assigned_to_id || '');
   const [selectedStatus, setSelectedStatus] = useState(complaint.status);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedback, setFeedback] = useState(null);
 
   useEffect(() => {
     loadComments();
+    loadFeedback();
     if (user.role !== 'trader') {
       loadCommitteeUsers();
     }
   }, []);
+
+  const loadFeedback = async () => {
+    try {
+      const response = await api.get(`/complaints/${complaint.id}/feedback`);
+      setFeedback(response.data);
+    } catch (error) {
+      console.error('Error loading feedback:', error);
+    }
+  };
 
   const loadComments = async () => {
     try {
@@ -67,6 +79,31 @@ function ComplaintDetail({ complaint, onBack, role }) {
     }
   };
 
+  const handleReopen = async () => {
+    if (!window.confirm('هل أنت متأكد من إعادة فتح هذه الشكوى؟')) return;
+
+    try {
+      await api.post(`/complaints/${complaint.id}/reopen`);
+      alert('تم إعادة فتح الشكوى بنجاح');
+      onBack();
+    } catch (error) {
+      alert(error.response?.data?.detail || 'فشل في إعادة فتح الشكوى');
+    }
+  };
+
+  const canReopen = () => {
+    if (user.role !== 'trader') return false;
+    if (!['resolved', 'rejected'].includes(complaint.status)) return false;
+    if (!complaint.can_reopen_until) return false;
+    return new Date(complaint.can_reopen_until) > new Date();
+  };
+
+  const canProvideFeedback = () => {
+    if (user.role !== 'trader') return false;
+    if (!['resolved', 'rejected'].includes(complaint.status)) return false;
+    return !feedback;
+  };
+
   const getStatusText = (status) => {
     const statusMap = {
       'submitted': 'مقدمة',
@@ -86,6 +123,36 @@ function ComplaintDetail({ complaint, onBack, role }) {
       >
         ← العودة للقائمة
       </button>
+
+      {/* Trader Actions for Resolved/Rejected Complaints */}
+      {user.role === 'trader' && ['resolved', 'rejected'].includes(complaint.status) && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex gap-3 flex-wrap">
+            {canProvideFeedback() && (
+              <button
+                onClick={() => setShowFeedbackModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+              >
+                تقديم التقييم
+              </button>
+            )}
+            {canReopen() && (
+              <button
+                onClick={handleReopen}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+              >
+                إعادة فتح الشكوى
+              </button>
+            )}
+            {feedback && (
+              <div className="flex-1 bg-white rounded-lg p-3 border border-gray-200">
+                <p className="text-sm text-gray-600">التقييم: <span className="font-bold text-yellow-600">{feedback.rating}/5</span></p>
+                {feedback.comment && <p className="text-sm text-gray-700 mt-1">{feedback.comment}</p>}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <div className="flex justify-between items-start mb-4">
@@ -242,6 +309,111 @@ function ComplaintDetail({ complaint, onBack, role }) {
             إضافة تعليق
           </button>
         </div>
+      </div>
+
+      {/* Feedback Modal */}
+      {showFeedbackModal && (
+        <FeedbackModal
+          complaintId={complaint.id}
+          onClose={() => setShowFeedbackModal(false)}
+          onSuccess={() => {
+            setShowFeedbackModal(false);
+            loadFeedback();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function FeedbackModal({ complaintId, onClose, onSuccess }) {
+  const [formData, setFormData] = useState({ rating: 5, comment: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      await api.post(`/complaints/${complaintId}/feedback`, formData);
+      alert('شكراً لتقييمك!');
+      onSuccess();
+    } catch (err) {
+      setError(err.response?.data?.detail || 'فشل في إرسال التقييم');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+        <h2 className="text-2xl font-bold mb-6">تقييم الخدمة</h2>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              التقييم (1-5) *
+            </label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <button
+                  key={rating}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, rating })}
+                  className={`w-12 h-12 rounded-lg border-2 font-bold ${
+                    formData.rating === rating
+                      ? 'bg-yellow-500 text-white border-yellow-600'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-yellow-400'
+                  }`}
+                >
+                  {rating}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              1 = سيء جداً، 5 = ممتاز
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              تعليق (اختياري)
+            </label>
+            <textarea
+              value={formData.comment}
+              onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+              rows={4}
+              placeholder="شاركنا رأيك حول تجربتك..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              إلغاء
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? 'جاري الإرسال...' : 'إرسال التقييم'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

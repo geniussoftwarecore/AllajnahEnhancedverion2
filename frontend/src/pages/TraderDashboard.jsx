@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import ComplaintForm from '../components/ComplaintForm';
 import ComplaintList from '../components/ComplaintList';
@@ -27,6 +28,18 @@ function TraderDashboard() {
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick Actions */}
+        <div className="bg-white rounded-lg shadow p-4 mb-6">
+          <div className="flex gap-3 flex-wrap">
+            <Link 
+              to="/subscription" 
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            >
+              الاشتراك والدفع
+            </Link>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-sm text-gray-600 mb-2">إجمالي الشكاوى</h3>

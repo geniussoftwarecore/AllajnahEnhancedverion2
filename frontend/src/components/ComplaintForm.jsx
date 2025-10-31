@@ -3,14 +3,31 @@ import { useForm } from 'react-hook-form';
 import api from '../api/axios';
 
 function ComplaintForm({ onSuccess }) {
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { register, handleSubmit, formState: { errors }, watch } = useForm();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+
+  const title = watch('title');
+  const categoryId = watch('category_id');
+  const description = watch('description');
 
   useEffect(() => {
     loadCategories();
   }, []);
+
+  useEffect(() => {
+    if (title && categoryId && title.length > 5) {
+      const timeoutId = setTimeout(() => {
+        checkForDuplicates();
+      }, 800);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setDuplicateWarning(null);
+    }
+  }, [title, categoryId, description]);
 
   const loadCategories = async () => {
     try {
@@ -18,6 +35,28 @@ function ComplaintForm({ onSuccess }) {
       setCategories(response.data);
     } catch (error) {
       console.error('Error loading categories:', error);
+    }
+  };
+
+  const checkForDuplicates = async () => {
+    setCheckingDuplicates(true);
+    try {
+      const response = await api.post('/complaints/check-duplicate', {
+        title,
+        category_id: parseInt(categoryId),
+        description: description || '',
+        complaint_summary: ''
+      });
+      
+      if (response.data.has_duplicates) {
+        setDuplicateWarning(response.data);
+      } else {
+        setDuplicateWarning(null);
+      }
+    } catch (error) {
+      console.error('Error checking duplicates:', error);
+    } finally {
+      setCheckingDuplicates(false);
     }
   };
 
@@ -41,6 +80,26 @@ function ComplaintForm({ onSuccess }) {
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           {error}
         </div>
+      )}
+
+      {duplicateWarning && duplicateWarning.has_duplicates && (
+        <div className="bg-yellow-50 border border-yellow-400 text-yellow-800 px-4 py-3 rounded">
+          <p className="font-bold mb-2">{duplicateWarning.message}</p>
+          <p className="text-sm mb-2">شكاوى مشابهة:</p>
+          <ul className="text-sm space-y-1">
+            {duplicateWarning.similar_complaints.map((complaint) => (
+              <li key={complaint.id} className="flex justify-between">
+                <span>#{complaint.id}: {complaint.title}</span>
+                <span className="text-xs">({(complaint.similarity_score * 100).toFixed(0)}% تشابه)</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-sm mt-2">يمكنك المتابعة في التقديم إذا كانت شكواك مختلفة</p>
+        </div>
+      )}
+
+      {checkingDuplicates && (
+        <div className="text-sm text-gray-600">جاري التحقق من الشكاوى المشابهة...</div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

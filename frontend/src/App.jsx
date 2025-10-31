@@ -6,8 +6,14 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Setup from './pages/Setup';
 import TraderDashboard from './pages/TraderDashboard';
+import TraderSubscription from './pages/TraderSubscription';
 import TechnicalCommitteeDashboard from './pages/TechnicalCommitteeDashboard';
 import HigherCommitteeDashboard from './pages/HigherCommitteeDashboard';
+import UsersManagement from './pages/Admin/UsersManagement';
+import PaymentsReview from './pages/Admin/PaymentsReview';
+import Settings from './pages/Admin/Settings';
+import Analytics from './pages/Admin/Analytics';
+import AuditLog from './pages/Admin/AuditLog';
 
 function PrivateRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -82,6 +88,58 @@ function AppRoutes() {
             {user?.role === 'technical_committee' && <TechnicalCommitteeDashboard />}
             {user?.role === 'higher_committee' && <HigherCommitteeDashboard />}
             {!user && <Navigate to="/login" />}
+          </PrivateRoute>
+        }
+      />
+      
+      {/* Trader Routes */}
+      <Route
+        path="/subscription"
+        element={
+          <PrivateRoute allowedRoles={['trader']}>
+            <TraderSubscription />
+          </PrivateRoute>
+        }
+      />
+
+      {/* Higher Committee Admin Routes */}
+      <Route
+        path="/admin/users"
+        element={
+          <PrivateRoute allowedRoles={['higher_committee']}>
+            <UsersManagement />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/payments"
+        element={
+          <PrivateRoute allowedRoles={['higher_committee']}>
+            <PaymentsReview />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/settings"
+        element={
+          <PrivateRoute allowedRoles={['higher_committee']}>
+            <Settings />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/analytics"
+        element={
+          <PrivateRoute allowedRoles={['higher_committee']}>
+            <Analytics />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/audit-log"
+        element={
+          <PrivateRoute allowedRoles={['higher_committee']}>
+            <AuditLog />
           </PrivateRoute>
         }
       />
