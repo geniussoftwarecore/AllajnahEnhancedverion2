@@ -51,6 +51,22 @@ The system is built with a clear separation of concerns using a backend in Pytho
 -   **Icons**: lucide-react
 
 ## Recent Changes
+**October 31, 2025** - Government Entity-Based Category System
+-   **Category Organization**: Restructured the complaint category system to be organized by government entities
+    -   Added 4 government entities: المواصفات والمقاييس (15 categories), الجمارك (23 categories), الضرائب (9 categories), صندوق النظافة والتحسين (10 categories)
+    -   Total of 57 complaint categories now organized by entity
+    -   Created update_categories.py script to manage category data
+-   **Two-Step Complaint Selection**: Enhanced ComplaintForm with cascading dropdowns
+    -   Step 1: Trader selects the government entity they want to complain about
+    -   Step 2: Category dropdown filters to show only categories relevant to selected entity
+    -   Category dropdown is disabled until entity is selected for better UX
+-   **API Enhancements**: Added new backend endpoints
+    -   GET /api/government-entities: Returns list of all government entities
+    -   GET /api/categories?government_entity=X: Supports filtering categories by entity
+-   **Database Migration**: Successfully migrated from generic categories to entity-specific categories
+    -   All existing complaint data preserved
+    -   Categories now include government_entity field for proper filtering
+
 **October 31, 2025** - Navigation Enhancement
 -   **Navigation Buttons**: Added Back and Home navigation buttons to ALL pages for improved user experience
     -   Created NavigationButtons component with browser history integration
