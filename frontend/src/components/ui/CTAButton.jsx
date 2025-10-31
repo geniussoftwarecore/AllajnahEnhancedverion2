@@ -14,15 +14,15 @@ const CTAButton = ({
   className = '',
   ...props
 }) => {
-  const baseClasses = 'btn-touch font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 flex items-center justify-center gap-2';
+  const baseClasses = 'btn-touch font-semibold rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 flex items-center justify-center gap-2 transform hover:-translate-y-0.5';
   
   const variantClasses = {
-    primary: 'bg-primary-600 hover:bg-primary-700 text-white focus:ring-primary-500 shadow-md hover:shadow-lg',
-    secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-900 focus:ring-gray-400',
-    success: 'bg-success-600 hover:bg-success-700 text-white focus:ring-success-500 shadow-md hover:shadow-lg',
-    danger: 'bg-danger-600 hover:bg-danger-700 text-white focus:ring-danger-500 shadow-md hover:shadow-lg',
-    warning: 'bg-warning-500 hover:bg-warning-600 text-white focus:ring-warning-400 shadow-md hover:shadow-lg',
-    outline: 'border-2 border-primary-600 text-primary-600 hover:bg-primary-50 focus:ring-primary-500',
+    primary: 'bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white focus:ring-primary-500 shadow-md hover:shadow-glow-primary',
+    secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-900 focus:ring-gray-400 shadow-sm hover:shadow-md',
+    success: 'bg-gradient-to-r from-success-600 to-success-700 hover:from-success-700 hover:to-success-800 text-white focus:ring-success-500 shadow-md hover:shadow-glow-success',
+    danger: 'bg-gradient-to-r from-danger-600 to-danger-700 hover:from-danger-700 hover:to-danger-800 text-white focus:ring-danger-500 shadow-md hover:shadow-lg',
+    warning: 'bg-gradient-to-r from-warning-500 to-warning-600 hover:from-warning-600 hover:to-warning-700 text-white focus:ring-warning-400 shadow-md hover:shadow-lg',
+    outline: 'border-2 border-primary-600 text-primary-600 hover:bg-primary-50 hover:border-primary-700 focus:ring-primary-500',
     ghost: 'text-primary-600 hover:bg-primary-50 focus:ring-primary-500',
   };
 

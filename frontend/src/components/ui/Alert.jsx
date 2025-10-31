@@ -39,13 +39,15 @@ const Alert = ({
   const Icon = icons[type];
 
   return (
-    <div className={`rounded-xl border-2 p-4 ${styles[type]} ${className} animate-slide-in-down`}>
+    <div className={`rounded-xl border-2 p-4 ${styles[type]} ${className} animate-slide-in-down backdrop-blur-sm transition-all duration-300 hover:shadow-md`}>
       <div className="flex items-start gap-3">
-        <Icon className={`w-6 h-6 flex-shrink-0 ${iconStyles[type]}`} />
+        <div className="flex-shrink-0">
+          <Icon className={`w-6 h-6 ${iconStyles[type]} animate-bounce-once`} />
+        </div>
         
         <div className="flex-1">
           {title && (
-            <h3 className="font-semibold mb-1">
+            <h3 className="font-semibold mb-1 text-base">
               {title}
             </h3>
           )}
@@ -64,7 +66,7 @@ const Alert = ({
         {onClose && (
           <button
             onClick={onClose}
-            className="btn-touch p-1 hover:opacity-70 transition-opacity"
+            className="btn-touch p-1 hover:opacity-70 transition-all duration-200 rounded-lg hover:bg-black/5 active:scale-95"
             aria-label="إغلاق"
           >
             <XMarkIcon className="w-5 h-5" />

@@ -21,11 +21,13 @@ const FormField = forwardRef(({
   options = [],
   ...props
 }, ref) => {
-  const baseInputClasses = 'input-touch w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:bg-gray-100 disabled:cursor-not-allowed text-base';
+  const baseInputClasses = 'input-touch w-full px-4 py-3 rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:bg-gray-100 disabled:cursor-not-allowed text-base hover:border-gray-400';
   
   const stateClasses = error 
-    ? 'border-danger-300 focus:border-danger-500 focus:ring-danger-500/20' 
-    : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500/20';
+    ? 'border-danger-300 focus:border-danger-500 focus:ring-danger-500/30 hover:border-danger-400 bg-danger-50/30' 
+    : value 
+    ? 'border-primary-300 focus:border-primary-500 focus:ring-primary-500/30 bg-primary-50/20'
+    : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500/30';
 
   const iconPaddingClasses = {
     left: leftIcon ? 'pr-12' : '',

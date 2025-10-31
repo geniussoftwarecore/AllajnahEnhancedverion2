@@ -61,11 +61,22 @@
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-soft transition-all duration-300;
+    @apply bg-white rounded-xl shadow-soft transition-all duration-300 hover:shadow-medium;
   }
 
   .card-hover {
-    @apply card hover:shadow-medium active:scale-98;
+    @apply card hover:shadow-medium active:scale-98 hover:-translate-y-0.5 cursor-pointer;
+  }
+  
+  .gradient-text {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600;
+  }
+  
+  .gradient-border {
+    position: relative;
+    background: linear-gradient(white, white) padding-box,
+                linear-gradient(to right, rgb(14, 165, 233), rgb(168, 85, 247)) border-box;
+    border: 2px solid transparent;
   }
 
   .page-container {
