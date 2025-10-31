@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+@import 'react-datepicker/dist/react-datepicker.css';
+@import 'react-toastify/dist/ReactToastify.css';
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -17,4 +20,13 @@ body {
 
 .rtl {
   direction: rtl;
+}
+
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.Toastify__toast--rtl {
+  direction: rtl;
+  text-align: right;
 }
