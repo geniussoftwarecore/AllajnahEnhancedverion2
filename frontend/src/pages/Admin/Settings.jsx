@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import api from '../../api/axios';
 
 function Settings() {
@@ -81,6 +82,7 @@ function CategoriesTab() {
       setCategories(response.data);
     } catch (error) {
       console.error('Error loading categories:', error);
+      toast.error('فشل في تحميل التصنيفات');
     } finally {
       setLoading(false);
     }
@@ -91,9 +93,9 @@ function CategoriesTab() {
       await api.post('/categories', data);
       setShowCreate(false);
       loadCategories();
-      alert('تم إضافة التصنيف بنجاح');
+      toast.success('تم إضافة التصنيف بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في إضافة التصنيف');
+      toast.error(error.response?.data?.detail || 'فشل في إضافة التصنيف');
     }
   };
 
@@ -102,9 +104,9 @@ function CategoriesTab() {
       await api.patch(`/categories/${id}`, data);
       setEditing(null);
       loadCategories();
-      alert('تم تحديث التصنيف بنجاح');
+      toast.success('تم تحديث التصنيف بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في تحديث التصنيف');
+      toast.error(error.response?.data?.detail || 'فشل في تحديث التصنيف');
     }
   };
 
@@ -114,9 +116,9 @@ function CategoriesTab() {
     try {
       await api.delete(`/categories/${id}`);
       loadCategories();
-      alert('تم حذف التصنيف بنجاح');
+      toast.success('تم حذف التصنيف بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في حذف التصنيف');
+      toast.error(error.response?.data?.detail || 'فشل في حذف التصنيف');
     }
   };
 
@@ -290,6 +292,7 @@ function SLATab() {
       setCategories(categoriesRes.data);
     } catch (error) {
       console.error('Error loading SLA configs:', error);
+      toast.error('فشل في تحميل إعدادات SLA');
     } finally {
       setLoading(false);
     }
@@ -300,9 +303,9 @@ function SLATab() {
       await api.post('/admin/sla-configs', data);
       setShowCreate(false);
       loadData();
-      alert('تم إضافة إعداد SLA بنجاح');
+      toast.success('تم إضافة إعداد SLA بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في إضافة إعداد SLA');
+      toast.error(error.response?.data?.detail || 'فشل في إضافة إعداد SLA');
     }
   };
 
@@ -311,9 +314,9 @@ function SLATab() {
       await api.patch(`/admin/sla-configs/${id}`, data);
       setEditing(null);
       loadData();
-      alert('تم تحديث إعداد SLA بنجاح');
+      toast.success('تم تحديث إعداد SLA بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في تحديث إعداد SLA');
+      toast.error(error.response?.data?.detail || 'فشل في تحديث إعداد SLA');
     }
   };
 
@@ -323,9 +326,9 @@ function SLATab() {
     try {
       await api.delete(`/admin/sla-configs/${id}`);
       loadData();
-      alert('تم حذف الإعداد بنجاح');
+      toast.success('تم حذف الإعداد بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في حذف الإعداد');
+      toast.error(error.response?.data?.detail || 'فشل في حذف الإعداد');
     }
   };
 
@@ -521,6 +524,7 @@ function PaymentMethodsTab() {
       setMethods(response.data);
     } catch (error) {
       console.error('Error loading payment methods:', error);
+      toast.error('فشل في تحميل طرق الدفع');
     } finally {
       setLoading(false);
     }
@@ -531,9 +535,9 @@ function PaymentMethodsTab() {
       await api.post('/admin/payment-methods', data);
       setShowCreate(false);
       loadMethods();
-      alert('تم إضافة طريقة الدفع بنجاح');
+      toast.success('تم إضافة طريقة الدفع بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في إضافة طريقة الدفع');
+      toast.error(error.response?.data?.detail || 'فشل في إضافة طريقة الدفع');
     }
   };
 
@@ -542,9 +546,9 @@ function PaymentMethodsTab() {
       await api.patch(`/admin/payment-methods/${id}`, data);
       setEditing(null);
       loadMethods();
-      alert('تم تحديث طريقة الدفع بنجاح');
+      toast.success('تم تحديث طريقة الدفع بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في تحديث طريقة الدفع');
+      toast.error(error.response?.data?.detail || 'فشل في تحديث طريقة الدفع');
     }
   };
 
@@ -554,9 +558,9 @@ function PaymentMethodsTab() {
     try {
       await api.delete(`/admin/payment-methods/${id}`);
       loadMethods();
-      alert('تم حذف طريقة الدفع بنجاح');
+      toast.success('تم حذف طريقة الدفع بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في حذف طريقة الدفع');
+      toast.error(error.response?.data?.detail || 'فشل في حذف طريقة الدفع');
     }
   };
 
@@ -734,6 +738,7 @@ function SystemSettingsTab() {
       setSettings(response.data);
     } catch (error) {
       console.error('Error loading settings:', error);
+      toast.error('فشل في تحميل الإعدادات');
     } finally {
       setLoading(false);
     }
@@ -744,9 +749,9 @@ function SystemSettingsTab() {
       await api.post('/admin/settings', data);
       setShowCreate(false);
       loadSettings();
-      alert('تم إضافة الإعداد بنجاح');
+      toast.success('تم إضافة الإعداد بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في إضافة الإعداد');
+      toast.error(error.response?.data?.detail || 'فشل في إضافة الإعداد');
     }
   };
 
@@ -755,9 +760,9 @@ function SystemSettingsTab() {
       await api.patch(`/admin/settings/${key}`, data);
       setEditing(null);
       loadSettings();
-      alert('تم تحديث الإعداد بنجاح');
+      toast.success('تم تحديث الإعداد بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في تحديث الإعداد');
+      toast.error(error.response?.data?.detail || 'فشل في تحديث الإعداد');
     }
   };
 
@@ -767,9 +772,9 @@ function SystemSettingsTab() {
     try {
       await api.delete(`/admin/settings/${key}`);
       loadSettings();
-      alert('تم حذف الإعداد بنجاح');
+      toast.success('تم حذف الإعداد بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في حذف الإعداد');
+      toast.error(error.response?.data?.detail || 'فشل في حذف الإعداد');
     }
   };
 

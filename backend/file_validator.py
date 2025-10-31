@@ -29,6 +29,12 @@ async def validate_upload_file(file: UploadFile) -> bool:
             detail=f"File size exceeds maximum allowed size of {settings.MAX_UPLOAD_SIZE_MB}MB"
         )
     
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Filename is required"
+        )
+    
     file_extension = os.path.splitext(file.filename)[1].lower()
     allowed_extensions = [ext.strip() for ext in settings.ALLOWED_UPLOAD_EXTENSIONS.split(',')]
     

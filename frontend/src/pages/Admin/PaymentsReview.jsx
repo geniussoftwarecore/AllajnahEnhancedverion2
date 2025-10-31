@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import api from '../../api/axios';
 
 function PaymentsReview() {
@@ -19,6 +20,7 @@ function PaymentsReview() {
       setPayments(response.data);
     } catch (error) {
       console.error('Error loading payments:', error);
+      toast.error('فشل في تحميل الدفعات');
     } finally {
       setLoading(false);
     }
@@ -33,18 +35,18 @@ function PaymentsReview() {
         status: 'approved',
         approval_notes: notes || undefined
       });
-      alert('تمت الموافقة على الدفع بنجاح');
+      toast.success('تمت الموافقة على الدفع بنجاح');
       loadPayments();
       setSelectedPayment(null);
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في الموافقة على الدفع');
+      toast.error(error.response?.data?.detail || 'فشل في الموافقة على الدفع');
     }
   };
 
   const handleReject = async (paymentId) => {
     const notes = window.prompt('سبب الرفض (مطلوب):');
     if (!notes) {
-      alert('يرجى إدخال سبب الرفض');
+      toast.warning('يرجى إدخال سبب الرفض');
       return;
     }
 
@@ -53,11 +55,11 @@ function PaymentsReview() {
         status: 'rejected',
         approval_notes: notes
       });
-      alert('تم رفض الدفع');
+      toast.success('تم رفض الدفع');
       loadPayments();
       setSelectedPayment(null);
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في رفض الدفع');
+      toast.error(error.response?.data?.detail || 'فشل في رفض الدفع');
     }
   };
 

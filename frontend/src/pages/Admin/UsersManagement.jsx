@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import api from '../../api/axios';
 
 function UsersManagement() {
@@ -24,6 +25,7 @@ function UsersManagement() {
       setUsers(response.data);
     } catch (error) {
       console.error('Error loading users:', error);
+      toast.error('فشل في تحميل المستخدمين');
     } finally {
       setLoading(false);
     }
@@ -34,9 +36,10 @@ function UsersManagement() {
       await api.post('/admin/users', userData);
       setShowCreateModal(false);
       loadUsers();
-      alert('تم إنشاء المستخدم بنجاح');
+      toast.success('تم إنشاء المستخدم بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في إنشاء المستخدم');
+      const message = error.response?.data?.detail || 'فشل في إنشاء المستخدم';
+      toast.error(typeof message === 'string' ? message : JSON.stringify(message));
     }
   };
 
@@ -45,9 +48,10 @@ function UsersManagement() {
       await api.patch(`/admin/users/${userId}`, userData);
       setEditingUser(null);
       loadUsers();
-      alert('تم تحديث المستخدم بنجاح');
+      toast.success('تم تحديث المستخدم بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في تحديث المستخدم');
+      const message = error.response?.data?.detail || 'فشل في تحديث المستخدم';
+      toast.error(typeof message === 'string' ? message : JSON.stringify(message));
     }
   };
 
@@ -57,24 +61,26 @@ function UsersManagement() {
     try {
       await api.delete(`/admin/users/${userId}`);
       loadUsers();
-      alert('تم تعطيل المستخدم بنجاح');
+      toast.success('تم تعطيل المستخدم بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في تعطيل المستخدم');
+      const message = error.response?.data?.detail || 'فشل في تعطيل المستخدم';
+      toast.error(typeof message === 'string' ? message : JSON.stringify(message));
     }
   };
 
   const handleResetPassword = async (userId) => {
     const newPassword = window.prompt('أدخل كلمة المرور الجديدة (6 أحرف على الأقل):');
     if (!newPassword || newPassword.length < 6) {
-      alert('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      toast.warning('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
       return;
     }
 
     try {
       await api.post(`/admin/users/${userId}/reset-password`, { new_password: newPassword });
-      alert('تم إعادة تعيين كلمة المرور بنجاح');
+      toast.success('تم إعادة تعيين كلمة المرور بنجاح');
     } catch (error) {
-      alert(error.response?.data?.detail || 'فشل في إعادة تعيين كلمة المرور');
+      const message = error.response?.data?.detail || 'فشل في إعادة تعيين كلمة المرور';
+      toast.error(typeof message === 'string' ? message : JSON.stringify(message));
     }
   };
 

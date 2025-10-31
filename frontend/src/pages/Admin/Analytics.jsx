@@ -1,4 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import {
+  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 import api from '../../api/axios';
 
 function Analytics() {
@@ -21,6 +26,7 @@ function Analytics() {
       setAnalytics(response.data);
     } catch (error) {
       console.error('Error loading analytics:', error);
+      toast.error('فشل في تحميل التحليلات');
     } finally {
       setLoading(false);
     }
@@ -100,92 +106,74 @@ function Analytics() {
         </div>
       </div>
 
-      {/* Status Breakdown */}
+      {/* Charts Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Status Pie Chart */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-bold mb-4">الشكاوى حسب الحالة</h2>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">مقدمة</span>
-              <div className="flex items-center gap-2">
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-gray-600 h-2 rounded-full"
-                    style={{ width: `${(analytics?.submitted / analytics?.total_complaints * 100) || 0}%` }}
-                  ></div>
-                </div>
-                <span className="font-bold text-gray-900 w-12 text-right">{analytics?.submitted || 0}</span>
-              </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">قيد المراجعة</span>
-              <div className="flex items-center gap-2">
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full"
-                    style={{ width: `${(analytics?.under_review / analytics?.total_complaints * 100) || 0}%` }}
-                  ></div>
-                </div>
-                <span className="font-bold text-blue-900 w-12 text-right">{analytics?.under_review || 0}</span>
-              </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">تم التصعيد</span>
-              <div className="flex items-center gap-2">
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-yellow-600 h-2 rounded-full"
-                    style={{ width: `${(analytics?.escalated / analytics?.total_complaints * 100) || 0}%` }}
-                  ></div>
-                </div>
-                <span className="font-bold text-yellow-900 w-12 text-right">{analytics?.escalated || 0}</span>
-              </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">محلولة</span>
-              <div className="flex items-center gap-2">
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-green-600 h-2 rounded-full"
-                    style={{ width: `${(analytics?.resolved / analytics?.total_complaints * 100) || 0}%` }}
-                  ></div>
-                </div>
-                <span className="font-bold text-green-900 w-12 text-right">{analytics?.resolved || 0}</span>
-              </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">مرفوضة</span>
-              <div className="flex items-center gap-2">
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-red-600 h-2 rounded-full"
-                    style={{ width: `${(analytics?.rejected / analytics?.total_complaints * 100) || 0}%` }}
-                  ></div>
-                </div>
-                <span className="font-bold text-red-900 w-12 text-right">{analytics?.rejected || 0}</span>
-              </div>
-            </div>
-          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={[
+                  { name: 'مقدمة', value: analytics?.submitted || 0, color: '#6B7280' },
+                  { name: 'قيد المراجعة', value: analytics?.under_review || 0, color: '#3B82F6' },
+                  { name: 'تم التصعيد', value: analytics?.escalated || 0, color: '#F59E0B' },
+                  { name: 'محلولة', value: analytics?.resolved || 0, color: '#10B981' },
+                  { name: 'مرفوضة', value: analytics?.rejected || 0, color: '#EF4444' }
+                ]}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, value }) => value > 0 ? `${name}: ${value}` : null}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {[
+                  { name: 'مقدمة', value: analytics?.submitted || 0, color: '#6B7280' },
+                  { name: 'قيد المراجعة', value: analytics?.under_review || 0, color: '#3B82F6' },
+                  { name: 'تم التصعيد', value: analytics?.escalated || 0, color: '#F59E0B' },
+                  { name: 'محلولة', value: analytics?.resolved || 0, color: '#10B981' },
+                  { name: 'مرفوضة', value: analytics?.rejected || 0, color: '#EF4444' }
+                ].map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
 
+        {/* Category Bar Chart */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-bold mb-4">الشكاوى حسب التصنيف</h2>
-          <div className="space-y-3">
-            {analytics?.by_category && Object.entries(analytics.by_category).map(([category, count]) => (
-              <div key={category} className="flex justify-between items-center">
-                <span className="text-gray-600">{category}</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-32 bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-purple-600 h-2 rounded-full"
-                      style={{ width: `${(count / analytics?.total_complaints * 100) || 0}%` }}
-                    ></div>
-                  </div>
-                  <span className="font-bold text-gray-900 w-12 text-right">{count}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              data={analytics?.by_category ? Object.entries(analytics.by_category).map(([name, value]) => ({
+                name: name.substring(0, 15) + (name.length > 15 ? '...' : ''),
+                fullName: name,
+                value
+              })) : []}
+              layout="vertical"
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" />
+              <YAxis dataKey="name" type="category" width={120} />
+              <Tooltip content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  return (
+                    <div className="bg-white p-2 border border-gray-300 rounded shadow">
+                      <p className="font-medium">{payload[0].payload.fullName}</p>
+                      <p className="text-sm text-gray-600">العدد: {payload[0].value}</p>
+                    </div>
+                  );
+                }
+                return null;
+              }} />
+              <Bar dataKey="value" fill="#8B5CF6" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
