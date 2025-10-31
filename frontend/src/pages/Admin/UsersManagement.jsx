@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import Header from '../../components/Header';
 import api from '../../api/axios';
 
 function UsersManagement() {
@@ -94,7 +95,9 @@ function UsersManagement() {
   };
 
   return (
-    <div className="p-6">
+    <>
+      <Header />
+      <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">إدارة المستخدمين</h1>
         <button
@@ -407,6 +410,7 @@ function UserFormModal({ user, onClose, onSubmit, title }) {
         </form>
       </div>
     </div>
+    </>
   );
 }
 

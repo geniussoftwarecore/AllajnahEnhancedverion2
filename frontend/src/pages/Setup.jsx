@@ -4,6 +4,7 @@ import axios from '../api/axios';
 import FormField from '../components/ui/FormField';
 import CTAButton from '../components/ui/CTAButton';
 import Alert from '../components/ui/Alert';
+import NavigationButtons from '../components/ui/NavigationButtons';
 import { EnvelopeIcon, LockClosedIcon, UserIcon } from '@heroicons/react/24/outline';
 
 function Setup() {
@@ -76,6 +77,9 @@ function Setup() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-600 py-8 px-4 sm:px-6 lg:px-8 animate-fade-in">
+      <div className="fixed top-4 left-4 z-50">
+        <NavigationButtons />
+      </div>
       <div className="max-w-md w-full space-y-6 bg-white p-6 sm:p-10 rounded-2xl shadow-strong animate-scale-in">
         <div className="text-center">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
