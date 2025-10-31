@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import Header from '../../components/Header';
 import api from '../../api/axios';
 
 function PaymentsReview() {
@@ -46,7 +47,7 @@ function PaymentsReview() {
   const handleReject = async (paymentId) => {
     const notes = window.prompt('سبب الرفض (مطلوب):');
     if (!notes) {
-      toast.warning('يرجى إدخال سبب الرفض');
+      toast.warning('يرجى إدخل سبب الرفض');
       return;
     }
 
@@ -82,7 +83,9 @@ function PaymentsReview() {
   };
 
   return (
-    <div className="p-6">
+    <>
+      <Header />
+      <div className="p-6">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">مراجعة الدفعات</h1>
 
       {/* Filters */}
@@ -263,6 +266,7 @@ function PaymentsReview() {
         </div>
       )}
     </div>
+    </>
   );
 }
 

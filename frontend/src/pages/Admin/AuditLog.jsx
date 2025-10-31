@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Header from '../../components/Header';
 import api from '../../api/axios';
 
 function AuditLog() {
@@ -72,7 +73,9 @@ function AuditLog() {
   };
 
   return (
-    <div className="p-6">
+    <>
+      <Header />
+      <div className="p-6">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">سجل التدقيق</h1>
 
       {/* Filters */}
@@ -219,6 +222,7 @@ function AuditLog() {
         )}
       </div>
     </div>
+    </>
   );
 }
 

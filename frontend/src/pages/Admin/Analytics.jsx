@@ -4,6 +4,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import Header from '../../components/Header';
 import api from '../../api/axios';
 
 function Analytics() {
@@ -38,14 +39,19 @@ function Analytics() {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="text-center text-gray-500">جاري تحميل التحليلات...</div>
-      </div>
+      <>
+        <Header />
+        <div className="p-6">
+          <div className="text-center text-gray-500">جاري تحميل التحليلات...</div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="p-6">
+    <>
+      <Header />
+      <div className="p-6">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">التحليلات المتقدمة</h1>
 
       {/* Date Filters */}
@@ -233,6 +239,7 @@ function Analytics() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

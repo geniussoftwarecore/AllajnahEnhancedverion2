@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import Header from '../../components/Header';
 import api from '../../api/axios';
 
 function Settings() {
   const [activeTab, setActiveTab] = useState('categories');
 
   return (
-    <div className="p-6">
+    <>
+      <Header />
+      <div className="p-6">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">الإعدادات</h1>
 
       {/* Tabs */}
@@ -63,6 +66,7 @@ function Settings() {
         {activeTab === 'system' && <SystemSettingsTab />}
       </div>
     </div>
+    </>
   );
 }
 
