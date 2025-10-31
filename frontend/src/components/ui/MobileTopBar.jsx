@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bars3Icon, BellIcon } from '@heroicons/react/24/outline';
+import NavigationButtons from './NavigationButtons';
 
 const MobileTopBar = ({ onMenuClick, title = 'نظام إدارة الشكاوى', showNotifications = true, notificationCount = 0 }) => {
   return (
@@ -17,19 +18,23 @@ const MobileTopBar = ({ onMenuClick, title = 'نظام إدارة الشكاوى
           {title}
         </h1>
 
-        {showNotifications && (
-          <button
-            className="btn-touch p-2 -ml-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200 active:scale-95 relative"
-            aria-label="الإشعارات"
-          >
-            <BellIcon className="w-6 h-6" />
-            {notificationCount > 0 && (
-              <span className="absolute top-1 right-1 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-danger-500 rounded-full animate-scale-in">
-                {notificationCount > 9 ? '9+' : notificationCount}
-              </span>
-            )}
-          </button>
-        )}
+        <div className="flex items-center gap-2 -ml-2">
+          <NavigationButtons />
+          
+          {showNotifications && (
+            <button
+              className="btn-touch p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200 active:scale-95 relative"
+              aria-label="الإشعارات"
+            >
+              <BellIcon className="w-6 h-6" />
+              {notificationCount > 0 && (
+                <span className="absolute top-1 right-1 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-danger-500 rounded-full animate-scale-in">
+                  {notificationCount > 9 ? '9+' : notificationCount}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

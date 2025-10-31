@@ -4,5 +4,6 @@ export { default as CTAButton } from './CTAButton';
 export { default as FormField } from './FormField';
 export { default as MobileTopBar } from './MobileTopBar';
 export { default as NavDrawer } from './NavDrawer';
+export { default as NavigationButtons } from './NavigationButtons';
 export { default as ResponsivePageShell } from './ResponsivePageShell';
 export { default as StatCard } from './StatCard';

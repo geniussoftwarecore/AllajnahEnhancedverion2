@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import NavigationButtons from './ui/NavigationButtons';
 
 function Header() {
   const { user, logout } = useAuth();
@@ -26,6 +27,7 @@ function Header() {
             <p className="text-sm text-gray-600">نظام إدارة الشكاوى</p>
           </div>
           <div className="flex items-center space-x-4 space-x-reverse">
+            <NavigationButtons />
             <div className="text-left">
               <p className="text-sm font-medium text-gray-900">
                 {user?.first_name} {user?.last_name}
