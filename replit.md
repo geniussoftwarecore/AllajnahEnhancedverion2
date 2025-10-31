@@ -51,6 +51,15 @@ The system is built with a clear separation of concerns using a backend in Pytho
 -   **Icons**: lucide-react
 
 ## Recent Changes
+**October 31, 2025** - Navigation Enhancement
+-   **Navigation Buttons**: Added Back and Home navigation buttons to improve user experience
+    -   Created NavigationButtons component with browser history integration
+    -   Back button allows users to return to previous pages
+    -   Home button provides quick access to role-specific dashboard
+    -   Integrated into both MobileTopBar (mobile/tablet) and Header (desktop)
+    -   RTL-aware design using ArrowRight icon for "back" action
+    -   Smart visibility: Home button only shows when not already on home page
+
 **October 31, 2025** - Mobile-First Responsive Design Implementation
 -   **Design System Overhaul**: Comprehensive mobile-first design system with custom Tailwind configuration including:
     -   Mobile-optimized breakpoints (xs: 320px, sm: 640px, md: 768px, lg: 1024px, xl: 1280px, 2xl: 1536px)
