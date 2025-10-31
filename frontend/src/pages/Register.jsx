@@ -19,9 +19,36 @@ function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const validatePassword = (password) => {
+    const errors = [];
+    if (password.length < 8) {
+      errors.push('يجب أن تكون كلمة المرور 8 أحرف على الأقل');
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push('يجب أن تحتوي على حرف كبير واحد على الأقل');
+    }
+    if (!/[a-z]/.test(password)) {
+      errors.push('يجب أن تحتوي على حرف صغير واحد على الأقل');
+    }
+    if (!/[0-9]/.test(password)) {
+      errors.push('يجب أن تحتوي على رقم واحد على الأقل');
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      errors.push('يجب أن تحتوي على رمز خاص واحد على الأقل (!@#$%^&*...)');
+    }
+    return errors;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    
+    const passwordErrors = validatePassword(formData.password);
+    if (passwordErrors.length > 0) {
+      setError('كلمة المرور لا تستوفي المتطلبات:\n' + passwordErrors.join('\n'));
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -47,7 +74,7 @@ function Register() {
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded whitespace-pre-line">
               {error}
             </div>
           )}
@@ -95,10 +122,14 @@ function Register() {
               <input
                 type="password"
                 required
+                minLength={8}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
+              <p className="mt-1 text-xs text-gray-500">
+                يجب أن تحتوي على 8 أحرف على الأقل، حرف كبير وصغير، رقم، ورمز خاص
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
