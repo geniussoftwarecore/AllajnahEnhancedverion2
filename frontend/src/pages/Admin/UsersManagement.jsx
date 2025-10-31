@@ -245,6 +245,7 @@ function UsersManagement() {
         />
       )}
     </div>
+    </>
   );
 }
 
@@ -410,7 +411,6 @@ function UserFormModal({ user, onClose, onSubmit, title }) {
         </form>
       </div>
     </div>
-    </>
   );
 }
 
