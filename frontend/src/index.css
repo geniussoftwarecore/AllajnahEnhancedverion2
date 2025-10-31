@@ -25,9 +25,16 @@
   }
 
   body {
-    @apply font-arabic bg-gray-50 text-gray-900;
+    @apply font-arabic text-gray-900;
     margin: 0;
     min-height: 100vh;
+    background: linear-gradient(135deg, #00C46B 0%, #CFFFE0 50%, #ffffff 100%);
+    background-attachment: fixed;
+  }
+  
+  body.dark {
+    @apply text-gray-100;
+    background: linear-gradient(135deg, #005734 0%, #00874c 50%, #1a1a1a 100%);
   }
 
   [dir="rtl"] {
@@ -61,11 +68,19 @@
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-soft transition-all duration-300 hover:shadow-medium;
+    @apply bg-white/80 backdrop-blur-lg rounded-3xl shadow-soft border border-white/40 transition-all duration-300 hover:shadow-medium;
   }
 
   .card-hover {
-    @apply card hover:shadow-medium active:scale-98 hover:-translate-y-0.5 cursor-pointer;
+    @apply card hover:shadow-glow-green active:scale-98 hover:-translate-y-1 cursor-pointer;
+  }
+  
+  .card-neumorphic {
+    @apply bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-neumorphic border border-white/60 transition-all duration-300;
+  }
+  
+  .card-glass {
+    @apply bg-white/30 backdrop-blur-lg rounded-3xl shadow-glass border border-white/40 transition-all duration-300;
   }
   
   .gradient-text {
@@ -92,7 +107,23 @@
   }
 
   .glass-effect {
-    @apply bg-white/80 backdrop-blur-lg;
+    @apply bg-white/80 backdrop-blur-lg border border-white/40;
+  }
+  
+  .glass-header {
+    @apply bg-white/70 backdrop-blur-xl border-b border-white/40 shadow-glass;
+  }
+  
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-500 to-primary-400 text-white rounded-2xl px-6 py-3 font-medium shadow-medium hover:shadow-glow-green transition-all duration-300 hover:scale-105 active:scale-95;
+  }
+  
+  .btn-glass {
+    @apply bg-white/30 backdrop-blur-lg border border-white/40 rounded-2xl px-6 py-3 font-medium shadow-glass hover:bg-white/40 transition-all duration-300 hover:scale-105;
+  }
+  
+  .input-glass {
+    @apply bg-white/50 backdrop-blur-lg border border-white/60 rounded-2xl px-4 py-3 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300;
   }
 }
 

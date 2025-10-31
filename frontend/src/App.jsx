@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from './api/axios';
+import PageTransition from './components/PageTransition';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Setup from './pages/Setup';
@@ -41,6 +44,7 @@ function PrivateRoute({ children, allowedRoles }) {
 
 function AppRoutes() {
   const { user } = useAuth();
+  const location = useLocation();
   const [needsSetup, setNeedsSetup] = useState(false);
   const [setupLoading, setSetupLoading] = useState(true);
 
@@ -69,18 +73,21 @@ function AppRoutes() {
 
   if (needsSetup) {
     return (
-      <Routes>
-        <Route path="/setup" element={<Setup />} />
-        <Route path="*" element={<Navigate to="/setup" />} />
-      </Routes>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/setup" element={<PageTransition><Setup /></PageTransition>} />
+          <Route path="*" element={<Navigate to="/setup" />} />
+        </Routes>
+      </AnimatePresence>
     );
   }
 
   return (
-    <Routes>
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
       <Route path="/setup" element={<Navigate to="/login" />} />
-      <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
-      <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
+      <Route path="/login" element={user ? <Navigate to="/" /> : <PageTransition><Login /></PageTransition>} />
+      <Route path="/register" element={user ? <Navigate to="/" /> : <PageTransition><Register /></PageTransition>} />
       
       <Route
         path="/"
@@ -145,31 +152,34 @@ function AppRoutes() {
           </PrivateRoute>
         }
       />
-    </Routes>
+      </Routes>
+    </AnimatePresence>
   );
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="min-h-screen bg-gray-50" dir="rtl">
-          <AppRoutes />
-          <ToastContainer
-            position="top-center"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop
-            closeOnClick
-            rtl={true}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light"
-          />
-        </div>
-      </Router>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <div className="min-h-screen" dir="rtl">
+            <AppRoutes />
+            <ToastContainer
+              position="top-center"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop
+              closeOnClick
+              rtl={true}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="light"
+            />
+          </div>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
