@@ -183,9 +183,17 @@ def get_me(current_user: User = Depends(get_current_user)):
     return UserResponse.model_validate(current_user)
 
 @app.get("/api/categories", response_model=List[CategoryResponse])
-def get_categories(db: Session = Depends(get_db)):
-    categories = db.query(Category).all()
+def get_categories(government_entity: str = None, db: Session = Depends(get_db)):
+    query = db.query(Category)
+    if government_entity:
+        query = query.filter(Category.government_entity == government_entity)
+    categories = query.all()
     return categories
+
+@app.get("/api/government-entities")
+def get_government_entities(db: Session = Depends(get_db)):
+    entities = db.query(Category.government_entity).distinct().all()
+    return [{"name": entity[0]} for entity in entities]
 
 @app.post("/api/complaints/check-duplicate")
 def check_complaint_duplicate(

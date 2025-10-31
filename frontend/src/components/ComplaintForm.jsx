@@ -3,8 +3,10 @@ import { useForm } from 'react-hook-form';
 import api from '../api/axios';
 
 function ComplaintForm({ onSuccess }) {
-  const { register, handleSubmit, formState: { errors }, watch } = useForm();
+  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm();
+  const [governmentEntities, setGovernmentEntities] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [filteredCategories, setFilteredCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [duplicateWarning, setDuplicateWarning] = useState(null);
@@ -13,10 +15,22 @@ function ComplaintForm({ onSuccess }) {
   const title = watch('title');
   const categoryId = watch('category_id');
   const description = watch('description');
+  const selectedEntity = watch('government_entity');
 
   useEffect(() => {
+    loadGovernmentEntities();
     loadCategories();
   }, []);
+
+  useEffect(() => {
+    if (selectedEntity) {
+      const filtered = categories.filter(cat => cat.government_entity === selectedEntity);
+      setFilteredCategories(filtered);
+      setValue('category_id', '');
+    } else {
+      setFilteredCategories([]);
+    }
+  }, [selectedEntity, categories]);
 
   useEffect(() => {
     if (title && categoryId && title.length > 5) {
@@ -28,6 +42,15 @@ function ComplaintForm({ onSuccess }) {
       setDuplicateWarning(null);
     }
   }, [title, categoryId, description]);
+
+  const loadGovernmentEntities = async () => {
+    try {
+      const response = await api.get('/government-entities');
+      setGovernmentEntities(response.data);
+    } catch (error) {
+      console.error('Error loading government entities:', error);
+    }
+  };
 
   const loadCategories = async () => {
     try {
@@ -117,16 +140,37 @@ function ComplaintForm({ onSuccess }) {
 
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">
+            الجهة *
+          </label>
+          <select
+            {...register('government_entity', { required: true })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">اختر الجهة</option>
+            {governmentEntities.map((entity, index) => (
+              <option key={index} value={entity.name}>
+                {entity.name}
+              </option>
+            ))}
+          </select>
+          {errors.government_entity && <span className="text-red-500 text-sm">هذا الحقل مطلوب</span>}
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             تصنيف الشكوى *
           </label>
           <select
             {...register('category_id', { required: true, valueAsNumber: true })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            disabled={!selectedEntity}
           >
-            <option value="">اختر التصنيف</option>
-            {categories.map((cat) => (
+            <option value="">
+              {selectedEntity ? 'اختر التصنيف' : 'الرجاء اختيار الجهة أولاً'}
+            </option>
+            {filteredCategories.map((cat) => (
               <option key={cat.id} value={cat.id}>
-                {cat.name_ar} - {cat.government_entity}
+                {cat.name_ar}
               </option>
             ))}
           </select>
