@@ -82,8 +82,11 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 @app.get("/api/setup/status")
 def get_setup_status(db: Session = Depends(get_db)):
-    higher_committee_count = db.query(User).filter(User.role == UserRole.HIGHER_COMMITTEE).count()
-    return {"needs_setup": higher_committee_count == 0}
+    try:
+        higher_committee_count = db.query(User).filter(User.role == UserRole.HIGHER_COMMITTEE).count()
+        return {"needs_setup": higher_committee_count == 0}
+    except Exception as e:
+        return {"needs_setup": True}
 
 @app.post("/api/setup/initialize", response_model=Token)
 def initialize_setup(user_data: UserCreate, db: Session = Depends(get_db)):
