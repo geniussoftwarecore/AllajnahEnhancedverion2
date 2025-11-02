@@ -72,11 +72,42 @@ async def startup_event():
     print("Initializing database...")
     try:
         from database import Base, engine, SessionLocal
+        from sqlalchemy import text, inspect
+        
         Base.metadata.create_all(bind=engine)
         print("✓ Database tables verified/created")
         
+        inspector = inspect(engine)
+        existing_indexes = [idx['name'] for idx in inspector.get_indexes('categories')]
+        existing_constraints = [c['name'] for c in inspector.get_unique_constraints('categories')]
+        
+        if 'uq_category_name_en' not in existing_constraints and 'uq_category_name_en' not in existing_indexes:
+            print("Adding unique index to categories table...")
+            try:
+                with engine.connect() as conn:
+                    conn.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS uq_category_name_en ON categories (name_en)'))
+                    conn.commit()
+                print("✓ Unique index added")
+            except Exception as e:
+                if 'already exists' in str(e).lower() or 'duplicate' in str(e).lower():
+                    print("✓ Unique index already exists")
+                else:
+                    db_error = f"Failed to create unique index: {e}"
+                    print(f"✗ CRITICAL: {db_error}")
+                    raise RuntimeError(db_error)
+        else:
+            print("✓ Unique constraint/index exists")
+        
         db = SessionLocal()
         try:
+            table_count = db.query(User).count()
+            print(f"✓ Database connection verified ({table_count} users)")
+        except Exception as e:
+            db.close()
+            raise RuntimeError(f"Database tables not accessible: {e}")
+        
+        try:
+            from sqlalchemy.exc import IntegrityError
             if db.query(Category).count() == 0:
                 print("Adding default categories...")
                 categories = [
@@ -105,23 +136,29 @@ async def startup_event():
                         description_ar="شكاوى متعلقة بصندوق النظافة والتحسين"
                     ),
                 ]
-                db.add_all(categories)
+                for category in categories:
+                    try:
+                        db.add(category)
+                        db.flush()
+                    except IntegrityError:
+                        db.rollback()
                 db.commit()
                 print("✓ Default categories added")
             else:
                 print("✓ Categories already exist")
         except Exception as e:
-            print(f"⚠ Warning: Could not initialize categories: {e}")
+            print(f"Warning: Could not initialize default categories: {e}")
             db.rollback()
         finally:
             db.close()
             
     except Exception as e:
         print(f"✗ CRITICAL: Database initialization failed: {e}")
-        print("⚠ Application may not function correctly without database tables")
+        print("⚠ Application cannot start without a working database")
+        raise
     
     start_scheduler()
-    print("Application started successfully!")
+    print("✓ Application started successfully!")
 
 @app.on_event("shutdown")
 async def shutdown_event():

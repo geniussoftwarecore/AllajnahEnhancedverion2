@@ -19,6 +19,7 @@ const FormField = forwardRef(({
   rightIcon,
   rows = 4,
   options = [],
+  autoComplete,
   ...props
 }, ref) => {
   const baseInputClasses = 'input-touch w-full px-4 py-3 rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:bg-gray-100 disabled:cursor-not-allowed text-base hover:border-gray-400';
@@ -35,11 +36,13 @@ const FormField = forwardRef(({
   };
 
   const renderInput = () => {
-    const autoCompleteValue = type === 'password' 
-      ? (name === 'confirmPassword' || name === 'confirm_password' ? 'new-password' : 'current-password')
-      : type === 'email' 
-      ? 'email'
-      : 'off';
+    const autoCompleteValue = autoComplete || (
+      type === 'password' 
+        ? 'new-password'
+        : type === 'email' 
+        ? 'email'
+        : 'off'
+    );
     
     const commonProps = {
       id: name,

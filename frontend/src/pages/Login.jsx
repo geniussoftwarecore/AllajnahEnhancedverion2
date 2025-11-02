@@ -153,6 +153,7 @@ function Login() {
         onBlur={handleBlur}
         rightIcon={<LockClosedIcon className="w-5 h-5" />}
         error={errors.password}
+        autoComplete="current-password"
       />
 
       <CTAButton

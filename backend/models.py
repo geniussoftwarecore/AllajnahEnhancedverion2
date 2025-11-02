@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum as SQLEnum, Float, Boolean, Numeric
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum as SQLEnum, Float, Boolean, Numeric, UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -60,6 +60,9 @@ class User(Base):
 
 class Category(Base):
     __tablename__ = "categories"
+    __table_args__ = (
+        UniqueConstraint('name_en', name='uq_category_name_en'),
+    )
     
     id = Column(Integer, primary_key=True, index=True)
     name_ar = Column(String, nullable=False)
