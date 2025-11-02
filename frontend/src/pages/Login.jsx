@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import FormField from '../components/ui/FormField';
 import CTAButton from '../components/ui/CTAButton';
 import Alert from '../components/ui/Alert';
-import NavigationButtons from '../components/ui/NavigationButtons';
 import { EnvelopeIcon, LockClosedIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 
 function Login() {
@@ -32,10 +31,6 @@ function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-600 py-8 px-4 sm:px-6 lg:px-8 animate-fade-in relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC41IiBvcGFjaXR5PSIwLjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-20"></div>
-      
-      <div className="fixed top-4 left-4 z-50">
-        <NavigationButtons />
-      </div>
       
       <div className="max-w-md w-full space-y-6 bg-white p-6 sm:p-10 rounded-3xl shadow-strong animate-scale-in relative z-10 backdrop-blur-sm border border-white/20">
         <div className="text-center">
