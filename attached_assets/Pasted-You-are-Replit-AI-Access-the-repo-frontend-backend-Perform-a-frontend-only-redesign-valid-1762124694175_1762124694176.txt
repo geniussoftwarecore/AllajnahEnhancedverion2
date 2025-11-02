@@ -1,0 +1,34 @@
+You are Replit AI. Access the repo (frontend/, backend/). Perform a **frontend-only redesign & validation overhaul**. DO NOT touch backend.
+
+🎯 GOALS
+1. Fully redesign the UI (modern, responsive, RTL/LTR, Arabic + English).
+2. Fix all client-side validation in Setup, Login, Signup.
+3. Make Setup create admin on first run via existing backend endpoint (no backend edits). Block re-setup after success.
+4. Improve Login/Signup flows: password strength meter, proper inline errors, retry cooldown.
+5. Use centralized validation utils, consistent error mapping, and friendly bilingual messages.
+6. Keep backend contracts (URLs, methods, status codes) untouched.
+7. Add light theme with green accent. Responsive + accessible UI.
+8. Add smoke test (`frontend/tests/smoke.test.js`) to verify setup, login, render (no JS errors).
+9. Create feature branch: `feat/frontend-redesign-setup-fixes` → single PR with changelog, screenshots, QA checklist.
+
+🧠 STEPS
+- Identify entry points (index, App, router) & forms (Setup, Login, Signup).
+- Add `frontend/src/utils/validation.js` and reusable `FormWrapper`.
+- Replace old CSS with clean design tokens (fonts: Inter + Noto Naskh Arabic).
+- Add `frontend/src/i18n/en.json`, `ar.json` for UI strings.
+- Implement Setup flow: POST to backend, on success set localStorage flag, redirect to login, show messages.
+- Handle backend errors safely; log unknown fields; never modify backend.
+- Add `FRONTEND_CHANGELOG.md` with what changed + rollback steps.
+- PR must include QA checklist, smoke test results, before/after screenshots.
+
+⚙️ QA CHECKLIST
+- [ ] Setup creates admin, cannot re-run.
+- [ ] Validation works in all forms (Arabic + English).
+- [ ] Login handles 401/422 properly.
+- [ ] Password meter & inline errors show correctly.
+- [ ] No backend changes.
+- [ ] `npm run build` succeeds.
+
+If any backend issue appears, open an issue titled `Backend contract unclear for <endpoint>` instead of editing backend.
+
+Focus: **Frontend-only radical redesign + validation & setup fixes**, clean, tested, modern, and bilingual.
