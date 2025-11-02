@@ -35,6 +35,12 @@ const FormField = forwardRef(({
   };
 
   const renderInput = () => {
+    const autoCompleteValue = type === 'password' 
+      ? (name === 'confirmPassword' || name === 'confirm_password' ? 'new-password' : 'current-password')
+      : type === 'email' 
+      ? 'email'
+      : 'off';
+    
     const commonProps = {
       id: name,
       name,
@@ -44,6 +50,7 @@ const FormField = forwardRef(({
       disabled,
       required,
       ref,
+      autoComplete: autoCompleteValue,
       className: `${baseInputClasses} ${stateClasses} ${iconPaddingClasses.left} ${iconPaddingClasses.right} ${inputClassName}`,
       ...props
     };

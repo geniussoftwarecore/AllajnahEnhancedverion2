@@ -68,6 +68,58 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     print("Starting application...")
+    
+    print("Initializing database...")
+    try:
+        from database import Base, engine, SessionLocal
+        Base.metadata.create_all(bind=engine)
+        print("✓ Database tables verified/created")
+        
+        db = SessionLocal()
+        try:
+            if db.query(Category).count() == 0:
+                print("Adding default categories...")
+                categories = [
+                    Category(
+                        name_ar="الموصفات والمقاييس",
+                        name_en="Standards and Measurements",
+                        government_entity="الموصفات والمقاييس",
+                        description_ar="شكاوى متعلقة بالموصفات والمقاييس"
+                    ),
+                    Category(
+                        name_ar="الجمارك",
+                        name_en="Customs",
+                        government_entity="الجمارك",
+                        description_ar="شكاوى متعلقة بالجمارك"
+                    ),
+                    Category(
+                        name_ar="الضرائب",
+                        name_en="Taxes",
+                        government_entity="الضرائب",
+                        description_ar="شكاوى متعلقة بالضرائب"
+                    ),
+                    Category(
+                        name_ar="صندوق النظافة والتحسين",
+                        name_en="Cleaning and Improvement Fund",
+                        government_entity="صندوق النظافة والتحسين",
+                        description_ar="شكاوى متعلقة بصندوق النظافة والتحسين"
+                    ),
+                ]
+                db.add_all(categories)
+                db.commit()
+                print("✓ Default categories added")
+            else:
+                print("✓ Categories already exist")
+        except Exception as e:
+            print(f"⚠ Warning: Could not initialize categories: {e}")
+            db.rollback()
+        finally:
+            db.close()
+            
+    except Exception as e:
+        print(f"✗ CRITICAL: Database initialization failed: {e}")
+        print("⚠ Application may not function correctly without database tables")
+    
     start_scheduler()
     print("Application started successfully!")
 
