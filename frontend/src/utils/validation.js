@@ -164,3 +164,41 @@ export const mapBackendError = (error, lang = 'ar') => {
   const message = error?.response?.data?.detail || error?.message || 'Unknown error';
   return errorMessages[lang][message] || message;
 };
+
+export const mapServerValidationErrors = (error, lang = 'ar') => {
+  const fallbackMessage = {
+    ar: 'حدث خطأ في التحقق من البيانات',
+    en: 'Validation error occurred'
+  };
+
+  if (!error?.response) {
+    return { _form: mapBackendError(error, lang) };
+  }
+
+  const { data, status } = error.response;
+  
+  if (status === 422 && data?.detail) {
+    const errors = {};
+    
+    if (Array.isArray(data.detail)) {
+      data.detail.forEach(err => {
+        const field = err.loc?.[1] || '_form';
+        const message = err.msg || fallbackMessage[lang];
+        
+        if (!errors[field]) {
+          errors[field] = message;
+        }
+      });
+    } else if (typeof data.detail === 'object') {
+      Object.keys(data.detail).forEach(field => {
+        errors[field] = data.detail[field];
+      });
+    } else {
+      errors._form = data.detail;
+    }
+    
+    return errors;
+  }
+  
+  return { _form: mapBackendError(error, lang) };
+};

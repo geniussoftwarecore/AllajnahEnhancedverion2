@@ -6,6 +6,12 @@ This changelog documents all frontend-only changes made during the UI redesign a
 ## Date
 November 2, 2025
 
+## Latest Update (November 2, 2025 - Afternoon)
+### Enhanced Validation Error Mapping
+- **Added**: `mapServerValidationErrors()` function in `frontend/src/utils/validation.js`
+- **Purpose**: Better handling of 422 validation errors from backend with support for both array and object formats
+- **Impact**: Improved user experience with clearer, field-specific error messages
+
 ## Changes Made
 
 ### 🎨 Design System Updates
