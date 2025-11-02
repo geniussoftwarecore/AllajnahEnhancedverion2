@@ -1,11 +1,20 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from '../api/axios';
 import FormField from '../components/ui/FormField';
 import CTAButton from '../components/ui/CTAButton';
 import Alert from '../components/ui/Alert';
 import PasswordStrengthIndicator from '../components/ui/PasswordStrengthIndicator';
+import FormWrapper from '../components/ui/FormWrapper';
 import { EnvelopeIcon, LockClosedIcon, UserIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import {
+  validateEmail,
+  validatePassword,
+  validatePasswordMatch,
+  validateRequired,
+  mapBackendError
+} from '../utils/validation';
+import translations from '../i18n/ar.json';
 
 function Setup() {
   const navigate = useNavigate();
@@ -16,41 +25,93 @@ function Setup() {
     first_name: '',
     last_name: ''
   });
+  const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [setupCompleted, setSetupCompleted] = useState(false);
 
-  const validatePassword = (password) => {
-    const errors = [];
-    if (password.length < 8) {
-      errors.push('يجب أن تكون كلمة المرور 8 أحرف على الأقل');
+  useEffect(() => {
+    const completed = localStorage.getItem('setup_completed');
+    if (completed === 'true') {
+      setSetupCompleted(true);
     }
-    if (!/[A-Z]/.test(password)) {
-      errors.push('يجب أن تحتوي على حرف كبير واحد على الأقل');
+  }, []);
+
+  const validateField = (name, value) => {
+    let fieldError = null;
+
+    switch (name) {
+      case 'email':
+        fieldError = validateEmail(value, 'ar');
+        break;
+      case 'password':
+        const passwordErrors = validatePassword(value, 'ar');
+        fieldError = passwordErrors ? passwordErrors[0] : null;
+        break;
+      case 'confirmPassword':
+        fieldError = validatePasswordMatch(formData.password, value, 'ar');
+        break;
+      case 'first_name':
+      case 'last_name':
+        fieldError = validateRequired(value, 'ar');
+        break;
+      default:
+        break;
     }
-    if (!/[a-z]/.test(password)) {
-      errors.push('يجب أن تحتوي على حرف صغير واحد على الأقل');
+
+    setErrors(prev => ({
+      ...prev,
+      [name]: fieldError
+    }));
+
+    return !fieldError;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    if (errors[name]) {
+      validateField(name, value);
     }
-    if (!/[0-9]/.test(password)) {
-      errors.push('يجب أن تحتوي على رقم واحد على الأقل');
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    validateField(name, value);
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    newErrors.first_name = validateRequired(formData.first_name, 'ar');
+    newErrors.last_name = validateRequired(formData.last_name, 'ar');
+    newErrors.email = validateEmail(formData.email, 'ar');
+    
+    const passwordErrors = validatePassword(formData.password, 'ar');
+    if (passwordErrors) {
+      newErrors.password = passwordErrors.join('\n');
     }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      errors.push('يجب أن تحتوي على رمز خاص واحد على الأقل (!@#$%^&*...)');
-    }
-    return errors;
+    
+    newErrors.confirmPassword = validatePasswordMatch(formData.password, formData.confirmPassword, 'ar');
+
+    Object.keys(newErrors).forEach(key => {
+      if (!newErrors[key]) delete newErrors[key];
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('كلمات المرور غير متطابقة');
-      return;
-    }
-
-    const passwordErrors = validatePassword(formData.password);
-    if (passwordErrors.length > 0) {
-      setError('كلمة المرور لا تستوفي المتطلبات:\n' + passwordErrors.join('\n'));
+    if (!validateForm()) {
+      setError('يرجى تصحيح الأخطاء في النموذج');
       return;
     }
 
@@ -67,121 +128,152 @@ function Setup() {
 
       localStorage.setItem('token', response.data.access_token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      window.location.href = '/';
+      localStorage.setItem('setup_completed', 'true');
+      
+      setSetupCompleted(true);
+      
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
     } catch (err) {
-      setError(err.response?.data?.detail || 'فشل في إنشاء الحساب');
+      const errorMessage = mapBackendError(err, 'ar');
+      setError(errorMessage);
+      
+      if (errorMessage.includes('تم إكمال الإعداد')) {
+        localStorage.setItem('setup_completed', 'true');
+        setSetupCompleted(true);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8 animate-fade-in relative overflow-hidden">
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC41IiBvcGFjaXR5PSIwLjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-20"></div>
-      
-      <div className="max-w-md w-full space-y-6 bg-white/80 backdrop-blur-lg p-6 sm:p-10 rounded-3xl shadow-glass animate-scale-in relative z-10 border border-white/40">
-        <div className="text-center">
-          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-400 rounded-3xl flex items-center justify-center mb-4 shadow-glow-green animate-glow relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
-            <SparklesIcon className="w-10 h-10 text-white relative z-10" />
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-400 mb-2">
-            إعداد النظام الأولي
-          </h2>
-          <p className="text-sm sm:text-base text-gray-600 flex items-center justify-center gap-2">
-            <UserIcon className="w-5 h-5" />
-            إنشاء حساب المسؤول الأول
-          </p>
-        </div>
-
+  if (setupCompleted) {
+    return (
+      <FormWrapper
+        title="تم الإعداد بالفعل"
+        subtitle="النظام جاهز للاستخدام"
+        icon={SparklesIcon}
+      >
         <Alert
-          type="info"
-          message="مرحباً بك في نظام الاجنة المحسنة. يرجى إنشاء حساب المسؤول الأول للبدء في استخدام النظام."
+          type="success"
+          message={translations.setup.alreadyCompleted}
         />
-
-        <form className="space-y-5" onSubmit={handleSubmit}>
-          {error && (
-            <Alert
-              type="error"
-              message={error}
-              onClose={() => setError('')}
-            />
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              label="الاسم الأول"
-              name="first_name"
-              type="text"
-              required
-              placeholder="أدخل الاسم الأول"
-              value={formData.first_name}
-              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-              rightIcon={<UserIcon className="w-5 h-5" />}
-            />
-
-            <FormField
-              label="الاسم الأخير"
-              name="last_name"
-              type="text"
-              required
-              placeholder="أدخل الاسم الأخير"
-              value={formData.last_name}
-              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-              rightIcon={<UserIcon className="w-5 h-5" />}
-            />
-          </div>
-
-          <FormField
-            label="البريد الإلكتروني"
-            name="email"
-            type="email"
-            required
-            placeholder="أدخل بريدك الإلكتروني"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            rightIcon={<EnvelopeIcon className="w-5 h-5" />}
-          />
-
-          <div className="space-y-4">
-            <FormField
-              label="كلمة المرور"
-              name="password"
-              type="password"
-              required
-              placeholder="أدخل كلمة المرور"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              rightIcon={<LockClosedIcon className="w-5 h-5" />}
-            />
-            
-            <PasswordStrengthIndicator password={formData.password} />
-          </div>
-
-          <FormField
-            label="تأكيد كلمة المرور"
-            name="confirmPassword"
-            type="password"
-            required
-            placeholder="أدخل كلمة المرور مرة أخرى"
-            value={formData.confirmPassword}
-            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-            rightIcon={<LockClosedIcon className="w-5 h-5" />}
-            error={formData.confirmPassword && formData.password !== formData.confirmPassword ? 'كلمات المرور غير متطابقة' : ''}
-          />
-
+        <Link to="/login">
           <CTAButton
-            type="submit"
             variant="primary"
             size="lg"
             fullWidth
-            loading={loading}
           >
-            {loading ? 'جاري الإنشاء...' : 'إنشاء حساب المسؤول'}
+            {translations.setup.goToLogin}
           </CTAButton>
-        </form>
+        </Link>
+      </FormWrapper>
+    );
+  }
+
+  return (
+    <FormWrapper
+      title={translations.setup.title}
+      subtitle={translations.setup.subtitle}
+      icon={SparklesIcon}
+      onSubmit={handleSubmit}
+    >
+      <Alert
+        type="info"
+        message={translations.setup.welcome}
+      />
+
+      {error && (
+        <Alert
+          type="error"
+          message={error}
+          onClose={() => setError('')}
+        />
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField
+          label={translations.setup.firstName}
+          name="first_name"
+          type="text"
+          required
+          placeholder="أدخل الاسم الأول"
+          value={formData.first_name}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          rightIcon={<UserIcon className="w-5 h-5" />}
+          error={errors.first_name}
+        />
+
+        <FormField
+          label={translations.setup.lastName}
+          name="last_name"
+          type="text"
+          required
+          placeholder="أدخل الاسم الأخير"
+          value={formData.last_name}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          rightIcon={<UserIcon className="w-5 h-5" />}
+          error={errors.last_name}
+        />
       </div>
-    </div>
+
+      <FormField
+        label={translations.setup.email}
+        name="email"
+        type="email"
+        required
+        placeholder="أدخل بريدك الإلكتروني"
+        value={formData.email}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        rightIcon={<EnvelopeIcon className="w-5 h-5" />}
+        error={errors.email}
+      />
+
+      <div className="space-y-4">
+        <FormField
+          label={translations.setup.password}
+          name="password"
+          type="password"
+          required
+          placeholder="أدخل كلمة المرور"
+          value={formData.password}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          rightIcon={<LockClosedIcon className="w-5 h-5" />}
+          error={errors.password}
+        />
+        
+        <PasswordStrengthIndicator password={formData.password} />
+      </div>
+
+      <FormField
+        label={translations.setup.confirmPassword}
+        name="confirmPassword"
+        type="password"
+        required
+        placeholder="أدخل كلمة المرور مرة أخرى"
+        value={formData.confirmPassword}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        rightIcon={<LockClosedIcon className="w-5 h-5" />}
+        error={errors.confirmPassword}
+      />
+
+      <CTAButton
+        type="submit"
+        variant="primary"
+        size="lg"
+        fullWidth
+        loading={loading}
+        disabled={loading}
+      >
+        {loading ? translations.setup.submitting : translations.setup.submit}
+      </CTAButton>
+    </FormWrapper>
   );
 }
 

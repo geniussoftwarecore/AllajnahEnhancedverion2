@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import FormField from '../components/ui/FormField';
 import CTAButton from '../components/ui/CTAButton';
 import Alert from '../components/ui/Alert';
-import NavigationButtons from '../components/ui/NavigationButtons';
+import PasswordStrengthIndicator from '../components/ui/PasswordStrengthIndicator';
+import FormWrapper from '../components/ui/FormWrapper';
 import { 
   EnvelopeIcon, 
   LockClosedIcon, 
@@ -13,6 +14,13 @@ import {
   MapPinIcon,
   UserPlusIcon 
 } from '@heroicons/react/24/outline';
+import {
+  validateEmail,
+  validatePassword,
+  validateRequired,
+  mapBackendError
+} from '../utils/validation';
+import translations from '../i18n/ar.json';
 
 function Register() {
   const navigate = useNavigate();
@@ -28,36 +36,80 @@ function Register() {
     telegram: '',
     address: ''
   });
+  const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const validatePassword = (password) => {
-    const errors = [];
-    if (password.length < 8) {
-      errors.push('يجب أن تكون كلمة المرور 8 أحرف على الأقل');
+  const validateField = (name, value) => {
+    let fieldError = null;
+
+    switch (name) {
+      case 'email':
+        fieldError = validateEmail(value, 'ar');
+        break;
+      case 'password':
+        const passwordErrors = validatePassword(value, 'ar');
+        fieldError = passwordErrors ? passwordErrors[0] : null;
+        break;
+      case 'first_name':
+      case 'last_name':
+        fieldError = validateRequired(value, 'ar');
+        break;
+      default:
+        break;
     }
-    if (!/[A-Z]/.test(password)) {
-      errors.push('يجب أن تحتوي على حرف كبير واحد على الأقل');
+
+    setErrors(prev => ({
+      ...prev,
+      [name]: fieldError
+    }));
+
+    return !fieldError;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    if (errors[name]) {
+      validateField(name, value);
     }
-    if (!/[a-z]/.test(password)) {
-      errors.push('يجب أن تحتوي على حرف صغير واحد على الأقل');
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    validateField(name, value);
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    newErrors.first_name = validateRequired(formData.first_name, 'ar');
+    newErrors.last_name = validateRequired(formData.last_name, 'ar');
+    newErrors.email = validateEmail(formData.email, 'ar');
+    
+    const passwordErrors = validatePassword(formData.password, 'ar');
+    if (passwordErrors) {
+      newErrors.password = passwordErrors.join('\n');
     }
-    if (!/[0-9]/.test(password)) {
-      errors.push('يجب أن تحتوي على رقم واحد على الأقل');
-    }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      errors.push('يجب أن تحتوي على رمز خاص واحد على الأقل (!@#$%^&*...)');
-    }
-    return errors;
+
+    Object.keys(newErrors).forEach(key => {
+      if (!newErrors[key]) delete newErrors[key];
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     
-    const passwordErrors = validatePassword(formData.password);
-    if (passwordErrors.length > 0) {
-      setError('كلمة المرور لا تستوفي المتطلبات:\n' + passwordErrors.join('\n'));
+    if (!validateForm()) {
+      setError('يرجى تصحيح الأخطاء في النموذج');
       return;
     }
     
@@ -67,153 +119,153 @@ function Register() {
       await register(formData);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.detail || 'فشل التسجيل');
+      const errorMessage = mapBackendError(err, 'ar');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-600 py-8 px-4 sm:px-6 lg:px-8 animate-fade-in">
-      <div className="fixed top-4 left-4 z-50">
-        <NavigationButtons />
-      </div>
-      <div className="max-w-2xl w-full space-y-6 bg-white p-6 sm:p-10 rounded-2xl shadow-strong animate-scale-in">
-        <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-            <UserPlusIcon className="w-8 h-8 text-white" />
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">
-            إنشاء حساب جديد
-          </h2>
-          <p className="text-sm sm:text-base text-gray-600">
-            نظام إدارة الشكاوى - الاجنة المحسنة
-          </p>
+    <FormWrapper
+      title={translations.register.title}
+      subtitle={translations.register.subtitle}
+      icon={UserPlusIcon}
+      onSubmit={handleSubmit}
+      className="bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-600"
+    >
+      {error && (
+        <Alert
+          type="error"
+          message={error}
+          onClose={() => setError('')}
+        />
+      )}
+
+      <div className="space-y-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
+            label={translations.register.firstName}
+            name="first_name"
+            type="text"
+            required
+            placeholder="الاسم الأول"
+            value={formData.first_name}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            rightIcon={<UserIcon className="w-5 h-5" />}
+            error={errors.first_name}
+          />
+
+          <FormField
+            label={translations.register.lastName}
+            name="last_name"
+            type="text"
+            required
+            placeholder="اسم العائلة"
+            value={formData.last_name}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            rightIcon={<UserIcon className="w-5 h-5" />}
+            error={errors.last_name}
+          />
         </div>
 
-        <form className="space-y-5" onSubmit={handleSubmit}>
-          {error && (
-            <Alert
-              type="error"
-              message={error}
-              onClose={() => setError('')}
-            />
-          )}
+        <FormField
+          label={translations.register.email}
+          name="email"
+          type="email"
+          required
+          placeholder="أدخل بريدك الإلكتروني"
+          value={formData.email}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          rightIcon={<EnvelopeIcon className="w-5 h-5" />}
+          error={errors.email}
+        />
 
-          <div className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                label="الاسم الأول"
-                name="first_name"
-                type="text"
-                required
-                placeholder="الاسم الأول"
-                value={formData.first_name}
-                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                rightIcon={<UserIcon className="w-5 h-5" />}
-              />
+        <div className="space-y-4">
+          <FormField
+            label={translations.register.password}
+            name="password"
+            type="password"
+            required
+            placeholder="أدخل كلمة المرور"
+            value={formData.password}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            rightIcon={<LockClosedIcon className="w-5 h-5" />}
+            error={errors.password}
+          />
+          
+          <PasswordStrengthIndicator password={formData.password} />
+        </div>
 
-              <FormField
-                label="اسم العائلة"
-                name="last_name"
-                type="text"
-                required
-                placeholder="اسم العائلة"
-                value={formData.last_name}
-                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                rightIcon={<UserIcon className="w-5 h-5" />}
-              />
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
+            label={translations.register.phone}
+            name="phone"
+            type="tel"
+            placeholder="رقم الهاتف"
+            value={formData.phone}
+            onChange={handleChange}
+            rightIcon={<PhoneIcon className="w-5 h-5" />}
+          />
 
-            <FormField
-              label="البريد الإلكتروني"
-              name="email"
-              type="email"
-              required
-              placeholder="أدخل بريدك الإلكتروني"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              rightIcon={<EnvelopeIcon className="w-5 h-5" />}
-            />
+          <FormField
+            label={translations.register.whatsapp}
+            name="whatsapp"
+            type="tel"
+            placeholder="رقم الواتساب"
+            value={formData.whatsapp}
+            onChange={handleChange}
+            rightIcon={<PhoneIcon className="w-5 h-5" />}
+          />
+        </div>
 
-            <FormField
-              label="كلمة المرور"
-              name="password"
-              type="password"
-              required
-              placeholder="أدخل كلمة المرور"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              rightIcon={<LockClosedIcon className="w-5 h-5" />}
-              helperText="يجب أن تحتوي على 8 أحرف على الأقل، حرف كبير وصغير، رقم، ورمز خاص"
-            />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
+            label={translations.register.telegram}
+            name="telegram"
+            type="text"
+            placeholder="رقم التليجرام"
+            value={formData.telegram}
+            onChange={handleChange}
+          />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                label="رقم الهاتف"
-                name="phone"
-                type="tel"
-                placeholder="رقم الهاتف"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                rightIcon={<PhoneIcon className="w-5 h-5" />}
-              />
-
-              <FormField
-                label="رقم الواتساب"
-                name="whatsapp"
-                type="tel"
-                placeholder="رقم الواتساب"
-                value={formData.whatsapp}
-                onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                rightIcon={<PhoneIcon className="w-5 h-5" />}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                label="رقم التليجرام"
-                name="telegram"
-                type="text"
-                placeholder="رقم التليجرام"
-                value={formData.telegram}
-                onChange={(e) => setFormData({ ...formData, telegram: e.target.value })}
-              />
-
-              <FormField
-                label="العنوان"
-                name="address"
-                type="text"
-                placeholder="العنوان"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                rightIcon={<MapPinIcon className="w-5 h-5" />}
-              />
-            </div>
-          </div>
-
-          <CTAButton
-            type="submit"
-            variant="primary"
-            size="lg"
-            fullWidth
-            loading={loading}
-          >
-            {loading ? 'جاري التسجيل...' : 'إنشاء الحساب'}
-          </CTAButton>
-
-          <div className="text-center">
-            <Link 
-              to="/login" 
-              className="text-primary-600 hover:text-primary-700 font-medium transition-colors duration-200 inline-flex items-center gap-2"
-            >
-              <span>لديك حساب؟</span>
-              <span className="font-bold">سجل الدخول</span>
-            </Link>
-          </div>
-        </form>
+          <FormField
+            label={translations.register.address}
+            name="address"
+            type="text"
+            placeholder="العنوان"
+            value={formData.address}
+            onChange={handleChange}
+            rightIcon={<MapPinIcon className="w-5 h-5" />}
+          />
+        </div>
       </div>
-    </div>
+
+      <CTAButton
+        type="submit"
+        variant="primary"
+        size="lg"
+        fullWidth
+        loading={loading}
+        disabled={loading}
+      >
+        {loading ? translations.register.submitting : translations.register.submit}
+      </CTAButton>
+
+      <div className="text-center">
+        <Link 
+          to="/login" 
+          className="text-primary-600 hover:text-primary-700 font-medium transition-all duration-200 inline-flex items-center gap-2 hover:gap-3 group"
+        >
+          <span className="text-gray-600">{translations.register.hasAccount}</span>
+          <span className="font-bold group-hover:underline decoration-2 underline-offset-4">{translations.register.signIn}</span>
+        </Link>
+      </div>
+    </FormWrapper>
   );
 }
 

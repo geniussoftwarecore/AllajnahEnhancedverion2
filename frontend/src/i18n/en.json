@@ -1,0 +1,73 @@
+{
+  "app": {
+    "title": "Allajnah Enhanced",
+    "subtitle": "Complaint Management System"
+  },
+  "setup": {
+    "title": "Initial System Setup",
+    "subtitle": "Create First Admin Account",
+    "welcome": "Welcome to Allajnah Enhanced. Please create the first admin account to start using the system.",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email Address",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "submit": "Create Admin Account",
+    "submitting": "Creating...",
+    "success": "Account created successfully! Logging in...",
+    "alreadyCompleted": "Initial setup has already been completed. Please log in.",
+    "goToLogin": "Go to Login"
+  },
+  "login": {
+    "title": "Login",
+    "email": "Email Address",
+    "password": "Password",
+    "submit": "Login",
+    "submitting": "Logging in...",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign Up",
+    "forgotPassword": "Forgot Password?"
+  },
+  "register": {
+    "title": "Create New Account",
+    "subtitle": "Join the Complaint System",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email Address",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "phone": "Phone Number",
+    "whatsapp": "WhatsApp",
+    "telegram": "Telegram",
+    "address": "Address",
+    "submit": "Create Account",
+    "submitting": "Creating...",
+    "hasAccount": "Already have an account?",
+    "signIn": "Sign In"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "passwordMismatch": "Passwords do not match",
+    "passwordStrength": "Password Strength"
+  },
+  "errors": {
+    "generic": "Something went wrong, please try again",
+    "network": "Network connection error",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Access forbidden",
+    "notFound": "Not found",
+    "serverError": "Server error"
+  },
+  "common": {
+    "loading": "Loading...",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No"
+  }
+}

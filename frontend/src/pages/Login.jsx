@@ -4,101 +4,180 @@ import { useAuth } from '../context/AuthContext';
 import FormField from '../components/ui/FormField';
 import CTAButton from '../components/ui/CTAButton';
 import Alert from '../components/ui/Alert';
+import FormWrapper from '../components/ui/FormWrapper';
 import { EnvelopeIcon, LockClosedIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import {
+  validateEmail,
+  validateRequired,
+  mapBackendError
+} from '../utils/validation';
+import translations from '../i18n/ar.json';
 
 function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [retryDelay, setRetryDelay] = useState(0);
+
+  const validateField = (name, value) => {
+    let fieldError = null;
+
+    switch (name) {
+      case 'email':
+        fieldError = validateEmail(value, 'ar');
+        break;
+      case 'password':
+        fieldError = validateRequired(value, 'ar');
+        break;
+      default:
+        break;
+    }
+
+    setErrors(prev => ({
+      ...prev,
+      [name]: fieldError
+    }));
+
+    return !fieldError;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    if (errors[name]) {
+      validateField(name, value);
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    validateField(name, value);
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    newErrors.email = validateEmail(formData.email, 'ar');
+    newErrors.password = validateRequired(formData.password, 'ar');
+
+    Object.keys(newErrors).forEach(key => {
+      if (!newErrors[key]) delete newErrors[key];
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!validateForm()) {
+      setError('يرجى تصحيح الأخطاء في النموذج');
+      return;
+    }
+
+    if (retryDelay > 0) {
+      setError(`يرجى الانتظار ${retryDelay} ثانية قبل المحاولة مرة أخرى`);
+      return;
+    }
+
     setLoading(true);
 
     try {
       await login(formData.email, formData.password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.detail || 'فشل تسجيل الدخول');
+      const errorMessage = mapBackendError(err, 'ar');
+      setError(errorMessage);
+      
+      if (err.response?.status === 401) {
+        setRetryDelay(3);
+        let countdown = 3;
+        const interval = setInterval(() => {
+          countdown--;
+          setRetryDelay(countdown);
+          if (countdown === 0) {
+            clearInterval(interval);
+          }
+        }, 1000);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-600 py-8 px-4 sm:px-6 lg:px-8 animate-fade-in relative overflow-hidden">
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC41IiBvcGFjaXR5PSIwLjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-20"></div>
-      
-      <div className="max-w-md w-full space-y-6 bg-white p-6 sm:p-10 rounded-3xl shadow-strong animate-scale-in relative z-10 backdrop-blur-sm border border-white/20">
-        <div className="text-center">
-          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500 rounded-3xl flex items-center justify-center mb-4 shadow-lg animate-glow relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
-            <ArrowRightOnRectangleIcon className="w-10 h-10 text-white relative z-10" />
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-600 mb-2">
-            الاجنة المحسنة
-          </h2>
-          <p className="text-sm sm:text-base text-gray-600">
-            نظام إدارة الشكاوى
-          </p>
-        </div>
+    <FormWrapper
+      title={translations.app.title}
+      subtitle={translations.app.subtitle}
+      icon={ArrowRightOnRectangleIcon}
+      onSubmit={handleSubmit}
+    >
+      {error && (
+        <Alert
+          type="error"
+          message={error}
+          onClose={() => setError('')}
+        />
+      )}
 
-        <form className="space-y-5" onSubmit={handleSubmit}>
-          {error && (
-            <Alert
-              type="error"
-              message={error}
-              onClose={() => setError('')}
-            />
-          )}
+      <FormField
+        label={translations.login.email}
+        name="email"
+        type="email"
+        required
+        placeholder="أدخل بريدك الإلكتروني"
+        value={formData.email}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        rightIcon={<EnvelopeIcon className="w-5 h-5" />}
+        error={errors.email}
+      />
 
-          <FormField
-            label="البريد الإلكتروني"
-            name="email"
-            type="email"
-            required
-            placeholder="أدخل بريدك الإلكتروني"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            rightIcon={<EnvelopeIcon className="w-5 h-5" />}
-          />
+      <FormField
+        label={translations.login.password}
+        name="password"
+        type="password"
+        required
+        placeholder="أدخل كلمة المرور"
+        value={formData.password}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        rightIcon={<LockClosedIcon className="w-5 h-5" />}
+        error={errors.password}
+      />
 
-          <FormField
-            label="كلمة المرور"
-            name="password"
-            type="password"
-            required
-            placeholder="أدخل كلمة المرور"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            rightIcon={<LockClosedIcon className="w-5 h-5" />}
-          />
+      <CTAButton
+        type="submit"
+        variant="primary"
+        size="lg"
+        fullWidth
+        loading={loading}
+        disabled={loading || retryDelay > 0}
+      >
+        {loading ? translations.login.submitting : 
+         retryDelay > 0 ? `انتظر ${retryDelay}ث` : 
+         translations.login.submit}
+      </CTAButton>
 
-          <CTAButton
-            type="submit"
-            variant="primary"
-            size="lg"
-            fullWidth
-            loading={loading}
-          >
-            {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
-          </CTAButton>
-
-          <div className="text-center pt-2">
-            <Link 
-              to="/register" 
-              className="text-primary-600 hover:text-primary-700 font-medium transition-all duration-200 inline-flex items-center gap-2 hover:gap-3 group"
-            >
-              <span className="text-gray-600">ليس لديك حساب؟</span>
-              <span className="font-bold group-hover:underline decoration-2 underline-offset-4">سجل الآن</span>
-            </Link>
-          </div>
-        </form>
+      <div className="text-center pt-2">
+        <Link 
+          to="/register" 
+          className="text-primary-600 hover:text-primary-700 font-medium transition-all duration-200 inline-flex items-center gap-2 hover:gap-3 group"
+        >
+          <span className="text-gray-600">{translations.login.noAccount}</span>
+          <span className="font-bold group-hover:underline decoration-2 underline-offset-4">{translations.login.signUp}</span>
+        </Link>
       </div>
-    </div>
+    </FormWrapper>
   );
 }
 

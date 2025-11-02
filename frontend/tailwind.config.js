@@ -102,8 +102,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Cairo', 'Tajawal', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        arabic: ['Cairo', 'Tajawal', 'sans-serif'],
+        sans: ['Inter', 'Noto Naskh Arabic', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        arabic: ['Noto Naskh Arabic', 'Inter', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
       },
       fontSize: {
         'xs': ['0.75rem', { lineHeight: '1rem' }],
