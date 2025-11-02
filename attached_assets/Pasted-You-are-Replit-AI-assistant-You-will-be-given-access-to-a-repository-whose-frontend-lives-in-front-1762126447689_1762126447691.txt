@@ -1,0 +1,91 @@
+You are Replit AI assistant. You will be given access to a repository whose frontend lives in `frontend/` and backend in `backend/`. Your task: perform **frontend-only** work to radically redesign and harden the app's user interface and client-side logic, specifically:
+
+GOALS (must do)
+1. Redesign the entire frontend UI (visuals, layout, components) to a modern, accessible, RTL & LTR friendly interface — keep all functionality but change only presentation and client-side flows.
+2. Fix and centralize client-side **validation** (forms, login, signup, setup) with clear user-friendly messages in Arabic and English.
+3. Implement a reliable **Setup** flow (first-run): create admin account (only client-side wiring to existing backend setup endpoint — **do not change backend endpoints**). Ensure the Setup page:
+   - Validates admin credentials (strong password policy).
+   - Creates the first admin by calling existing backend Setup API (only call; **no backend logic edits**).
+   - Prevents re-running setup after success (front-end flag + backend response check).
+4. Fix login and signup flows: robust client-side validation, proper error handling for backend responses (400/401/422), and retry/cooldown behavior for repeated failed logins.
+5. Improve UX for form errors: inline messages, field highlights, summarize errors at top when server returns multiple validation errors.
+6. Ensure the UI does **not change** backend contracts (URLs, payload fields, status codes). Where the backend response shape is unclear, detect it at runtime and adapt client mapping without modifying endpoints.
+7. Add an automated **frontend-only** smoke-test script and a manual QA checklist (see below).
+8. Create a new feature branch named `feat/frontend-redesign-setup-fixes` and produce a single PR with:
+   - Summary of changes
+   - Files changed
+   - Migration / rollback notes (frontend only)
+   - Manual QA steps and automated smoke test results
+
+CONSTRAINTS (must enforce)
+- **Do not modify any file under `backend/`**.
+- Do not change API endpoint paths, HTTP methods, or expected status codes.
+- If a backend bug is discovered (e.g., missing field), create a clear issue in the repo and do not patch the backend.
+- Keep changes minimal to make code-review simple: new components + styles + small wiring updates in existing frontend modules only.
+
+IMPLEMENTATION DETAILS — what to do, specifically
+1. Project discovery:
+   - Search the `frontend/` folder for entry points (e.g., `src/main`, `index.html`, `App.jsx`, `router`).
+   - Identify form components used for: Setup, Login, Signup, Admin creation, and validation utilities.
+2. Architecture changes (frontend-only):
+   - Add a central `validation/` utility (e.g., `frontend/src/utils/validation.js`) that exports reusable validators and error formatters (required, email, password strength, match).
+   - Wrap forms with a common `FormWrapper` component that handles submit-blocking, loading state, server error mapping, and inline display.
+3. UI/Design:
+   - Replace existing CSS with a modern, minimal design system (variables + tokens): spacing, colors, fonts (Google Fonts: Inter for LTR and Noto Naskh Arabic for Arabic).
+   - Provide a light theme and a green-accent variant inspired by the project's brand (no backend coupling).
+   - Implement responsive layout and RTL support: ensure direction toggles per locale.
+4. Setup flow specifics:
+   - Build `SetupPage` to POST to the existing backend setup endpoint (do not change endpoint path).
+   - On success: set localStorage flag `app.setup_done = true` and navigate to login. On failure: show mapped errors.
+   - If backend returns `already_configured`, display friendly message and link to login.
+5. Login & Signup:
+   - Enforce client-side password policy: min 8 chars, uppercase, lowercase, number, special char — show strength meter.
+   - Implement exponential backoff or simple cooldown after 5 failed attempts (client-only).
+6. Validation & Error mapping:
+   - Normalize server validation responses into `{field: message[]}` and display inline. Log raw server errors to console for debugging.
+7. Accessibility & i18n:
+   - Ensure aria-labels, role attributes, visible focus outlines.
+   - Add a minimal i18n wrapper where strings live in `en.json` and `ar.json` in `frontend/src/i18n/`. Provide Arabic translations for new messages.
+8. Tests & QA:
+   - Add a tiny smoke test script (Node + fetch or Playwright lite) under `frontend/tests/smoke.test.js` that:
+     * visits Setup page, attempts to detect setup_done flag (skip if already done)
+     * attempts login with dummy credentials (expect 4xx or 200 depending on backend)
+     * asserts that no javascript exceptions are thrown during render
+   - Provide a `README` snippet documenting how to run the smoke test locally.
+
+DELIVERABLES (what to include in PR)
+- New branch: `feat/frontend-redesign-setup-fixes`
+- Files added/changed: list and short purpose
+- `frontend/src/components/FormWrapper.*`
+- `frontend/src/utils/validation.*`
+- `frontend/src/pages/SetupPage.*`
+- `frontend/src/pages/Login.*` (improved)
+- `frontend/src/i18n/en.json`, `frontend/src/i18n/ar.json`
+- CSS tokens file and updated component styles
+- `frontend/tests/smoke.test.js`
+- `FRONTEND_CHANGELOG.md` summarizing the change and rollback steps
+- PR body: summary, screenshots (before/after mocked), testing steps, known issues, recommended backend follow-ups (if any)
+
+QA CHECKLIST (manual)
+- [ ] Setup page creates admin on a clean backend instance (observe network call, expect 201 or documented success code)
+- [ ] Setup page detects configured state and blocks re-setup
+- [ ] Signup form shows inline validation for each field and prevents invalid submissions
+- [ ] Login form handles 401/422 gracefully and shows messages (Arabic + English)
+- [ ] Password strength meter updates as user types
+- [ ] No frontend-originated changes to backend endpoints (inspect git diff to confirm)
+- [ ] Run `npm run build` (or project build command) — build must succeed
+- [ ] Smoke tests pass locally
+
+If you encounter any **backend contract uncertainty** (unknown request body or response shape), *do not change backend code*. Instead:
+- Add an issue in repo `/issues` titled `Backend contract unclear for <endpoint>` with example request/response and suggested fix.
+- Implement an adapter in frontend to map the unknown response shape to the client expected shape (adapter should be documented in PR).
+
+Edge-cases & Safety:
+- If the Setup API is missing or protected, do not attempt to bypass — open an issue and implement a safe UI that instructs the admin how to run backend setup manually.
+- If you must add environment variables or config for frontend behavior, put them in `.env.example` and document usage in `FRONTEND_CHANGELOG.md`.
+
+Communication:
+- For every meaningful step, post an update comment in the PR summarizing work done and any outstanding items.
+- Provide before/after screenshots or GIFs for major UI pages: Setup, Login, Dashboard.
+
+Begin by scanning the repository `frontend/` to find entry points and form components, then create the feature branch `feat/frontend-redesign-setup-fixes` and implement changes as described. Provide a single PR that contains all deliverables and the QA checklist results.
