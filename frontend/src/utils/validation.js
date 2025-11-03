@@ -202,3 +202,82 @@ export const mapServerValidationErrors = (error, lang = 'ar') => {
   
   return { _form: mapBackendError(error, lang) };
 };
+
+export const getErrorSummary = (errors, lang = 'ar') => {
+  const messages = {
+    ar: {
+      prefix: 'يرجى تصحيح الأخطاء التالية:',
+      single: 'يرجى تصحيح الخطأ في النموذج'
+    },
+    en: {
+      prefix: 'Please correct the following errors:',
+      single: 'Please correct the error in the form'
+    }
+  };
+  
+  const errorList = Object.entries(errors).filter(([key]) => key !== '_form');
+  
+  if (errorList.length === 0) return null;
+  if (errorList.length === 1) return errorList[0][1];
+  
+  return messages[lang].prefix;
+};
+
+const LOGIN_ATTEMPTS_KEY = 'login_attempts';
+const LOGIN_COOLDOWN_KEY = 'login_cooldown_until';
+
+export const getLoginAttempts = () => {
+  try {
+    const attempts = localStorage.getItem(LOGIN_ATTEMPTS_KEY);
+    return attempts ? parseInt(attempts, 10) : 0;
+  } catch {
+    return 0;
+  }
+};
+
+export const incrementLoginAttempts = () => {
+  try {
+    const attempts = getLoginAttempts() + 1;
+    localStorage.setItem(LOGIN_ATTEMPTS_KEY, attempts.toString());
+    return attempts;
+  } catch {
+    return 0;
+  }
+};
+
+export const resetLoginAttempts = () => {
+  try {
+    localStorage.removeItem(LOGIN_ATTEMPTS_KEY);
+    localStorage.removeItem(LOGIN_COOLDOWN_KEY);
+  } catch {
+    // Fail silently
+  }
+};
+
+export const getLoginCooldown = () => {
+  try {
+    const cooldownUntil = localStorage.getItem(LOGIN_COOLDOWN_KEY);
+    if (!cooldownUntil) return null;
+    
+    const until = parseInt(cooldownUntil, 10);
+    const now = Date.now();
+    
+    if (now >= until) {
+      resetLoginAttempts();
+      return null;
+    }
+    
+    return Math.ceil((until - now) / 1000);
+  } catch {
+    return null;
+  }
+};
+
+export const setLoginCooldown = (seconds = 30) => {
+  try {
+    const until = Date.now() + (seconds * 1000);
+    localStorage.setItem(LOGIN_COOLDOWN_KEY, until.toString());
+  } catch {
+    // Fail silently
+  }
+};

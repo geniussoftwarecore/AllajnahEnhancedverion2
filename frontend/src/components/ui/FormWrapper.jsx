@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import Alert from './Alert';
 
 const FormWrapper = ({ 
   children, 
@@ -8,7 +9,9 @@ const FormWrapper = ({
   icon: Icon,
   onSubmit,
   className = '',
-  showBackground = true
+  showBackground = true,
+  errorSummary = null,
+  onDismissError = null
 }) => {
   return (
     <div className={`min-h-screen flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8 animate-fade-in relative overflow-hidden ${className}`}>
@@ -66,6 +69,14 @@ const FormWrapper = ({
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
+          {errorSummary && (
+            <Alert
+              type="error"
+              message={errorSummary}
+              onClose={onDismissError}
+            />
+          )}
+          
           {onSubmit ? (
             <form onSubmit={onSubmit} className="space-y-5">
               {children}

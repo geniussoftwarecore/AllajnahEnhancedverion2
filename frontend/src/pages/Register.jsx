@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import FormField from '../components/ui/FormField';
 import CTAButton from '../components/ui/CTAButton';
-import Alert from '../components/ui/Alert';
 import PasswordStrengthIndicator from '../components/ui/PasswordStrengthIndicator';
 import FormWrapper from '../components/ui/FormWrapper';
 import { 
@@ -18,7 +17,8 @@ import {
   validateEmail,
   validatePassword,
   validateRequired,
-  mapBackendError
+  mapBackendError,
+  getErrorSummary
 } from '../utils/validation';
 import translations from '../i18n/ar.json';
 
@@ -109,7 +109,8 @@ function Register() {
     setError('');
     
     if (!validateForm()) {
-      setError('يرجى تصحيح الأخطاء في النموذج');
+      const summary = getErrorSummary(errors, 'ar');
+      setError(summary || 'يرجى تصحيح الأخطاء في النموذج');
       return;
     }
     
@@ -133,15 +134,9 @@ function Register() {
       icon={UserPlusIcon}
       onSubmit={handleSubmit}
       className="bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-600"
+      errorSummary={error}
+      onDismissError={() => setError('')}
     >
-      {error && (
-        <Alert
-          type="error"
-          message={error}
-          onClose={() => setError('')}
-        />
-      )}
-
       <div className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField

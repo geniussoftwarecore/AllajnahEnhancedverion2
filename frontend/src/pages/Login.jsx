@@ -1,26 +1,49 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import FormField from '../components/ui/FormField';
 import CTAButton from '../components/ui/CTAButton';
-import Alert from '../components/ui/Alert';
 import FormWrapper from '../components/ui/FormWrapper';
 import { EnvelopeIcon, LockClosedIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import {
   validateEmail,
   validateRequired,
-  mapBackendError
+  mapBackendError,
+  getErrorSummary,
+  getLoginAttempts,
+  incrementLoginAttempts,
+  resetLoginAttempts,
+  getLoginCooldown,
+  setLoginCooldown
 } from '../utils/validation';
 import translations from '../i18n/ar.json';
 
 function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [retryDelay, setRetryDelay] = useState(0);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+
+  useEffect(() => {
+    const cooldown = getLoginCooldown();
+    if (cooldown) {
+      setCooldownSeconds(cooldown);
+      const interval = setInterval(() => {
+        const remaining = getLoginCooldown();
+        if (!remaining) {
+          setCooldownSeconds(0);
+          clearInterval(interval);
+        } else {
+          setCooldownSeconds(remaining);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, []);
 
   const validateField = (name, value) => {
     let fieldError = null;
@@ -80,12 +103,14 @@ function Login() {
     setError('');
 
     if (!validateForm()) {
-      setError('يرجى تصحيح الأخطاء في النموذج');
+      const summary = getErrorSummary(errors, 'ar');
+      setError(summary || 'يرجى تصحيح الأخطاء في النموذج');
       return;
     }
 
-    if (retryDelay > 0) {
-      setError(`يرجى الانتظار ${retryDelay} ثانية قبل المحاولة مرة أخرى`);
+    const cooldown = getLoginCooldown();
+    if (cooldown) {
+      setError(`تم تجاوز عدد المحاولات المسموحة. يرجى الانتظار ${cooldown} ثانية قبل المحاولة مرة أخرى`);
       return;
     }
 
@@ -93,21 +118,32 @@ function Login() {
 
     try {
       await login(formData.email, formData.password);
-      navigate('/');
+      resetLoginAttempts();
+      
+      const redirectTo = searchParams.get('redirect_to') || '/';
+      navigate(redirectTo);
     } catch (err) {
       const errorMessage = mapBackendError(err, 'ar');
       setError(errorMessage);
       
       if (err.response?.status === 401) {
-        setRetryDelay(3);
-        let countdown = 3;
-        const interval = setInterval(() => {
-          countdown--;
-          setRetryDelay(countdown);
-          if (countdown === 0) {
-            clearInterval(interval);
-          }
-        }, 1000);
+        const attempts = incrementLoginAttempts();
+        
+        if (attempts >= 5) {
+          setLoginCooldown(30);
+          setCooldownSeconds(30);
+          setError('تم تجاوز عدد المحاولات المسموحة. يرجى الانتظار 30 ثانية');
+          
+          const interval = setInterval(() => {
+            const remaining = getLoginCooldown();
+            if (!remaining) {
+              setCooldownSeconds(0);
+              clearInterval(interval);
+            } else {
+              setCooldownSeconds(remaining);
+            }
+          }, 1000);
+        }
       }
     } finally {
       setLoading(false);
@@ -120,15 +156,9 @@ function Login() {
       subtitle={translations.app.subtitle}
       icon={ArrowRightOnRectangleIcon}
       onSubmit={handleSubmit}
+      errorSummary={error}
+      onDismissError={() => setError('')}
     >
-      {error && (
-        <Alert
-          type="error"
-          message={error}
-          onClose={() => setError('')}
-        />
-      )}
-
       <FormField
         label={translations.login.email}
         name="email"
@@ -162,10 +192,10 @@ function Login() {
         size="lg"
         fullWidth
         loading={loading}
-        disabled={loading || retryDelay > 0}
+        disabled={loading || cooldownSeconds > 0}
       >
         {loading ? translations.login.submitting : 
-         retryDelay > 0 ? `انتظر ${retryDelay}ث` : 
+         cooldownSeconds > 0 ? `انتظر ${cooldownSeconds}ث` : 
          translations.login.submit}
       </CTAButton>
 
