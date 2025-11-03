@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5000",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:smoke": "playwright test tests/smoke.test.js",
+    "test:smoke:headed": "playwright test tests/smoke.test.js --headed",
+    "test:smoke:debug": "playwright test tests/smoke.test.js --debug"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

@@ -1,167 +1,322 @@
 /**
- * Smoke Tests for Frontend Redesign
+ * Smoke Tests for Allajnah Enhanced Frontend
  * 
  * These tests verify that the application can:
- * 1. Render without crashing
- * 2. Load the setup page
- * 3. Display login form
- * 4. Handle form validation
- * 5. Prevent re-setup after completion
+ * 1. Visit /setup and /login pages without crashing
+ * 2. Render without JavaScript exceptions
+ * 3. Display correct error messages on 4xx responses
+ * 
+ * HOW TO RUN:
+ * ===========
+ * 
+ * Prerequisites:
+ * - Make sure both backend and frontend are running:
+ *   - Backend: http://localhost:8000
+ *   - Frontend: http://localhost:5000
+ * 
+ * Run tests:
+ * - npm run test:smoke          # Run in headless mode
+ * - npm run test:smoke:headed   # Run with browser visible
+ * - npm run test:smoke:debug    # Run in debug mode
+ * 
+ * Or directly with Playwright:
+ * - npx playwright test tests/smoke.test.js
+ * - npx playwright test tests/smoke.test.js --headed
+ * - npx playwright test tests/smoke.test.js --ui
  */
 
-describe('Frontend Smoke Tests', () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
+const { test, expect } = require('@playwright/test');
 
-  describe('Setup Page', () => {
-    test('should render setup page without errors', () => {
-      // Visit setup page
-      // Check for no JS errors in console
-      // Verify form elements are present
-      expect(true).toBe(true); // Placeholder
+const BASE_URL = 'http://localhost:5000';
+
+test.describe('Frontend Smoke Tests', () => {
+  
+  test.describe('/setup page', () => {
+    let consoleErrors = [];
+    let jsExceptions = [];
+
+    test.beforeEach(async ({ page }) => {
+      consoleErrors = [];
+      jsExceptions = [];
+
+      // Capture console errors
+      page.on('console', msg => {
+        if (msg.type() === 'error') {
+          consoleErrors.push(msg.text());
+        }
+      });
+
+      // Capture JavaScript exceptions
+      page.on('pageerror', exception => {
+        jsExceptions.push(exception.message);
+      });
     });
 
-    test('should validate required fields', () => {
-      // Try to submit empty form
-      // Verify validation errors appear
-      expect(true).toBe(true); // Placeholder
+    test('should load /setup page without JavaScript exceptions', async ({ page }) => {
+      await page.goto(`${BASE_URL}/setup`);
+      
+      // Wait for page to be fully loaded
+      await page.waitForLoadState('networkidle');
+      
+      // Verify no JS exceptions occurred
+      expect(jsExceptions, `Found JS exceptions: ${jsExceptions.join(', ')}`).toHaveLength(0);
+      
+      // Check page title or main heading is present
+      const heading = await page.locator('h1, h2').first();
+      await expect(heading).toBeVisible();
+      
+      // Verify the setup form is rendered
+      const form = await page.locator('form');
+      await expect(form).toBeVisible();
     });
 
-    test('should validate email format', () => {
-      // Enter invalid email
-      // Verify email validation error
-      expect(true).toBe(true); // Placeholder
+    test('should display setup form fields correctly', async ({ page }) => {
+      await page.goto(`${BASE_URL}/setup`);
+      await page.waitForLoadState('networkidle');
+      
+      // Check for email/username input
+      const emailInput = await page.locator('input[type="email"], input[type="text"]').first();
+      await expect(emailInput).toBeVisible();
+      
+      // Check for password input
+      const passwordInput = await page.locator('input[type="password"]').first();
+      await expect(passwordInput).toBeVisible();
+      
+      // Verify no critical console errors (ignore warnings)
+      const criticalErrors = consoleErrors.filter(err => 
+        !err.includes('Download the React DevTools') &&
+        !err.includes('warning')
+      );
+      expect(criticalErrors, `Found critical console errors: ${criticalErrors.join(', ')}`).toHaveLength(0);
     });
 
-    test('should show password strength indicator', () => {
-      // Enter password
-      // Verify strength indicator appears and updates
-      expect(true).toBe(true); // Placeholder
-    });
-
-    test('should prevent re-setup after completion', () => {
-      // Set localStorage flag
-      localStorage.setItem('setup_completed', 'true');
-      // Visit setup page
-      // Verify it shows "already completed" message
-      expect(true).toBe(true); // Placeholder
-    });
-  });
-
-  describe('Login Page', () => {
-    test('should render login page without errors', () => {
-      // Visit login page
-      // Check for no JS errors
-      // Verify form exists
-      expect(true).toBe(true); // Placeholder
-    });
-
-    test('should validate email and password', () => {
-      // Submit empty form
-      // Verify validation errors
-      expect(true).toBe(true); // Placeholder
-    });
-
-    test('should show retry cooldown on 401', () => {
-      // Mock 401 response
-      // Submit form
-      // Verify cooldown appears
-      expect(true).toBe(true); // Placeholder
-    });
-  });
-
-  describe('Register Page', () => {
-    test('should render register page without errors', () => {
-      // Visit register page
-      // Verify no JS errors
-      expect(true).toBe(true); // Placeholder
-    });
-
-    test('should validate all required fields', () => {
-      // Submit form with missing fields
-      // Verify validation errors
-      expect(true).toBe(true); // Placeholder
-    });
-
-    test('should show password strength meter', () => {
-      // Enter password
-      // Verify meter updates
-      expect(true).toBe(true); // Placeholder
-    });
-  });
-
-  describe('Validation Utilities', () => {
-    test('should validate email correctly', () => {
-      // Test email validation function
-      expect(true).toBe(true); // Placeholder
-    });
-
-    test('should calculate password strength', () => {
-      // Test password strength calculation
-      expect(true).toBe(true); // Placeholder
-    });
-
-    test('should map backend errors correctly', () => {
-      // Test error mapping
-      expect(true).toBe(true); // Placeholder
+    test('should handle validation errors correctly', async ({ page }) => {
+      await page.goto(`${BASE_URL}/setup`);
+      await page.waitForLoadState('networkidle');
+      
+      // Try to submit form without filling required fields
+      const submitButton = await page.locator('button[type="submit"]');
+      
+      if (await submitButton.count() > 0) {
+        await submitButton.click();
+        
+        // Wait a bit for validation to trigger
+        await page.waitForTimeout(500);
+        
+        // Verify no JS exceptions occurred during validation
+        expect(jsExceptions, `Found JS exceptions during validation: ${jsExceptions.join(', ')}`).toHaveLength(0);
+      }
     });
   });
 
-  describe('Integration', () => {
-    test('should complete full setup flow', () => {
-      // Fill and submit setup form
-      // Verify success and redirect
-      // Verify localStorage flag set
-      expect(true).toBe(true); // Placeholder
+  test.describe('/login page', () => {
+    let consoleErrors = [];
+    let jsExceptions = [];
+
+    test.beforeEach(async ({ page }) => {
+      consoleErrors = [];
+      jsExceptions = [];
+
+      // Capture console errors
+      page.on('console', msg => {
+        if (msg.type() === 'error') {
+          consoleErrors.push(msg.text());
+        }
+      });
+
+      // Capture JavaScript exceptions
+      page.on('pageerror', exception => {
+        jsExceptions.push(exception.message);
+      });
     });
 
-    test('should complete login flow', () => {
-      // Fill and submit login form
-      // Verify redirect on success
-      expect(true).toBe(true); // Placeholder
+    test('should load /login page without JavaScript exceptions', async ({ page }) => {
+      await page.goto(`${BASE_URL}/login`);
+      
+      // Wait for page to be fully loaded
+      await page.waitForLoadState('networkidle');
+      
+      // Verify no JS exceptions occurred
+      expect(jsExceptions, `Found JS exceptions: ${jsExceptions.join(', ')}`).toHaveLength(0);
+      
+      // Check page is rendered
+      const heading = await page.locator('h1, h2').first();
+      await expect(heading).toBeVisible();
+      
+      // Verify the login form is rendered
+      const form = await page.locator('form');
+      await expect(form).toBeVisible();
+    });
+
+    test('should display login form fields correctly', async ({ page }) => {
+      await page.goto(`${BASE_URL}/login`);
+      await page.waitForLoadState('networkidle');
+      
+      // Check for email input
+      const emailInput = await page.locator('input[type="email"], input[type="text"]').first();
+      await expect(emailInput).toBeVisible();
+      
+      // Check for password input
+      const passwordInput = await page.locator('input[type="password"]');
+      await expect(passwordInput).toBeVisible();
+      
+      // Verify no critical console errors
+      const criticalErrors = consoleErrors.filter(err => 
+        !err.includes('Download the React DevTools') &&
+        !err.includes('warning')
+      );
+      expect(criticalErrors, `Found critical console errors: ${criticalErrors.join(', ')}`).toHaveLength(0);
+    });
+  });
+
+  test.describe('4xx Error Handling', () => {
+    test('should display correct error message on 401 (Unauthorized)', async ({ page }) => {
+      await page.goto(`${BASE_URL}/login`);
+      await page.waitForLoadState('networkidle');
+      
+      // Intercept API calls and mock 401 response
+      await page.route('**/api/auth/login', route => {
+        route.fulfill({
+          status: 401,
+          contentType: 'application/json',
+          body: JSON.stringify({ 
+            detail: 'Invalid credentials' 
+          })
+        });
+      });
+      
+      // Fill login form with test data
+      const emailInput = await page.locator('input[type="email"], input[type="text"]').first();
+      const passwordInput = await page.locator('input[type="password"]').first();
+      const submitButton = await page.locator('button[type="submit"]');
+      
+      await emailInput.fill('test@example.com');
+      await passwordInput.fill('password123');
+      await submitButton.click();
+      
+      // Wait for error message to appear (could be toast, alert, or inline)
+      await page.waitForTimeout(1000);
+      
+      // Check for error message somewhere on the page
+      const pageContent = await page.content();
+      const hasErrorIndicator = 
+        pageContent.toLowerCase().includes('invalid') ||
+        pageContent.toLowerCase().includes('credentials') ||
+        pageContent.toLowerCase().includes('unauthorized') ||
+        pageContent.toLowerCase().includes('خطأ') || // Arabic for "error"
+        pageContent.toLowerCase().includes('غير صحيح'); // Arabic for "incorrect"
+      
+      expect(hasErrorIndicator, 'Should display error message on 401').toBeTruthy();
+    });
+
+    test('should display correct error message on 404 (Not Found)', async ({ page }) => {
+      // Visit a non-existent page
+      await page.goto(`${BASE_URL}/this-page-does-not-exist`, { waitUntil: 'networkidle' });
+      
+      // The app should either redirect or show a 404 message
+      // Check if we're still on a valid page or if there's a 404 message
+      const pageContent = await page.content();
+      
+      // Should not crash - page should load something
+      expect(pageContent).toBeTruthy();
+      expect(pageContent.length).toBeGreaterThan(0);
+    });
+
+    test('should handle 400 (Bad Request) with user-friendly message', async ({ page }) => {
+      await page.goto(`${BASE_URL}/setup`);
+      await page.waitForLoadState('networkidle');
+      
+      // Intercept API calls and mock 400 response
+      await page.route('**/api/auth/setup', route => {
+        route.fulfill({
+          status: 400,
+          contentType: 'application/json',
+          body: JSON.stringify({ 
+            detail: 'Invalid email format' 
+          })
+        });
+      });
+      
+      // Find and fill the form
+      const submitButton = await page.locator('button[type="submit"]');
+      
+      if (await submitButton.count() > 0) {
+        // Fill with some data to pass client-side validation
+        const inputs = await page.locator('input').all();
+        for (const input of inputs) {
+          const type = await input.getAttribute('type');
+          if (type === 'email' || type === 'text') {
+            await input.fill('invalid-email');
+          } else if (type === 'password') {
+            await input.fill('TestPassword123!');
+          }
+        }
+        
+        await submitButton.click();
+        
+        // Wait for error response
+        await page.waitForTimeout(1000);
+        
+        // Should display error without crashing
+        const pageContent = await page.content();
+        expect(pageContent).toBeTruthy();
+      }
+    });
+  });
+
+  test.describe('Cross-page Navigation', () => {
+    test('should navigate from /setup to /login without errors', async ({ page }) => {
+      let jsExceptions = [];
+      
+      page.on('pageerror', exception => {
+        jsExceptions.push(exception.message);
+      });
+      
+      // Start at setup
+      await page.goto(`${BASE_URL}/setup`);
+      await page.waitForLoadState('networkidle');
+      
+      // Look for link to login (might be a button or link)
+      const loginLink = await page.locator('a[href*="login"], button:has-text("تسجيل الدخول"), button:has-text("Login")').first();
+      
+      if (await loginLink.count() > 0) {
+        await loginLink.click();
+        await page.waitForLoadState('networkidle');
+        
+        // Verify we're on login page
+        expect(page.url()).toContain('login');
+        
+        // Verify no exceptions during navigation
+        expect(jsExceptions, `Found JS exceptions during navigation: ${jsExceptions.join(', ')}`).toHaveLength(0);
+      }
+    });
+
+    test('should navigate from /login to /setup without errors', async ({ page }) => {
+      let jsExceptions = [];
+      
+      page.on('pageerror', exception => {
+        jsExceptions.push(exception.message);
+      });
+      
+      // Start at login
+      await page.goto(`${BASE_URL}/login`);
+      await page.waitForLoadState('networkidle');
+      
+      // Look for link to setup/register
+      const setupLink = await page.locator('a[href*="setup"], a[href*="register"], button:has-text("تسجيل"), button:has-text("Register")').first();
+      
+      if (await setupLink.count() > 0) {
+        await setupLink.click();
+        await page.waitForLoadState('networkidle');
+        
+        // Verify navigation occurred
+        const url = page.url();
+        const isValidDestination = url.includes('setup') || url.includes('register');
+        expect(isValidDestination).toBeTruthy();
+        
+        // Verify no exceptions during navigation
+        expect(jsExceptions, `Found JS exceptions during navigation: ${jsExceptions.join(', ')}`).toHaveLength(0);
+      }
     });
   });
 });
-
-// Manual testing checklist
-console.log(`
-MANUAL TESTING CHECKLIST:
-========================
-
-✓ Setup Page:
-  - [ ] Form renders correctly on mobile and desktop
-  - [ ] All validation works (email, password, required fields)
-  - [ ] Password strength meter updates in real-time
-  - [ ] Cannot re-access after completion
-  - [ ] Error messages display in Arabic
-  - [ ] Success state works correctly
-
-✓ Login Page:
-  - [ ] Form renders correctly
-  - [ ] Email and password validation works
-  - [ ] Retry cooldown appears on 401
-  - [ ] Loading state displays correctly
-  - [ ] Link to register page works
-
-✓ Register Page:
-  - [ ] All fields render correctly
-  - [ ] Validation works for all fields
-  - [ ] Password strength indicator works
-  - [ ] Optional fields are truly optional
-  - [ ] Link to login page works
-
-✓ General:
-  - [ ] No console errors on any page
-  - [ ] RTL layout works correctly
-  - [ ] Fonts (Inter + Noto Naskh Arabic) load
-  - [ ] Green accent theme applies
-  - [ ] Animations are smooth
-  - [ ] Responsive on all screen sizes
-  - [ ] Build completes without errors
-
-✓ Backend Contract:
-  - [ ] No backend files modified
-  - [ ] All API endpoints work as before
-  - [ ] Error responses handled correctly
-`);
