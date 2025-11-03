@@ -174,6 +174,7 @@ function Login() {
         name="email"
         type="email"
         required
+        autoFocus
         placeholder="أدخل بريدك الإلكتروني"
         value={formData.email}
         onChange={handleChange}

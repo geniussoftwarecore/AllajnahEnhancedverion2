@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ResponsivePageShell, StatCard, QuickActionCard, ChartCard, Alert, ProgressRing } from '../components/ui';
+import { ResponsivePageShell, StatCard, QuickActionCard, ChartCard, Alert, ProgressRing, SkeletonDashboard } from '../components/ui';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
@@ -91,6 +91,17 @@ function TraderDashboard() {
 
   const completionRate = stats ? 
     Math.round((stats.resolved / Math.max(stats.total_complaints, 1)) * 100) : 0;
+
+  if (loading) {
+    return (
+      <ResponsivePageShell 
+        title={`مرحباً، ${user?.full_name || 'التاجر'}`}
+        notificationCount={0}
+      >
+        <SkeletonDashboard />
+      </ResponsivePageShell>
+    );
+  }
 
   return (
     <ResponsivePageShell 

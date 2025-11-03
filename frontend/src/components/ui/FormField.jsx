@@ -1,5 +1,5 @@
-import React, { forwardRef } from 'react';
-import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import React, { forwardRef, useState } from 'react';
+import { ExclamationCircleIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 const FormField = forwardRef(({ 
   label,
@@ -20,8 +20,12 @@ const FormField = forwardRef(({
   rows = 4,
   options = [],
   autoComplete,
+  autoFocus = false,
+  showPasswordToggle = true,
   ...props
 }, ref) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const inputType = type === 'password' && showPassword ? 'text' : type;
   const baseInputClasses = 'input-touch w-full px-4 py-3 rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:bg-gray-100 disabled:cursor-not-allowed text-base hover:border-gray-400';
   
   const stateClasses = error 
@@ -54,7 +58,11 @@ const FormField = forwardRef(({
       required,
       ref,
       autoComplete: autoCompleteValue,
+      autoFocus,
       className: `${baseInputClasses} ${stateClasses} ${iconPaddingClasses.left} ${iconPaddingClasses.right} ${inputClassName}`,
+      'aria-label': label || name,
+      'aria-invalid': !!error,
+      'aria-describedby': error ? `${name}-error` : helperText ? `${name}-helper` : undefined,
       ...props
     };
 
@@ -89,7 +97,7 @@ const FormField = forwardRef(({
         return (
           <input
             {...commonProps}
-            type={type}
+            type={inputType}
             placeholder={placeholder}
           />
         );
@@ -114,7 +122,22 @@ const FormField = forwardRef(({
         
         {renderInput()}
         
-        {rightIcon && !error && (
+        {type === 'password' && showPasswordToggle && value && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded focus:text-primary-600"
+            aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+          >
+            {showPassword ? (
+              <EyeSlashIcon className="w-5 h-5" />
+            ) : (
+              <EyeIcon className="w-5 h-5" />
+            )}
+          </button>
+        )}
+        
+        {rightIcon && !error && type !== 'password' && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
             {rightIcon}
           </div>
@@ -128,14 +151,14 @@ const FormField = forwardRef(({
       </div>
       
       {error && (
-        <p className="text-sm text-danger-600 flex items-center gap-1 animate-slide-in-up">
+        <p id={`${name}-error`} className="text-sm text-danger-600 flex items-center gap-1 animate-slide-in-up" role="alert">
           <ExclamationCircleIcon className="w-4 h-4 flex-shrink-0" />
           <span>{error}</span>
         </p>
       )}
       
       {helperText && !error && (
-        <p className="text-sm text-gray-500">{helperText}</p>
+        <p id={`${name}-helper`} className="text-sm text-gray-500">{helperText}</p>
       )}
     </div>
   );

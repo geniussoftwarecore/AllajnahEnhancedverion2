@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ResponsivePageShell, StatCard, QuickActionCard, ChartCard, FilterBar, Alert } from '../components/ui';
+import { ResponsivePageShell, StatCard, QuickActionCard, ChartCard, FilterBar, Alert, SkeletonDashboard } from '../components/ui';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
@@ -136,6 +136,17 @@ function TechnicalCommitteeDashboard() {
   };
 
   const pendingCount = stats?.submitted || 0;
+
+  if (loading) {
+    return (
+      <ResponsivePageShell 
+        title={`مرحباً، ${user?.full_name || 'عضو اللجنة'}`}
+        notificationCount={0}
+      >
+        <SkeletonDashboard />
+      </ResponsivePageShell>
+    );
+  }
 
   return (
     <ResponsivePageShell 

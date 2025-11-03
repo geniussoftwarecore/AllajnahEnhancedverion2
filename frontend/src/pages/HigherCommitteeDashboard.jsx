@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ResponsivePageShell, StatCard, QuickActionCard, ChartCard, Alert, ProgressRing } from '../components/ui';
+import { ResponsivePageShell, StatCard, QuickActionCard, ChartCard, Alert, ProgressRing, SkeletonDashboard } from '../components/ui';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
@@ -88,6 +88,17 @@ function HigherCommitteeDashboard() {
     Math.round((stats.resolved / Math.max(stats.total_complaints, 1)) * 100) : 0;
 
   const escalatedCount = stats?.escalated || 0;
+
+  if (loading) {
+    return (
+      <ResponsivePageShell 
+        title={`مرحباً، ${user?.full_name || 'عضو اللجنة العليا'}`}
+        notificationCount={0}
+      >
+        <SkeletonDashboard />
+      </ResponsivePageShell>
+    );
+  }
 
   return (
     <ResponsivePageShell 

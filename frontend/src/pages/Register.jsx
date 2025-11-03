@@ -160,6 +160,7 @@ function Register() {
             name="first_name"
             type="text"
             required
+            autoFocus
             placeholder="الاسم الأول"
             value={formData.first_name}
             onChange={handleChange}
@@ -217,20 +218,22 @@ function Register() {
             label={translations.register.phone}
             name="phone"
             type="tel"
-            placeholder="رقم الهاتف"
+            placeholder="مثال: 0501234567"
             value={formData.phone}
             onChange={handleChange}
             rightIcon={<PhoneIcon className="w-5 h-5" />}
+            helperText="أدخل رقم الهاتف مع رمز الدولة"
           />
 
           <FormField
             label={translations.register.whatsapp}
             name="whatsapp"
             type="tel"
-            placeholder="رقم الواتساب"
+            placeholder="مثال: 0501234567"
             value={formData.whatsapp}
             onChange={handleChange}
             rightIcon={<PhoneIcon className="w-5 h-5" />}
+            helperText="رقم الواتساب للتواصل السريع"
           />
         </div>
 
