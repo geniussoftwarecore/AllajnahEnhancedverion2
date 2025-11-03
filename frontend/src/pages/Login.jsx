@@ -102,8 +102,18 @@ function Login() {
     e.preventDefault();
     setError('');
 
-    if (!validateForm()) {
-      const summary = getErrorSummary(errors, 'ar');
+    const newErrors = {};
+    
+    newErrors.email = validateEmail(formData.email, 'ar');
+    newErrors.password = validateRequired(formData.password, 'ar');
+
+    Object.keys(newErrors).forEach(key => {
+      if (!newErrors[key]) delete newErrors[key];
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      const summary = getErrorSummary(newErrors, 'ar');
       setError(summary || 'يرجى تصحيح الأخطاء في النموذج');
       return;
     }
