@@ -4,6 +4,41 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
   ar: {
     translation: {
+      setup: {
+        title: 'إعداد النظام الأولي',
+        subtitle: 'إنشاء حساب المسؤول الأول',
+        welcome: 'مرحباً بك في نظام الاجنة المحسنة. يرجى إنشاء حساب المسؤول الأول للبدء في استخدام النظام.',
+        firstName: 'الاسم الأول',
+        lastName: 'الاسم الأخير',
+        email: 'البريد الإلكتروني',
+        password: 'كلمة المرور',
+        confirmPassword: 'تأكيد كلمة المرور',
+        submit: 'إنشاء حساب المسؤول',
+        submitting: 'جاري الإنشاء...',
+        success: 'تم إنشاء الحساب بنجاح! جاري التوجيه إلى صفحة تسجيل الدخول...',
+        alreadyCompleted: 'تم إكمال الإعداد الأولي بالفعل. يرجى تسجيل الدخول.',
+        already_configured: 'النظام تم إعداده بالفعل',
+        goToLogin: 'انتقل إلى صفحة تسجيل الدخول'
+      },
+      errors: {
+        generic: 'حدث خطأ ما، يرجى المحاولة مرة أخرى',
+        network: 'خطأ في الاتصال بالشبكة',
+        unauthorized: 'غير مصرح بالوصول',
+        forbidden: 'ممنوع الوصول',
+        notFound: 'غير موجود',
+        serverError: 'خطأ في الخادم'
+      },
+      common: {
+        loading: 'جاري التحميل...',
+        submit: 'إرسال',
+        cancel: 'إلغاء',
+        save: 'حفظ',
+        delete: 'حذف',
+        edit: 'تعديل',
+        close: 'إغلاق',
+        yes: 'نعم',
+        no: 'لا'
+      },
       login: 'تسجيل الدخول',
       register: 'إنشاء حساب',
       logout: 'تسجيل الخروج',
@@ -194,6 +229,41 @@ const resources = {
   },
   en: {
     translation: {
+      setup: {
+        title: 'Initial System Setup',
+        subtitle: 'Create First Admin Account',
+        welcome: 'Welcome to Allajnah Enhanced. Please create the first admin account to start using the system.',
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        email: 'Email Address',
+        password: 'Password',
+        confirmPassword: 'Confirm Password',
+        submit: 'Create Admin Account',
+        submitting: 'Creating...',
+        success: 'Account created successfully! Redirecting to login...',
+        alreadyCompleted: 'Initial setup has already been completed. Please log in.',
+        already_configured: 'System already configured',
+        goToLogin: 'Go to Login'
+      },
+      errors: {
+        generic: 'Something went wrong, please try again',
+        network: 'Network connection error',
+        unauthorized: 'Unauthorized access',
+        forbidden: 'Access forbidden',
+        notFound: 'Not found',
+        serverError: 'Server error'
+      },
+      common: {
+        loading: 'Loading...',
+        submit: 'Submit',
+        cancel: 'Cancel',
+        save: 'Save',
+        delete: 'Delete',
+        edit: 'Edit',
+        close: 'Close',
+        yes: 'Yes',
+        no: 'No'
+      },
       login: 'Login',
       register: 'Register',
       logout: 'Logout',

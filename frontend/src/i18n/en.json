@@ -14,8 +14,9 @@
     "confirmPassword": "Confirm Password",
     "submit": "Create Admin Account",
     "submitting": "Creating...",
-    "success": "Account created successfully! Logging in...",
+    "success": "Account created successfully! Redirecting to login...",
     "alreadyCompleted": "Initial setup has already been completed. Please log in.",
+    "already_configured": "System already configured",
     "goToLogin": "Go to Login"
   },
   "login": {

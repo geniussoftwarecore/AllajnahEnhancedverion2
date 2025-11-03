@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from '../api/axios';
 import FormField from '../components/ui/FormField';
 import CTAButton from '../components/ui/CTAButton';
@@ -14,10 +15,12 @@ import {
   validateRequired,
   mapBackendError
 } from '../utils/validation';
-import translations from '../i18n/ar.json';
 
 function Setup() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language || 'ar';
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -28,13 +31,30 @@ function Setup() {
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
   const [setupCompleted, setSetupCompleted] = useState(false);
 
   useEffect(() => {
-    const completed = localStorage.getItem('setup_completed');
-    if (completed === 'true') {
-      setSetupCompleted(true);
-    }
+    const checkSetupStatus = async () => {
+      try {
+        const response = await axios.get('/setup/status');
+        const needsSetup = response.data.needs_setup;
+        const isCompleted = !needsSetup;
+        
+        setSetupCompleted(isCompleted);
+        localStorage.setItem('setup_completed', isCompleted.toString());
+      } catch (err) {
+        console.error('Failed to check setup status:', err);
+        const storedStatus = localStorage.getItem('setup_completed');
+        if (storedStatus === 'true') {
+          setSetupCompleted(true);
+        }
+      } finally {
+        setCheckingStatus(false);
+      }
+    };
+
+    checkSetupStatus();
   }, []);
 
   const validateField = (name, value) => {
@@ -42,18 +62,18 @@ function Setup() {
 
     switch (name) {
       case 'email':
-        fieldError = validateEmail(value, 'ar');
+        fieldError = validateEmail(value, currentLang);
         break;
       case 'password':
-        const passwordErrors = validatePassword(value, 'ar');
+        const passwordErrors = validatePassword(value, currentLang);
         fieldError = passwordErrors ? passwordErrors[0] : null;
         break;
       case 'confirmPassword':
-        fieldError = validatePasswordMatch(formData.password, value, 'ar');
+        fieldError = validatePasswordMatch(formData.password, value, currentLang);
         break;
       case 'first_name':
       case 'last_name':
-        fieldError = validateRequired(value, 'ar');
+        fieldError = validateRequired(value, currentLang);
         break;
       default:
         break;
@@ -87,16 +107,16 @@ function Setup() {
   const validateForm = () => {
     const newErrors = {};
     
-    newErrors.first_name = validateRequired(formData.first_name, 'ar');
-    newErrors.last_name = validateRequired(formData.last_name, 'ar');
-    newErrors.email = validateEmail(formData.email, 'ar');
+    newErrors.first_name = validateRequired(formData.first_name, currentLang);
+    newErrors.last_name = validateRequired(formData.last_name, currentLang);
+    newErrors.email = validateEmail(formData.email, currentLang);
     
-    const passwordErrors = validatePassword(formData.password, 'ar');
+    const passwordErrors = validatePassword(formData.password, currentLang);
     if (passwordErrors) {
       newErrors.password = passwordErrors.join('\n');
     }
     
-    newErrors.confirmPassword = validatePasswordMatch(formData.password, formData.confirmPassword, 'ar');
+    newErrors.confirmPassword = validatePasswordMatch(formData.password, formData.confirmPassword, currentLang);
 
     Object.keys(newErrors).forEach(key => {
       if (!newErrors[key]) delete newErrors[key];
@@ -111,7 +131,7 @@ function Setup() {
     setError('');
 
     if (!validateForm()) {
-      setError('يرجى تصحيح الأخطاء في النموذج');
+      setError(t('errors.generic'));
       return;
     }
 
@@ -126,20 +146,18 @@ function Setup() {
         role: 'higher_committee'
       });
 
-      localStorage.setItem('token', response.data.access_token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
       localStorage.setItem('setup_completed', 'true');
-      
       setSetupCompleted(true);
       
       setTimeout(() => {
-        window.location.href = '/';
+        navigate('/login');
       }, 1500);
     } catch (err) {
-      const errorMessage = mapBackendError(err, 'ar');
+      const errorMessage = mapBackendError(err, currentLang);
       setError(errorMessage);
       
-      if (errorMessage.includes('تم إكمال الإعداد')) {
+      if (err?.response?.data?.detail?.includes('already been completed') || 
+          errorMessage.includes(t('setup.already_configured'))) {
         localStorage.setItem('setup_completed', 'true');
         setSetupCompleted(true);
       }
@@ -148,16 +166,24 @@ function Setup() {
     }
   };
 
+  if (checkingStatus) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">{t('common.loading')}</div>
+      </div>
+    );
+  }
+
   if (setupCompleted) {
     return (
       <FormWrapper
-        title="تم الإعداد بالفعل"
-        subtitle="النظام جاهز للاستخدام"
+        title={t('setup.already_configured')}
+        subtitle={t('common.loading')}
         icon={SparklesIcon}
       >
         <Alert
           type="success"
-          message={translations.setup.alreadyCompleted}
+          message={t('setup.alreadyCompleted')}
         />
         <Link to="/login">
           <CTAButton
@@ -165,7 +191,7 @@ function Setup() {
             size="lg"
             fullWidth
           >
-            {translations.setup.goToLogin}
+            {t('setup.goToLogin')}
           </CTAButton>
         </Link>
       </FormWrapper>
@@ -174,14 +200,14 @@ function Setup() {
 
   return (
     <FormWrapper
-      title={translations.setup.title}
-      subtitle={translations.setup.subtitle}
+      title={t('setup.title')}
+      subtitle={t('setup.subtitle')}
       icon={SparklesIcon}
       onSubmit={handleSubmit}
     >
       <Alert
         type="info"
-        message={translations.setup.welcome}
+        message={t('setup.welcome')}
       />
 
       {error && (
@@ -194,11 +220,11 @@ function Setup() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField
-          label={translations.setup.firstName}
+          label={t('setup.firstName')}
           name="first_name"
           type="text"
           required
-          placeholder="أدخل الاسم الأول"
+          placeholder={currentLang === 'ar' ? 'أدخل الاسم الأول' : 'Enter first name'}
           value={formData.first_name}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -207,11 +233,11 @@ function Setup() {
         />
 
         <FormField
-          label={translations.setup.lastName}
+          label={t('setup.lastName')}
           name="last_name"
           type="text"
           required
-          placeholder="أدخل الاسم الأخير"
+          placeholder={currentLang === 'ar' ? 'أدخل الاسم الأخير' : 'Enter last name'}
           value={formData.last_name}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -221,11 +247,11 @@ function Setup() {
       </div>
 
       <FormField
-        label={translations.setup.email}
+        label={t('setup.email')}
         name="email"
         type="email"
         required
-        placeholder="أدخل بريدك الإلكتروني"
+        placeholder={currentLang === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
         value={formData.email}
         onChange={handleChange}
         onBlur={handleBlur}
@@ -235,11 +261,11 @@ function Setup() {
 
       <div className="space-y-4">
         <FormField
-          label={translations.setup.password}
+          label={t('setup.password')}
           name="password"
           type="password"
           required
-          placeholder="أدخل كلمة المرور"
+          placeholder={currentLang === 'ar' ? 'أدخل كلمة المرور' : 'Enter password'}
           value={formData.password}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -251,11 +277,11 @@ function Setup() {
       </div>
 
       <FormField
-        label={translations.setup.confirmPassword}
+        label={t('setup.confirmPassword')}
         name="confirmPassword"
         type="password"
         required
-        placeholder="أدخل كلمة المرور مرة أخرى"
+        placeholder={currentLang === 'ar' ? 'أدخل كلمة المرور مرة أخرى' : 'Enter password again'}
         value={formData.confirmPassword}
         onChange={handleChange}
         onBlur={handleBlur}
@@ -271,7 +297,7 @@ function Setup() {
         loading={loading}
         disabled={loading}
       >
-        {loading ? translations.setup.submitting : translations.setup.submit}
+        {loading ? t('setup.submitting') : t('setup.submit')}
       </CTAButton>
     </FormWrapper>
   );

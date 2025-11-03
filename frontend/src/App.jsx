@@ -53,8 +53,13 @@ function AppRoutes() {
       try {
         const response = await axios.get('/setup/status');
         setNeedsSetup(response.data.needs_setup);
+        localStorage.setItem('setup_completed', (!response.data.needs_setup).toString());
       } catch (error) {
         console.error('Failed to check setup status:', error);
+        const storedStatus = localStorage.getItem('setup_completed');
+        if (storedStatus === 'true') {
+          setNeedsSetup(false);
+        }
       } finally {
         setSetupLoading(false);
       }
