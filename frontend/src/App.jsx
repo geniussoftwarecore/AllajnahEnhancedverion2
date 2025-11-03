@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -6,19 +6,22 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from './api/axios';
+import useRTL from './hooks/useRTL';
 import PageTransition from './components/PageTransition';
+import LoadingFallback from './components/LoadingFallback';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Setup from './pages/Setup';
-import TraderDashboard from './pages/TraderDashboard';
-import TraderSubscription from './pages/TraderSubscription';
-import TechnicalCommitteeDashboard from './pages/TechnicalCommitteeDashboard';
-import HigherCommitteeDashboard from './pages/HigherCommitteeDashboard';
-import UsersManagement from './pages/Admin/UsersManagement';
-import PaymentsReview from './pages/Admin/PaymentsReview';
-import Settings from './pages/Admin/Settings';
-import Analytics from './pages/Admin/Analytics';
-import AuditLog from './pages/Admin/AuditLog';
+
+const TraderDashboard = lazy(() => import('./pages/TraderDashboard'));
+const TraderSubscription = lazy(() => import('./pages/TraderSubscription'));
+const TechnicalCommitteeDashboard = lazy(() => import('./pages/TechnicalCommitteeDashboard'));
+const HigherCommitteeDashboard = lazy(() => import('./pages/HigherCommitteeDashboard'));
+const UsersManagement = lazy(() => import('./pages/Admin/UsersManagement'));
+const PaymentsReview = lazy(() => import('./pages/Admin/PaymentsReview'));
+const Settings = lazy(() => import('./pages/Admin/Settings'));
+const Analytics = lazy(() => import('./pages/Admin/Analytics'));
+const AuditLog = lazy(() => import('./pages/Admin/AuditLog'));
 
 function PrivateRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -89,76 +92,100 @@ function AppRoutes() {
 
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-      <Route path="/setup" element={<Navigate to="/login" />} />
-      <Route path="/login" element={user ? <Navigate to="/" /> : <PageTransition><Login /></PageTransition>} />
-      <Route path="/register" element={user ? <Navigate to="/" /> : <PageTransition><Register /></PageTransition>} />
-      
-      <Route
-        path="/"
-        element={
-          <PrivateRoute>
-            {user?.role === 'trader' && <TraderDashboard />}
-            {user?.role === 'technical_committee' && <TechnicalCommitteeDashboard />}
-            {user?.role === 'higher_committee' && <HigherCommitteeDashboard />}
-            {!user && <Navigate to="/login" />}
-          </PrivateRoute>
-        }
-      />
-      
-      {/* Trader Routes */}
-      <Route
-        path="/subscription"
-        element={
-          <PrivateRoute allowedRoles={['trader']}>
-            <TraderSubscription />
-          </PrivateRoute>
-        }
-      />
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes location={location} key={location.pathname}>
+        <Route path="/setup" element={<Navigate to="/login" />} />
+        <Route path="/login" element={user ? <Navigate to="/" /> : <PageTransition><Login /></PageTransition>} />
+        <Route path="/register" element={user ? <Navigate to="/" /> : <PageTransition><Register /></PageTransition>} />
+        
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              {user?.role === 'trader' && <TraderDashboard />}
+              {user?.role === 'technical_committee' && <TechnicalCommitteeDashboard />}
+              {user?.role === 'higher_committee' && <HigherCommitteeDashboard />}
+              {!user && <Navigate to="/login" />}
+            </PrivateRoute>
+          }
+        />
+        
+        {/* Trader Routes */}
+        <Route
+          path="/subscription"
+          element={
+            <PrivateRoute allowedRoles={['trader']}>
+              <TraderSubscription />
+            </PrivateRoute>
+          }
+        />
 
-      {/* Higher Committee Admin Routes */}
-      <Route
-        path="/admin/users"
-        element={
-          <PrivateRoute allowedRoles={['higher_committee']}>
-            <UsersManagement />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/admin/payments"
-        element={
-          <PrivateRoute allowedRoles={['higher_committee']}>
-            <PaymentsReview />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/admin/settings"
-        element={
-          <PrivateRoute allowedRoles={['higher_committee']}>
-            <Settings />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/admin/analytics"
-        element={
-          <PrivateRoute allowedRoles={['higher_committee']}>
-            <Analytics />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/admin/audit-log"
-        element={
-          <PrivateRoute allowedRoles={['higher_committee']}>
-            <AuditLog />
-          </PrivateRoute>
-        }
-      />
-      </Routes>
+        {/* Higher Committee Admin Routes */}
+        <Route
+          path="/admin/users"
+          element={
+            <PrivateRoute allowedRoles={['higher_committee']}>
+              <UsersManagement />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/payments"
+          element={
+            <PrivateRoute allowedRoles={['higher_committee']}>
+              <PaymentsReview />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/settings"
+          element={
+            <PrivateRoute allowedRoles={['higher_committee']}>
+              <Settings />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/analytics"
+          element={
+            <PrivateRoute allowedRoles={['higher_committee']}>
+              <Analytics />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/audit-log"
+          element={
+            <PrivateRoute allowedRoles={['higher_committee']}>
+              <AuditLog />
+            </PrivateRoute>
+          }
+        />
+        </Routes>
+      </Suspense>
     </AnimatePresence>
+  );
+}
+
+function AppContent() {
+  const { isRTL } = useRTL();
+  
+  return (
+    <div className="min-h-screen">
+      <AppRoutes />
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={isRTL}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+    </div>
   );
 }
 
@@ -167,21 +194,7 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <div className="min-h-screen" dir="rtl">
-            <AppRoutes />
-            <ToastContainer
-              position="top-center"
-              autoClose={3000}
-              hideProgressBar={false}
-              newestOnTop
-              closeOnClick
-              rtl={true}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme="light"
-            />
-          </div>
+          <AppContent />
         </Router>
       </AuthProvider>
     </ThemeProvider>

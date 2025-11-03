@@ -11,10 +11,12 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
       document.body.classList.add('dark');
       localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'light');
       document.body.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }

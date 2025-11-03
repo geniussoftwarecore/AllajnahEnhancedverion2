@@ -46,11 +46,17 @@ export default function BottomNavigation({ role }) {
 
   return (
     <motion.nav
+      role="navigation"
+      aria-label="التنقل الرئيسي"
       initial={{ y: 100 }}
       animate={{ y: 0 }}
-      className="fixed bottom-0 left-0 right-0 md:hidden z-40 glass-header pb-safe"
+      className="fixed bottom-0 left-0 right-0 md:hidden glass-header pb-safe"
+      style={{ zIndex: 'var(--z-index-fixed)' }}
     >
-      <div className="flex justify-around items-center px-2 py-2">
+      <div 
+        className="flex justify-around items-center"
+        style={{ padding: 'var(--spacing-2)' }}
+      >
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = isActive ? item.activeIcon : item.icon;
@@ -60,14 +66,30 @@ export default function BottomNavigation({ role }) {
               key={item.path}
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center justify-center p-2 rounded-2xl transition-all ${
+              className={`flex flex-col items-center justify-center ${
                 isActive 
                   ? 'bg-gradient-to-r from-primary-500 to-primary-400 text-white shadow-glow-green' 
                   : 'text-gray-600 hover:text-primary-500'
               }`}
+              style={{ 
+                padding: 'var(--spacing-2)',
+                borderRadius: 'var(--border-radius-2xl)',
+                transition: 'all var(--transition-base)'
+              }}
+              aria-label={item.label}
+              aria-current={isActive ? 'page' : undefined}
             >
-              <Icon className="w-6 h-6 mb-1" />
-              <span className="text-xs font-medium">{item.label}</span>
+              <Icon 
+                className="w-6 h-6"
+                style={{ marginBottom: 'var(--spacing-1)' }}
+                aria-hidden="true"
+              />
+              <span 
+                className="font-medium"
+                style={{ fontSize: 'var(--font-size-xs)' }}
+              >
+                {item.label}
+              </span>
             </motion.button>
           );
         })}

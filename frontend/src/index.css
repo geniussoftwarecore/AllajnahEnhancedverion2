@@ -1,17 +1,11 @@
 @import 'react-datepicker/dist/react-datepicker.css';
 @import 'react-toastify/dist/ReactToastify.css';
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700&display=swap');
+@import './theme/tokens.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root {
-  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
-  --touch-target-min: 44px;
-}
 
 @layer base {
   * {

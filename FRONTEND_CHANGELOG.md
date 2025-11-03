@@ -6,7 +6,53 @@ This changelog documents all frontend-only changes made during the UI redesign a
 ## Date
 November 2, 2025 - November 3, 2025
 
-## Latest Update (November 3, 2025 - Afternoon)
+## Latest Update (November 3, 2025 - Evening)
+### Design Tokens & Accessibility Enhancements
+- **Added**: Comprehensive design token system (`frontend/src/theme/tokens.css` and `frontend/src/theme/tokens.js`)
+  - CSS variables for spacing, colors, typography, shadows, transitions, and z-index
+  - Dark mode support with `[data-theme="dark"]` attribute
+  - JavaScript export for programmatic access to tokens
+- **Enhanced**: RTL (Right-to-Left) auto-detection based on i18next language
+  - Created `useRTL` hook (`frontend/src/hooks/useRTL.js`) for automatic direction detection
+  - Removed hardcoded `dir="rtl"` attribute from App.jsx
+  - Dynamic ToastContainer RTL configuration based on language
+- **Refactored**: Header component with design tokens and ARIA roles
+  - Added `role="banner"` for semantic HTML
+  - Enhanced theme toggle button with `aria-label` and `aria-pressed`
+  - User info section with `role="status"` and `aria-label`
+  - Logout button with descriptive `aria-label`
+  - All spacing, typography, and z-index now use CSS variables
+- **Refactored**: BottomNavigation component with design tokens and ARIA roles
+  - Added `role="navigation"` and `aria-label` for navigation landmark
+  - Active navigation items marked with `aria-current="page"`
+  - All buttons have descriptive `aria-label` attributes
+  - Icons marked with `aria-hidden="true"` to avoid screen reader duplication
+- **Refactored**: CTAButton component with design tokens and ARIA improvements
+  - All spacing and typography use design tokens via inline styles
+  - Loading state with `aria-busy` attribute
+  - Loading spinner with `role="status"` and `aria-live="polite"`
+  - Proper `aria-label` support for buttons
+  - Icons marked with `aria-hidden="true"`
+- **Implemented**: React.lazy + Suspense for performance optimization
+  - Lazy-loaded large pages: Analytics, UsersManagement, Settings, AuditLog
+  - Lazy-loaded dashboard components: TraderDashboard, TechnicalCommitteeDashboard, HigherCommitteeDashboard
+  - Created LoadingFallback component with glass-morphism design and accessible loading indicator
+  - Login, Register, and Setup pages remain eagerly loaded for faster initial load
+- **Updated**: ThemeContext to set `data-theme` attribute for design token support
+- **Updated**: index.css to import design tokens
+- **Files Modified**:
+  - `frontend/src/theme/tokens.css` (NEW) - Design token definitions
+  - `frontend/src/theme/tokens.js` (NEW) - Token export for JS consumption
+  - `frontend/src/hooks/useRTL.js` (NEW) - RTL auto-detection hook
+  - `frontend/src/components/LoadingFallback.jsx` (NEW) - Suspense fallback component
+  - `frontend/src/App.jsx` - Lazy loading and RTL integration
+  - `frontend/src/components/Header.jsx` - Design tokens and ARIA roles
+  - `frontend/src/components/ui/BottomNavigation.jsx` - Design tokens and ARIA roles
+  - `frontend/src/components/ui/CTAButton.jsx` - Design tokens and ARIA improvements
+  - `frontend/src/context/ThemeContext.jsx` - data-theme attribute support
+  - `frontend/src/index.css` - Token import
+
+## Previous Update (November 3, 2025 - Afternoon)
 ### Axios Interceptor Enhancements
 - **Enhanced**: Complete axios interceptor overhaul for better error handling
 - **Added**: JWT expiry checking before each request (graceful logout if expired)
