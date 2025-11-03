@@ -1,0 +1,138 @@
+✅ What’s Working
+
+Frontend redesign is clearly applied: Tailwind tokens, unified UI, RTL layout, and bilingual fonts.
+
+Validation system is centralized and properly integrated across main forms.
+
+However, a few critical corrections (API paths, setup check, login cooldown, i18n keys, smoke tests) remain unfinished.
+
+🧩 Detailed Findings (per required fix)
+1️⃣ Absolute API paths ignoring baseURL — ❌ Not fully fixed
+
+In frontend/src/context/AuthContext.jsx:
+Calls like
+
+api.post('/auth/login', ...)
+api.post('/auth/register', ...)
+
+
+still start with /.
+✅ Fix: remove the leading slash:
+
+api.post('auth/login', ...)
+api.post('auth/register', ...)
+
+
+In frontend/src/App.jsx:
+
+axios.get('/setup/status')
+
+
+should instead be
+
+api.get('setup/status')
+
+
+(and must import the same api instance from ../api/axios).
+
+In frontend/src/pages/Setup.jsx:
+axios.post('/setup/initialize') → should be axios.post('setup/initialize').
+
+These incorrect slashes bypass the baseURL:'/api' and may cause silent 401 errors even when the backend is correct.
+
+2️⃣ Missing setup status check inside Setup.jsx — ❌ Not implemented
+
+The page still relies only on localStorage('setup_completed').
+
+It does not perform GET setup/status on mount.
+✅ Required: add a useEffect that calls api.get('setup/status');
+
+If response = already_configured → show message and redirect to /login.
+
+Else, keep the setup form active.
+
+3️⃣ Login cooldown logic — ⚠️ Partially implemented
+
+Login.jsx defines retryDelay but applies it immediately after one failed attempt.
+
+The planned behavior (per prompt) is:
+
+Track failedAttempts (state + localStorage).
+
+After 5 consecutive failures, trigger 60-second cooldown with countdown.
+
+Reset counter after successful login.
+
+4️⃣ Missing i18n keys — ⚠️ Partially present
+
+The i18n files en.json and ar.json are rich and functional, but the following explicit keys are missing or named differently:
+
+setup.success
+setup.already_configured
+errors.invalid_credentials
+errors.server_error
+errors.validation_failed
+password.requirements
+
+
+Either add these exact keys or adjust code to use the existing equivalent ones — consistency is key.
+
+5️⃣ Smoke tests — ❌ Still placeholders
+
+File frontend/tests/smoke.test.js exists but only contains trivial placeholders:
+
+expect(true).toBe(true)
+
+
+✅ Needed: use @testing-library/react (or jsdom) to render <Setup/> and <Login/> components and ensure:
+
+No console errors.
+
+Expected fields render correctly.
+
+🛠️ Quick Patches Recommended
+A. Fix API paths
+// AuthContext.jsx
+- await api.post('/auth/login', { email, password })
++ await api.post('auth/login', { email, password })
+
+- await api.post('/auth/register', userData)
++ await api.post('auth/register', userData)
+
+// App.jsx
+- const res = await axios.get('/setup/status')
++ const res = await api.get('setup/status')
+
+// Setup.jsx
+- await axios.post('/setup/initialize', payload)
++ await axios.post('setup/initialize', payload)
+
+
+Make sure all pages import api from ../api/axios.
+
+B. Add setup status check inside Setup.jsx
+
+Use a useEffect hook that calls api.get('setup/status'), updates UI, and redirects accordingly.
+
+C. Complete login cooldown
+
+Implement failedAttempts in state + localStorage, trigger 60-sec lockout after 5 failures, reset after success.
+
+D. Normalize i18n
+
+Add or rename keys to exactly match usage (avoid mixed naming or hardcoded strings).
+
+E. Update smoke tests
+
+Render Setup + Login, verify no JS exceptions and DOM fields exist.
+
+🧠 Final Verdict
+Area	Status
+Frontend redesign & validation	✅ Completed
+API paths correction	❌ Incomplete
+Setup status sync	❌ Missing
+Login cooldown	⚠️ Partial
+i18n standardization	⚠️ Partial
+Smoke tests	❌ Placeholder
+
+➡️ Once these five corrections are applied, the system will be fully ready for Phase 2, which focuses on the workflow logic redesign between the three roles (Higher Committee, Technical Committee, and Trader).
