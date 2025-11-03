@@ -31,7 +31,7 @@ const clearAuthAndRedirect = (redirectTo = null) => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
   
-  const currentPath = redirectTo || window.location.pathname;
+  const currentPath = redirectTo || (window.location.pathname + window.location.search + window.location.hash);
   if (currentPath !== '/login' && currentPath !== '/register' && currentPath !== '/setup') {
     window.location.href = `/login?redirect_to=${encodeURIComponent(currentPath)}`;
   } else {
@@ -69,7 +69,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isAuthEndpoint = error.config?.url?.includes('/auth/login') || 
+                          error.config?.url?.includes('/auth/register');
+    
+    if (error.response?.status === 401 && !isAuthEndpoint) {
       clearAuthAndRedirect();
       return Promise.reject(error);
     }

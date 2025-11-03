@@ -6,7 +6,21 @@ This changelog documents all frontend-only changes made during the UI redesign a
 ## Date
 November 2, 2025 - November 3, 2025
 
-## Latest Update (November 3, 2025 - Morning)
+## Latest Update (November 3, 2025 - Afternoon)
+### Axios Interceptor Enhancements
+- **Enhanced**: Complete axios interceptor overhaul for better error handling
+- **Added**: JWT expiry checking before each request (graceful logout if expired)
+- **Added**: 401 interceptor with automatic redirect to `/login?redirect_to=<current_path>`
+- **Added**: Centralized network error toasts for all HTTP status codes
+- **Added**: `decodeJWT()` helper function to parse JWT tokens
+- **Added**: `isTokenExpired()` function to check JWT expiration
+- **Added**: `clearAuthAndRedirect()` function for consistent logout behavior
+- **Updated**: Request interceptor to check token expiry before making requests
+- **Updated**: Response interceptor with comprehensive error handling (403, 404, 500, network errors)
+- **Files Modified**:
+  - `frontend/src/api/axios.js` - Complete interceptor rewrite with JWT expiry and error toasts
+
+## Update (November 3, 2025 - Morning)
 ### Unified Validation System with Login Cooldown
 - **Enhanced**: Unified validation across Login and Register pages
 - **Added**: Login cooldown after 5 failed attempts (30 seconds)
