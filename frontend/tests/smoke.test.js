@@ -25,7 +25,7 @@
  * - npx playwright test tests/smoke.test.js --ui
  */
 
-const { test, expect } = require('@playwright/test');
+import { test, expect } from '@playwright/test';
 
 const BASE_URL = 'http://localhost:5000';
 
@@ -213,13 +213,23 @@ test.describe('Frontend Smoke Tests', () => {
       // Visit a non-existent page
       await page.goto(`${BASE_URL}/this-page-does-not-exist`, { waitUntil: 'networkidle' });
       
-      // The app should either redirect or show a 404 message
-      // Check if we're still on a valid page or if there's a 404 message
       const pageContent = await page.content();
       
       // Should not crash - page should load something
       expect(pageContent).toBeTruthy();
       expect(pageContent.length).toBeGreaterThan(0);
+      
+      // Must show explicit 404 error message or not-found indicator to the user
+      const has404Message = 
+        pageContent.toLowerCase().includes('404') ||
+        pageContent.toLowerCase().includes('not found') ||
+        pageContent.toLowerCase().includes('page not found') ||
+        pageContent.toLowerCase().includes('لم يتم العثور') || // Arabic for "not found"
+        pageContent.toLowerCase().includes('الصفحة غير موجودة'); // Arabic for "page not found"
+      
+      // Must display a 404 message to the user
+      expect(has404Message, 
+        'Should display a 404 or not-found message to the user').toBeTruthy();
     });
 
     test('should handle 400 (Bad Request) with user-friendly message', async ({ page }) => {
@@ -240,27 +250,37 @@ test.describe('Frontend Smoke Tests', () => {
       // Find and fill the form
       const submitButton = await page.locator('button[type="submit"]');
       
-      if (await submitButton.count() > 0) {
-        // Fill with some data to pass client-side validation
-        const inputs = await page.locator('input').all();
-        for (const input of inputs) {
-          const type = await input.getAttribute('type');
-          if (type === 'email' || type === 'text') {
-            await input.fill('invalid-email');
-          } else if (type === 'password') {
-            await input.fill('TestPassword123!');
-          }
+      // Assert submit button exists
+      await expect(submitButton).toBeVisible();
+      
+      // Fill with some data to pass client-side validation
+      const inputs = await page.locator('input').all();
+      for (const input of inputs) {
+        const type = await input.getAttribute('type');
+        if (type === 'email' || type === 'text') {
+          await input.fill('invalid-email');
+        } else if (type === 'password') {
+          await input.fill('TestPassword123!');
         }
-        
-        await submitButton.click();
-        
-        // Wait for error response
-        await page.waitForTimeout(1000);
-        
-        // Should display error without crashing
-        const pageContent = await page.content();
-        expect(pageContent).toBeTruthy();
       }
+      
+      await submitButton.click();
+      
+      // Wait for error response
+      await page.waitForTimeout(1500);
+      
+      // Should display error message to user
+      const pageContent = await page.content();
+      const hasErrorMessage = 
+        pageContent.toLowerCase().includes('invalid') ||
+        pageContent.toLowerCase().includes('email') ||
+        pageContent.toLowerCase().includes('format') ||
+        pageContent.toLowerCase().includes('error') ||
+        pageContent.toLowerCase().includes('خطأ') || // Arabic for "error"
+        pageContent.toLowerCase().includes('غير صحيح'); // Arabic for "incorrect"
+      
+      expect(hasErrorMessage, 
+        'Should display user-friendly error message on 400 Bad Request').toBeTruthy();
     });
   });
 
@@ -279,16 +299,18 @@ test.describe('Frontend Smoke Tests', () => {
       // Look for link to login (might be a button or link)
       const loginLink = await page.locator('a[href*="login"], button:has-text("تسجيل الدخول"), button:has-text("Login")').first();
       
-      if (await loginLink.count() > 0) {
-        await loginLink.click();
-        await page.waitForLoadState('networkidle');
-        
-        // Verify we're on login page
-        expect(page.url()).toContain('login');
-        
-        // Verify no exceptions during navigation
-        expect(jsExceptions, `Found JS exceptions during navigation: ${jsExceptions.join(', ')}`).toHaveLength(0);
-      }
+      // Assert the navigation link exists
+      await expect(loginLink, 
+        'Navigation link from /setup to /login should exist').toBeVisible();
+      
+      await loginLink.click();
+      await page.waitForLoadState('networkidle');
+      
+      // Verify we're on login page
+      expect(page.url()).toContain('login');
+      
+      // Verify no exceptions during navigation
+      expect(jsExceptions, `Found JS exceptions during navigation: ${jsExceptions.join(', ')}`).toHaveLength(0);
     });
 
     test('should navigate from /login to /setup without errors', async ({ page }) => {
@@ -305,18 +327,21 @@ test.describe('Frontend Smoke Tests', () => {
       // Look for link to setup/register
       const setupLink = await page.locator('a[href*="setup"], a[href*="register"], button:has-text("تسجيل"), button:has-text("Register")').first();
       
-      if (await setupLink.count() > 0) {
-        await setupLink.click();
-        await page.waitForLoadState('networkidle');
-        
-        // Verify navigation occurred
-        const url = page.url();
-        const isValidDestination = url.includes('setup') || url.includes('register');
-        expect(isValidDestination).toBeTruthy();
-        
-        // Verify no exceptions during navigation
-        expect(jsExceptions, `Found JS exceptions during navigation: ${jsExceptions.join(', ')}`).toHaveLength(0);
-      }
+      // Assert the navigation link exists
+      await expect(setupLink,
+        'Navigation link from /login to /setup or /register should exist').toBeVisible();
+      
+      await setupLink.click();
+      await page.waitForLoadState('networkidle');
+      
+      // Verify navigation occurred
+      const url = page.url();
+      const isValidDestination = url.includes('setup') || url.includes('register');
+      expect(isValidDestination, 
+        'Should navigate to setup or register page').toBeTruthy();
+      
+      // Verify no exceptions during navigation
+      expect(jsExceptions, `Found JS exceptions during navigation: ${jsExceptions.join(', ')}`).toHaveLength(0);
     });
   });
 });
