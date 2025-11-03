@@ -51,6 +51,29 @@ The system is built with a clear separation of concerns using a backend in Pytho
 -   **Icons**: lucide-react
 
 ## Recent Changes
+**November 3, 2025** - Design Tokens, Accessibility & Performance Enhancements
+-   **Design Token System**: Comprehensive CSS variable system for spacing, colors, typography, shadows, transitions, and z-index
+    -   Created frontend/src/theme/tokens.css with complete design token definitions
+    -   Created frontend/src/theme/tokens.js for programmatic token access
+    -   Dark mode support via [data-theme="dark"] attribute
+    -   All major components refactored to use tokens (Header, BottomNavigation, CTAButton)
+-   **RTL Auto-Detection**: Automatic direction switching based on i18next language
+    -   Created useRTL hook for automatic RTL/LTR detection
+    -   Removed hardcoded dir="rtl" attributes
+    -   Dynamic ToastContainer RTL configuration
+    -   Seamless language switching experience
+-   **Accessibility Improvements**: Enhanced ARIA roles and semantic HTML across UI components
+    -   Header: role="banner", aria-label, aria-pressed for theme toggle, role="status" for user info
+    -   BottomNavigation: role="navigation", aria-current for active items, descriptive aria-labels
+    -   CTAButton: aria-busy for loading states, role="status" for spinners, aria-live="polite"
+    -   LoadingFallback: Accessible Suspense fallback with proper ARIA attributes
+-   **Performance Optimization**: React.lazy + Suspense for code splitting and faster initial load
+    -   Lazy-loaded dashboard pages: TraderDashboard, TechnicalCommitteeDashboard, HigherCommitteeDashboard
+    -   Lazy-loaded admin pages: Analytics, UsersManagement, Settings, AuditLog, PaymentsReview
+    -   Created LoadingFallback component with glass-morphism design
+    -   Login, Register, Setup pages remain eagerly loaded for quick access
+-   **Documentation**: Updated FRONTEND_CHANGELOG.md and QA_CHECKLIST.md with comprehensive testing guidelines
+
 **October 31, 2025** - Next-Gen UI/UX Modernization
 -   **Neumorphism + Glassmorphism Design**: Complete visual overhaul with modern design system
     -   New primary green theme (#00C46B) replacing blue, with gradient backgrounds
