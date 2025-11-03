@@ -2,9 +2,54 @@
 
 ## Date: November 2, 2025 - November 3, 2025
 
-## Latest Update: November 3, 2025 - Unified Validation & Login Cooldown
+## Latest Update: November 3, 2025 - Axios Interceptor Enhancements
 
-### ✅ Login Cooldown Testing (NEW)
+### ✅ Axios 401 Interceptor & Redirect Testing (NEW)
+
+- [ ] **401 on protected route** - Gets 401, redirects to `/login?redirect_to=/dashboard`
+- [ ] **401 redirect preservation** - After login, redirects to original protected route
+- [ ] **401 from auth pages** - On login/register/setup pages, redirects to `/login` (no redirect_to)
+- [ ] **Auth cleared on 401** - Token and user removed from localStorage
+- [ ] **Multiple 401s** - Doesn't create multiple redirect loops
+- [ ] **Redirect URL encoding** - Special characters in path properly encoded
+
+### ✅ JWT Expiry Checking (NEW)
+
+- [ ] **Expired token detection** - Detects expired JWT before making request
+- [ ] **Graceful expiry logout** - Expired token triggers automatic logout with redirect
+- [ ] **Valid token passes** - Non-expired tokens allow requests to proceed
+- [ ] **Invalid token format** - Malformed tokens handled gracefully
+- [ ] **No token** - Missing token doesn't cause errors
+- [ ] **Token refresh flow** - After re-login, new token works correctly
+
+### ✅ Centralized Error Toasts (NEW)
+
+- [ ] **403 error** - Shows "ليس لديك صلاحية للوصول إلى هذا المورد"
+- [ ] **404 error** - Shows "المورد المطلوب غير موجود"
+- [ ] **500 error** - Shows "خطأ في الخادم، يرجى المحاولة لاحقاً"
+- [ ] **Network error** - Shows "خطأ في الاتصال بالشبكة"
+- [ ] **No response** - Shows "فشل الاتصال بالخادم"
+- [ ] **Request error** - Shows "حدث خطأ في إعداد الطلب"
+- [ ] **Toast dismissal** - Error toasts can be dismissed
+- [ ] **No duplicate toasts** - Same error doesn't create multiple toasts
+- [ ] **No JS console errors** - Clean console, no unhandled errors
+
+### ✅ Login Cooldown Testing
+
+- [ ] **First login attempt** - No cooldown on first attempt
+- [ ] **401 error tracking** - Failed login increments attempt counter
+- [ ] **2-4 failed attempts** - Login still allowed, no cooldown
+- [ ] **5 failed attempts** - Cooldown activated (30 seconds)
+- [ ] **Cooldown countdown** - Button shows remaining seconds
+- [ ] **Cooldown prevents submit** - Cannot submit during cooldown
+- [ ] **Cooldown expires** - Can login again after 30 seconds
+- [ ] **Successful login resets** - Counter resets after successful login
+- [ ] **localStorage persistence** - Cooldown persists across page refresh
+- [ ] **Error message display** - Clear message about too many attempts
+
+## Previous Updates
+
+### ✅ Unified Validation & Login Cooldown (Earlier November 3, 2025)
 
 - [ ] **First login attempt** - No cooldown on first attempt
 - [ ] **401 error tracking** - Failed login increments attempt counter
