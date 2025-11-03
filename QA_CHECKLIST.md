@@ -1,6 +1,51 @@
 # QA Checklist - Frontend Redesign & Validation Overhaul
 
-## Date: November 2, 2025
+## Date: November 2, 2025 - November 3, 2025
+
+## Latest Update: November 3, 2025 - Unified Validation & Login Cooldown
+
+### ✅ Login Cooldown Testing (NEW)
+
+- [ ] **First login attempt** - No cooldown on first attempt
+- [ ] **401 error tracking** - Failed login increments attempt counter
+- [ ] **2-4 failed attempts** - Login still allowed, no cooldown
+- [ ] **5 failed attempts** - Cooldown activated (30 seconds)
+- [ ] **Cooldown countdown** - Button shows remaining seconds
+- [ ] **Cooldown prevents submit** - Cannot submit during cooldown
+- [ ] **Cooldown expires** - Can login again after 30 seconds
+- [ ] **Successful login resets** - Counter resets after successful login
+- [ ] **localStorage persistence** - Cooldown persists across page refresh
+- [ ] **Error message display** - Clear message about too many attempts
+
+### ✅ Redirect Preservation Testing (NEW)
+
+- [ ] **Direct login** - Navigates to `/` after successful login
+- [ ] **Login with redirect_to** - URL like `/login?redirect_to=/dashboard`
+- [ ] **Preserves redirect on 401** - redirect_to parameter preserved after error
+- [ ] **Successful redirect** - Navigates to redirect_to path after login
+- [ ] **Fallback to home** - Uses `/` if no redirect_to parameter
+
+### ✅ Error Summary Testing (NEW)
+
+- [ ] **Single field error** - Shows specific error message at top
+- [ ] **Multiple field errors** - Shows "Please correct the following errors" message
+- [ ] **Error dismissal** - Error summary can be dismissed via X button
+- [ ] **Error auto-clear** - Summary clears on successful submit
+- [ ] **Inline + summary** - Both inline errors AND summary display correctly
+
+### ✅ Password Strength Indicator Testing
+
+- [ ] **Register page only** - Shows on Register, not on Login
+- [ ] **Real-time update** - Updates as user types password
+- [ ] **Strength levels** - Shows: Very Weak, Weak, Medium, Good, Very Strong
+- [ ] **Color coding** - Red (weak) to Green (strong)
+- [ ] **Requirements list** - Shows all 5 password requirements
+- [ ] **Check marks** - Requirements show check marks when met
+- [ ] **Visual feedback** - Strength bar animates smoothly
+
+---
+
+## Original Testing (November 2, 2025)
 
 ### ✅ Setup Page Testing
 

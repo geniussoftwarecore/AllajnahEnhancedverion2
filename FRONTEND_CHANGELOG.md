@@ -4,9 +4,26 @@
 This changelog documents all frontend-only changes made during the UI redesign and validation enhancement project. **No backend files were modified.**
 
 ## Date
-November 2, 2025
+November 2, 2025 - November 3, 2025
 
-## Latest Update (November 2, 2025 - Afternoon)
+## Latest Update (November 3, 2025 - Morning)
+### Unified Validation System with Login Cooldown
+- **Enhanced**: Unified validation across Login and Register pages
+- **Added**: Login cooldown after 5 failed attempts (30 seconds)
+- **Added**: `redirect_to` parameter preservation on 401 errors in Login
+- **Added**: Error summary display at top of forms via FormWrapper
+- **Added**: Login attempt tracking and cooldown functions in validation.js
+- **Updated**: FormWrapper to support `errorSummary` and `onDismissError` props
+- **Updated**: i18n keys for cooldown messages and validation errors
+- **Files Modified**:
+  - `frontend/src/utils/validation.js` - Added login attempt/cooldown helpers
+  - `frontend/src/pages/Login.jsx` - Login cooldown + redirect_to preservation
+  - `frontend/src/pages/Register.jsx` - Unified error summary approach
+  - `frontend/src/components/ui/FormWrapper.jsx` - Error summary support
+  - `frontend/src/i18n/ar.json` - New validation and error keys
+  - `frontend/src/i18n/en.json` - New validation and error keys
+
+## Update (November 2, 2025 - Afternoon)
 ### Enhanced Validation Error Mapping
 - **Added**: `mapServerValidationErrors()` function in `frontend/src/utils/validation.js`
 - **Purpose**: Better handling of 422 validation errors from backend with support for both array and object formats
