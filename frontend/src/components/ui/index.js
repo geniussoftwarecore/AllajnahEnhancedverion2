@@ -1,5 +1,6 @@
 export { default as Alert } from './Alert';
 export { default as CardList } from './CardList';
+export { default as ConfirmDialog } from './ConfirmDialog';
 export { default as CTAButton } from './CTAButton';
 export { default as FormField } from './FormField';
 export { default as MobileTopBar } from './MobileTopBar';

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import Header from '../../components/Header';
+import { ConfirmDialog } from '../../components/ui';
 import api from '../../api/axios';
 
 function Settings() {
@@ -75,6 +76,7 @@ function CategoriesTab() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null, isLoading: false });
 
   useEffect(() => {
     loadCategories();
@@ -114,15 +116,17 @@ function CategoriesTab() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا التصنيف؟')) return;
+  const handleDelete = async () => {
+    setConfirmDialog({ ...confirmDialog, isLoading: true });
     
     try {
-      await api.delete(`/categories/${id}`);
+      await api.delete(`/categories/${confirmDialog.id}`);
       loadCategories();
       toast.success('تم حذف التصنيف بنجاح');
+      setConfirmDialog({ isOpen: false, id: null, isLoading: false });
     } catch (error) {
       toast.error(error.response?.data?.detail || 'فشل في حذف التصنيف');
+      setConfirmDialog({ isOpen: false, id: null, isLoading: false });
     }
   };
 
@@ -165,7 +169,7 @@ function CategoriesTab() {
                   تعديل
                 </button>
                 <button
-                  onClick={() => handleDelete(cat.id)}
+                  onClick={() => setConfirmDialog({ isOpen: true, id: cat.id, isLoading: false })}
                   className="text-red-600 hover:text-red-800"
                 >
                   حذف
@@ -186,6 +190,18 @@ function CategoriesTab() {
           onSubmit={(data) => editing ? handleUpdate(editing.id, data) : handleCreate(data)}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, id: null, isLoading: false })}
+        onConfirm={handleDelete}
+        title="حذف التصنيف"
+        message="هل أنت متأكد من حذف هذا التصنيف؟ قد يؤثر هذا على الشكاوى المرتبطة بهذا التصنيف."
+        confirmText="حذف"
+        cancelText="إلغاء"
+        type="danger"
+        isLoading={confirmDialog.isLoading}
+      />
     </div>
   );
 }
@@ -281,6 +297,7 @@ function SLATab() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null, isLoading: false });
 
   useEffect(() => {
     loadData();
@@ -324,15 +341,17 @@ function SLATab() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا الإعداد؟')) return;
+  const handleDelete = async () => {
+    setConfirmDialog({ ...confirmDialog, isLoading: true });
     
     try {
-      await api.delete(`/admin/sla-configs/${id}`);
+      await api.delete(`/admin/sla-configs/${confirmDialog.id}`);
       loadData();
       toast.success('تم حذف الإعداد بنجاح');
+      setConfirmDialog({ isOpen: false, id: null, isLoading: false });
     } catch (error) {
       toast.error(error.response?.data?.detail || 'فشل في حذف الإعداد');
+      setConfirmDialog({ isOpen: false, id: null, isLoading: false });
     }
   };
 
@@ -386,7 +405,7 @@ function SLATab() {
                   تعديل
                 </button>
                 <button
-                  onClick={() => handleDelete(config.id)}
+                  onClick={() => setConfirmDialog({ isOpen: true, id: config.id, isLoading: false })}
                   className="text-red-600 hover:text-red-800"
                 >
                   حذف
@@ -408,6 +427,18 @@ function SLATab() {
           onSubmit={(data) => editing ? handleUpdate(editing.id, data) : handleCreate(data)}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, id: null, isLoading: false })}
+        onConfirm={handleDelete}
+        title="حذف إعداد SLA"
+        message="هل أنت متأكد من حذف هذا الإعداد؟ سيؤدي هذا إلى إزالة قواعد وقت الاستجابة المحددة."
+        confirmText="حذف"
+        cancelText="إلغاء"
+        type="danger"
+        isLoading={confirmDialog.isLoading}
+      />
     </div>
   );
 }
@@ -517,6 +548,7 @@ function PaymentMethodsTab() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null, isLoading: false });
 
   useEffect(() => {
     loadMethods();
@@ -556,15 +588,17 @@ function PaymentMethodsTab() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('هل أنت متأكد من حذف طريقة الدفع؟')) return;
+  const handleDelete = async () => {
+    setConfirmDialog({ ...confirmDialog, isLoading: true });
     
     try {
-      await api.delete(`/admin/payment-methods/${id}`);
+      await api.delete(`/admin/payment-methods/${confirmDialog.id}`);
       loadMethods();
       toast.success('تم حذف طريقة الدفع بنجاح');
+      setConfirmDialog({ isOpen: false, id: null, isLoading: false });
     } catch (error) {
       toast.error(error.response?.data?.detail || 'فشل في حذف طريقة الدفع');
+      setConfirmDialog({ isOpen: false, id: null, isLoading: false });
     }
   };
 
@@ -615,7 +649,7 @@ function PaymentMethodsTab() {
                   تعديل
                 </button>
                 <button
-                  onClick={() => handleDelete(method.id)}
+                  onClick={() => setConfirmDialog({ isOpen: true, id: method.id, isLoading: false })}
                   className="text-red-600 hover:text-red-800"
                 >
                   حذف
@@ -636,6 +670,18 @@ function PaymentMethodsTab() {
           onSubmit={(data) => editing ? handleUpdate(editing.id, data) : handleCreate(data)}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, id: null, isLoading: false })}
+        onConfirm={handleDelete}
+        title="حذف طريقة الدفع"
+        message="هل أنت متأكد من حذف طريقة الدفع هذه؟ لن يتمكن المستخدمون من استخدامها بعد الحذف."
+        confirmText="حذف"
+        cancelText="إلغاء"
+        type="danger"
+        isLoading={confirmDialog.isLoading}
+      />
     </div>
   );
 }
@@ -731,6 +777,7 @@ function SystemSettingsTab() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null, isLoading: false });
 
   useEffect(() => {
     loadSettings();
@@ -770,15 +817,17 @@ function SystemSettingsTab() {
     }
   };
 
-  const handleDelete = async (key) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا الإعداد؟')) return;
+  const handleDelete = async () => {
+    setConfirmDialog({ ...confirmDialog, isLoading: true });
     
     try {
-      await api.delete(`/admin/settings/${key}`);
+      await api.delete(`/admin/settings/${confirmDialog.id}`);
       loadSettings();
       toast.success('تم حذف الإعداد بنجاح');
+      setConfirmDialog({ isOpen: false, id: null, isLoading: false });
     } catch (error) {
       toast.error(error.response?.data?.detail || 'فشل في حذف الإعداد');
+      setConfirmDialog({ isOpen: false, id: null, isLoading: false });
     }
   };
 
@@ -819,7 +868,7 @@ function SystemSettingsTab() {
                   تعديل
                 </button>
                 <button
-                  onClick={() => handleDelete(setting.setting_key)}
+                  onClick={() => setConfirmDialog({ isOpen: true, id: setting.setting_key, isLoading: false })}
                   className="text-red-600 hover:text-red-800"
                 >
                   حذف
@@ -840,6 +889,18 @@ function SystemSettingsTab() {
           onSubmit={(data) => editing ? handleUpdate(editing.setting_key, data) : handleCreate(data)}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, id: null, isLoading: false })}
+        onConfirm={handleDelete}
+        title="حذف الإعداد"
+        message="هل أنت متأكد من حذف هذا الإعداد من النظام؟ قد يؤثر هذا على سلوك التطبيق."
+        confirmText="حذف"
+        cancelText="إلغاء"
+        type="danger"
+        isLoading={confirmDialog.isLoading}
+      />
     </div>
   );
 }

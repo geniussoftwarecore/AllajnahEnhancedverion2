@@ -134,8 +134,10 @@ function ComplaintForm({ onSuccess }) {
             type="text"
             {...register('title', { required: true })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            placeholder="مثال: تأخير في إصدار الرخصة التجارية"
           />
           {errors.title && <span className="text-red-500 text-sm">هذا الحقل مطلوب</span>}
+          <p className="text-sm text-gray-500 mt-1">اكتب عنواناً واضحاً ومختصراً يصف مشكلتك</p>
         </div>
 
         <div className="md:col-span-2">
@@ -185,9 +187,10 @@ function ComplaintForm({ onSuccess }) {
             {...register('description', { required: true })}
             rows="4"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-            placeholder="ماهي تفاصيل الشكوى؟"
+            placeholder="مثال: قدمت طلباً للرخصة في تاريخ 2024/01/15 ولم يتم الرد حتى الآن رغم انقضاء 45 يوماً على الطلب..."
           />
           {errors.description && <span className="text-red-500 text-sm">هذا الحقل مطلوب</span>}
+          <p className="text-sm text-gray-500 mt-1">اشرح المشكلة بالتفصيل مع ذكر التواريخ والأطراف المعنية</p>
         </div>
 
         <div className="md:col-span-2">
@@ -198,8 +201,10 @@ function ComplaintForm({ onSuccess }) {
             {...register('complaint_summary', { required: true })}
             rows="3"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            placeholder="مثال: 1) تقديم الطلب في 15/01/2024 2) عدم الرد لمدة 45 يوماً 3) عدم الالتزام بالمدة القانونية"
           />
           {errors.complaint_summary && <span className="text-red-500 text-sm">هذا الحقل مطلوب</span>}
+          <p className="text-sm text-gray-500 mt-1">لخص أهم النقاط في شكل نقاط مختصرة</p>
         </div>
 
         <div className="md:col-span-2">

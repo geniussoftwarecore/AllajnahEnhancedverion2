@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import Header from '../../components/Header';
+import { ConfirmDialog } from '../../components/ui';
 import api from '../../api/axios';
 
 function UsersManagement() {
@@ -9,6 +10,7 @@ function UsersManagement() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [filters, setFilters] = useState({ role: '', is_active: '', search: '' });
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, userId: null, isLoading: false });
 
   useEffect(() => {
     loadUsers();
@@ -56,16 +58,18 @@ function UsersManagement() {
     }
   };
 
-  const handleDeactivateUser = async (userId) => {
-    if (!window.confirm('هل أنت متأكد من تعطيل هذا المستخدم؟')) return;
+  const handleDeactivateUser = async () => {
+    setConfirmDialog({ ...confirmDialog, isLoading: true });
     
     try {
-      await api.delete(`/admin/users/${userId}`);
+      await api.delete(`/admin/users/${confirmDialog.userId}`);
       loadUsers();
       toast.success('تم تعطيل المستخدم بنجاح');
+      setConfirmDialog({ isOpen: false, userId: null, isLoading: false });
     } catch (error) {
       const message = error.response?.data?.detail || 'فشل في تعطيل المستخدم';
       toast.error(typeof message === 'string' ? message : JSON.stringify(message));
+      setConfirmDialog({ isOpen: false, userId: null, isLoading: false });
     }
   };
 
@@ -211,7 +215,7 @@ function UsersManagement() {
                       </button>
                       {user.is_active && (
                         <button
-                          onClick={() => handleDeactivateUser(user.id)}
+                          onClick={() => setConfirmDialog({ isOpen: true, userId: user.id, isLoading: false })}
                           className="text-red-600 hover:text-red-800"
                         >
                           تعطيل
@@ -244,6 +248,19 @@ function UsersManagement() {
           title="تعديل المستخدم"
         />
       )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, userId: null, isLoading: false })}
+        onConfirm={handleDeactivateUser}
+        title="تعطيل المستخدم"
+        message="هل أنت متأكد من تعطيل هذا المستخدم؟ لن يتمكن من تسجيل الدخول بعد تعطيله."
+        confirmText="تعطيل"
+        cancelText="إلغاء"
+        type="danger"
+        isLoading={confirmDialog.isLoading}
+      />
     </div>
     </>
   );

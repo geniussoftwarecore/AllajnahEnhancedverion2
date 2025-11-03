@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import { ConfirmDialog } from './ui';
 
 function ComplaintDetail({ complaint, onBack, role }) {
   const { user } = useAuth();
@@ -12,6 +13,7 @@ function ComplaintDetail({ complaint, onBack, role }) {
   const [selectedStatus, setSelectedStatus] = useState(complaint.status);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, isLoading: false });
 
   useEffect(() => {
     loadComments();
@@ -80,14 +82,16 @@ function ComplaintDetail({ complaint, onBack, role }) {
   };
 
   const handleReopen = async () => {
-    if (!window.confirm('هل أنت متأكد من إعادة فتح هذه الشكوى؟')) return;
+    setConfirmDialog({ ...confirmDialog, isLoading: true });
 
     try {
       await api.post(`/complaints/${complaint.id}/reopen`);
       alert('تم إعادة فتح الشكوى بنجاح');
+      setConfirmDialog({ isOpen: false, isLoading: false });
       onBack();
     } catch (error) {
       alert(error.response?.data?.detail || 'فشل في إعادة فتح الشكوى');
+      setConfirmDialog({ isOpen: false, isLoading: false });
     }
   };
 
@@ -138,7 +142,7 @@ function ComplaintDetail({ complaint, onBack, role }) {
             )}
             {canReopen() && (
               <button
-                onClick={handleReopen}
+                onClick={() => setConfirmDialog({ isOpen: true, isLoading: false })}
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
               >
                 إعادة فتح الشكوى
@@ -322,6 +326,19 @@ function ComplaintDetail({ complaint, onBack, role }) {
           }}
         />
       )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, isLoading: false })}
+        onConfirm={handleReopen}
+        title="إعادة فتح الشكوى"
+        message="هل أنت متأكد من إعادة فتح هذه الشكوى؟ سيتم إعادة حالتها إلى 'قيد المراجعة'."
+        confirmText="إعادة فتح"
+        cancelText="إلغاء"
+        type="info"
+        isLoading={confirmDialog.isLoading}
+      />
     </div>
   );
 }
