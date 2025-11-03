@@ -63,7 +63,13 @@
     "forbidden": "ممنوع الوصول",
     "notFound": "غير موجود",
     "serverError": "خطأ في الخادم",
-    "invalidCredentials": "بيانات الدخول غير صحيحة"
+    "server_error": "خطأ غير متوقع في الخادم",
+    "invalidCredentials": "بيانات الدخول غير صحيحة",
+    "invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+    "validation_failed": "يرجى تصحيح الحقول المميزة"
+  },
+  "password": {
+    "requirements": "يجب أن تحتوي كلمة المرور على أحرف كبيرة وصغيرة وأرقام ورموز خاصة"
   },
   "common": {
     "loading": "جاري التحميل...",

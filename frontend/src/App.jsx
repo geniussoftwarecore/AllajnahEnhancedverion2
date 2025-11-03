@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import axios from './api/axios';
+import api from './api/axios';
 import useRTL from './hooks/useRTL';
 import PageTransition from './components/PageTransition';
 import LoadingFallback from './components/LoadingFallback';
@@ -54,7 +54,7 @@ function AppRoutes() {
   useEffect(() => {
     const checkSetupStatus = async () => {
       try {
-        const response = await axios.get('/setup/status');
+        const response = await api.get('setup/status');
         setNeedsSetup(response.data.needs_setup);
         localStorage.setItem('setup_completed', (!response.data.needs_setup).toString());
       } catch (error) {

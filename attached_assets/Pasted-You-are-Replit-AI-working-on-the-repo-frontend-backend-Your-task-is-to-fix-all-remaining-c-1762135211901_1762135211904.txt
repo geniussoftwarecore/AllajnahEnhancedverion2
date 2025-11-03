@@ -1,0 +1,70 @@
+You are Replit AI working on the repo (frontend / backend).  
+Your task is to fix all remaining **critical frontend issues** before Phase 2.  
+⚠️ Do NOT touch backend code or endpoints. Only frontend corrections.
+
+==============================
+🧩  GOAL  
+Make the app fully stable and ready for the Phase 2 workflow upgrade.  
+Fix every issue that causes wrong API calls, validation gaps, or incomplete setup/login logic.
+
+==============================
+🪲  CRITICAL ISSUES TO FIX  
+
+1️⃣ ❌ Absolute API paths ignoring baseURL  
+- In `frontend/src/context/AuthContext.jsx`:
+  - Change all `api.post('/auth/...')` and `api.get('/setup/...')` to **relative** paths:
+    ```diff
+    - api.post('/auth/login')
+    + api.post('auth/login')
+
+    - api.post('/auth/register')
+    + api.post('auth/register')
+    ```
+- In `App.jsx`:
+    ```diff
+    - axios.get('/setup/status')
+    + api.get('setup/status')
+    ```
+- Ensure all calls reuse the same `api` instance from `frontend/src/api/axios.js`.  
+✅ Result: all endpoints will correctly use `baseURL:'/api'`.
+
+2️⃣ ⚙️ Setup status check missing inside Setup.jsx  
+- Add `useEffect` that calls `api.get('setup/status')` on mount.  
+- If response shows `already_configured` → show message and redirect to `/login`.  
+- If backend says “needs setup” → keep form active.  
+✅ Result: UI and backend setup state always synchronized.
+
+3️⃣ 🕒 Login retry / cooldown logic incomplete  
+- In `Login.jsx`:  
+  - Track `failedAttempts` (in state + localStorage).  
+  - After 5 failures → block login for 60 s (`retryDelay` countdown UI).  
+  - Reset counter on successful login.  
+✅ Result: safer auth flow and no spamming of login endpoint.
+
+4️⃣ 🌐 i18n keys missing for error/success messages  
+- In `frontend/src/i18n/en.json` and `ar.json`, add:
+"setup.success": "Setup completed successfully.",
+"setup.already_configured": "System already configured.",
+"errors.invalid_credentials": "Invalid email or password.",
+"errors.server_error": "Unexpected server error.",
+"errors.validation_failed": "Please correct highlighted fields.",
+"password.requirements": "Password must contain uppercase, lowercase, number and special character."
+
+pgsql
+Copy code
+- Update `mapBackendError()` and validation messages to use these keys instead of hardcoded strings.  
+✅ Result: consistent bilingual messaging and cleaner validation.
+
+5️⃣ 🧪 Smoke tests placeholder only  
+- In `frontend/tests/smoke.test.js`:  
+Replace placeholders with real checks using `@testing-library/react` or `jsdom`:
+```js
+import { render } from '@testing-library/react';
+import Setup from '../src/pages/Setup';
+import Login from '../src/pages/Login';
+
+test('Setup and Login render without errors', () => {
+  render(<Setup />);
+  render(<Login />);
+  expect(true).toBe(true);
+});

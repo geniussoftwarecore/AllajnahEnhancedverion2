@@ -63,7 +63,13 @@
     "forbidden": "Access forbidden",
     "notFound": "Not found",
     "serverError": "Server error",
-    "invalidCredentials": "Invalid credentials"
+    "server_error": "Unexpected server error",
+    "invalidCredentials": "Invalid credentials",
+    "invalid_credentials": "Invalid email or password",
+    "validation_failed": "Please correct highlighted fields"
+  },
+  "password": {
+    "requirements": "Password must contain uppercase, lowercase, number and special character"
   },
   "common": {
     "loading": "Loading...",

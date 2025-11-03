@@ -140,9 +140,9 @@ function Login() {
         const attempts = incrementLoginAttempts();
         
         if (attempts >= 5) {
-          setLoginCooldown(30);
-          setCooldownSeconds(30);
-          setError('تم تجاوز عدد المحاولات المسموحة. يرجى الانتظار 30 ثانية');
+          setLoginCooldown(60);
+          setCooldownSeconds(60);
+          setError('تم تجاوز عدد المحاولات المسموحة. يرجى الانتظار 60 ثانية');
           
           const interval = setInterval(() => {
             const remaining = getLoginCooldown();

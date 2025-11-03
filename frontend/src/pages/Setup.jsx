@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import axios from '../api/axios';
+import api from '../api/axios';
 import FormField from '../components/ui/FormField';
 import CTAButton from '../components/ui/CTAButton';
 import Alert from '../components/ui/Alert';
@@ -37,7 +37,7 @@ function Setup() {
   useEffect(() => {
     const checkSetupStatus = async () => {
       try {
-        const response = await axios.get('/setup/status');
+        const response = await api.get('setup/status');
         const needsSetup = response.data.needs_setup;
         const isCompleted = !needsSetup;
         
@@ -138,7 +138,7 @@ function Setup() {
     setLoading(true);
 
     try {
-      const response = await axios.post('/setup/initialize', {
+      const response = await api.post('setup/initialize', {
         email: formData.email,
         password: formData.password,
         first_name: formData.first_name,
