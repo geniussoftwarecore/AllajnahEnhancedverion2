@@ -61,11 +61,12 @@ function Setup() {
   useEffect(() => {
     if (justCompleted) {
       const timer = setTimeout(() => {
-        navigate('/login');
-      }, 2000);
+        localStorage.setItem('setup_completed', 'true');
+        window.location.href = '/login';
+      }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [justCompleted, navigate]);
+  }, [justCompleted]);
 
   const validateField = (name, value) => {
     let fieldError = null;
