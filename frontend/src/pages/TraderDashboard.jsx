@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ResponsivePageShell, StatCard, CTAButton, Alert } from '../components/ui';
-import ComplaintForm from '../components/ComplaintForm';
-import ComplaintList from '../components/ComplaintList';
+import { useNavigate } from 'react-router-dom';
+import { ResponsivePageShell, StatCard, QuickActionCard, ChartCard, Alert, ProgressRing } from '../components/ui';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { 
   DocumentTextIcon, 
@@ -12,13 +11,21 @@ import {
   CheckCircleIcon, 
   XCircleIcon,
   CreditCardIcon,
-  PlusIcon,
-  XMarkIcon
+  PlusCircleIcon,
+  ViewfinderCircleIcon,
+  SparklesIcon,
+  BellAlertIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline';
+import { format } from 'date-fns';
+import { ar } from 'date-fns/locale';
 
 function TraderDashboard() {
-  const [showForm, setShowForm] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
+  const [recentComplaints, setRecentComplaints] = useState([]);
+  const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
 
@@ -29,61 +36,65 @@ function TraderDashboard() {
         type: 'info'
       });
       setTimeout(() => setNotification(null), 5000);
-      loadStats();
+      loadDashboardData();
     }
   });
 
   useEffect(() => {
-    loadStats();
+    loadDashboardData();
   }, []);
 
-  const loadStats = async () => {
+  const loadDashboardData = async () => {
     try {
-      const response = await api.get('/dashboard/stats');
-      setStats(response.data);
+      const [statsRes, complaintsRes] = await Promise.all([
+        api.get('/dashboard/stats'),
+        api.get('/complaints?limit=5')
+      ]);
+      
+      setStats(statsRes.data);
+      setRecentComplaints(complaintsRes.data.complaints || []);
+      
+      try {
+        const subRes = await api.get('/subscription');
+        setSubscription(subRes.data);
+      } catch (error) {
+        console.log('No subscription found');
+      }
     } catch (error) {
-      console.error('Error loading stats:', error);
+      console.error('Error loading dashboard:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const statsConfig = [
-    {
-      title: 'إجمالي الشكاوى',
-      value: stats?.total_complaints || 0,
-      icon: DocumentTextIcon,
-      color: 'gray',
-    },
-    {
-      title: 'قيد المراجعة',
-      value: stats?.under_review || 0,
-      icon: ClockIcon,
-      color: 'primary',
-    },
-    {
-      title: 'تم التصعيد',
-      value: stats?.escalated || 0,
-      icon: ArrowTrendingUpIcon,
-      color: 'warning',
-    },
-    {
-      title: 'محلولة',
-      value: stats?.resolved || 0,
-      icon: CheckCircleIcon,
-      color: 'success',
-    },
-    {
-      title: 'مرفوضة',
-      value: stats?.rejected || 0,
-      icon: XCircleIcon,
-      color: 'danger',
-    },
-  ];
+  const getStatusColor = (status) => {
+    const colors = {
+      submitted: 'bg-gray-100 text-gray-700',
+      under_review: 'bg-primary-100 text-primary-700',
+      escalated: 'bg-warning-100 text-warning-700',
+      resolved: 'bg-success-100 text-success-700',
+      rejected: 'bg-danger-100 text-danger-700',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-700';
+  };
+
+  const getStatusLabel = (status) => {
+    const labels = {
+      submitted: 'مقدمة',
+      under_review: 'قيد المراجعة',
+      escalated: 'متصاعدة',
+      resolved: 'محلولة',
+      rejected: 'مرفوضة',
+    };
+    return labels[status] || status;
+  };
+
+  const completionRate = stats ? 
+    Math.round((stats.resolved / Math.max(stats.total_complaints, 1)) * 100) : 0;
 
   return (
     <ResponsivePageShell 
-      title="لوحة التحكم - التاجر"
+      title={`مرحباً، ${user?.full_name || 'التاجر'}`}
       notificationCount={notification ? 1 : 0}
     >
       <div className="space-y-6">
@@ -95,70 +106,198 @@ function TraderDashboard() {
           />
         )}
 
-        <div className="flex items-center gap-2 text-sm">
-          <span className={`inline-block w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-success-500' : 'bg-gray-400'} animate-pulse`}></span>
-          <span className="text-gray-600 font-medium">{isConnected ? 'متصل' : 'غير متصل'}</span>
-        </div>
-
-        <div className="card p-4">
-          <Link to="/subscription">
-            <CTAButton
-              variant="secondary"
-              fullWidth
-              rightIcon={<CreditCardIcon className="w-5 h-5" />}
-            >
-              الاشتراك والدفع
-            </CTAButton>
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-5 gap-4">
-          {loading ? (
-            <>
-              {[...Array(5)].map((_, i) => (
-                <StatCard key={i} loading={true} />
-              ))}
-            </>
-          ) : (
-            statsConfig.map((stat, index) => (
-              <StatCard
-                key={index}
-                title={stat.title}
-                value={stat.value}
-                icon={stat.icon}
-                color={stat.color}
-              />
-            ))
-          )}
-        </div>
-
-        <div className="card p-4 sm:p-6 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-              شكاواي
-            </h2>
-            <CTAButton
-              onClick={() => setShowForm(!showForm)}
-              variant={showForm ? 'outline' : 'primary'}
-              rightIcon={showForm ? <XMarkIcon className="w-5 h-5" /> : <PlusIcon className="w-5 h-5" />}
-            >
-              {showForm ? 'إلغاء' : 'تقديم شكوى جديدة'}
-            </CTAButton>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-sm">
+            <span className={`inline-block w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-success-500' : 'bg-gray-400'} animate-pulse`}></span>
+            <span className="text-gray-600 font-medium">{isConnected ? 'متصل بالنظام' : 'غير متصل'}</span>
           </div>
+          <div className="text-sm text-gray-500">
+            {format(new Date(), 'EEEE، d MMMM yyyy', { locale: ar })}
+          </div>
+        </div>
 
-          <div className="animate-enter">
-            {showForm ? (
-              <ComplaintForm 
-                onSuccess={() => {
-                  setShowForm(false);
-                  loadStats();
-                }}
-              />
+        <div className="card bg-gradient-to-br from-primary-500 to-primary-700 p-6 text-white">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">لوحة التحكم الذكية</h2>
+              <p className="text-primary-100">إدارة شكاواك بكل سهولة وفعالية</p>
+            </div>
+            <SparklesIcon className="w-12 h-12 text-primary-200" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <QuickActionCard
+            icon={PlusCircleIcon}
+            title="شكوى جديدة"
+            description="تقديم شكوى جديدة"
+            color="primary"
+            onClick={() => navigate('/complaints?new=true')}
+          />
+          <QuickActionCard
+            icon={ViewfinderCircleIcon}
+            title="متابعة الشكاوى"
+            description="عرض جميع الشكاوى"
+            color="gray"
+            onClick={() => navigate('/complaints')}
+          />
+          <QuickActionCard
+            icon={CreditCardIcon}
+            title="الاشتراك"
+            description="إدارة الاشتراك والدفع"
+            color={subscription?.status === 'active' ? 'success' : 'warning'}
+            badge={subscription?.status !== 'active' ? '!' : null}
+            onClick={() => navigate('/subscription')}
+          />
+          <QuickActionCard
+            icon={BellAlertIcon}
+            title="الإشعارات"
+            description="التحديثات والرسائل"
+            color="gray"
+            onClick={() => navigate('/complaints')}
+          />
+        </div>
+
+        {subscription && (
+          <ChartCard 
+            title="حالة الاشتراك"
+            subtitle={subscription.status === 'active' ? 'الاشتراك نشط' : 'يتطلب تجديد'}
+          >
+            <div className="flex items-center gap-6">
+              <div className={`flex-1 p-4 rounded-lg ${subscription.status === 'active' ? 'bg-success-50 border border-success-200' : 'bg-warning-50 border border-warning-200'}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">تاريخ الانتهاء</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      {format(new Date(subscription.end_date), 'd MMMM yyyy', { locale: ar })}
+                    </p>
+                  </div>
+                  <CalendarIcon className={`w-8 h-8 ${subscription.status === 'active' ? 'text-success-600' : 'text-warning-600'}`} />
+                </div>
+              </div>
+            </div>
+          </ChartCard>
+        )}
+
+        <ChartCard title="إحصائيات الشكاوى" subtitle="نظرة عامة على شكاواك">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {loading ? (
+              <>
+                {[...Array(5)].map((_, i) => (
+                  <StatCard key={i} loading={true} />
+                ))}
+              </>
             ) : (
-              <ComplaintList onUpdate={loadStats} />
+              <>
+                <StatCard
+                  title="الإجمالي"
+                  value={stats?.total_complaints || 0}
+                  icon={DocumentTextIcon}
+                  color="gray"
+                />
+                <StatCard
+                  title="قيد المراجعة"
+                  value={stats?.under_review || 0}
+                  icon={ClockIcon}
+                  color="primary"
+                />
+                <StatCard
+                  title="تم التصعيد"
+                  value={stats?.escalated || 0}
+                  icon={ArrowTrendingUpIcon}
+                  color="warning"
+                />
+                <StatCard
+                  title="محلولة"
+                  value={stats?.resolved || 0}
+                  icon={CheckCircleIcon}
+                  color="success"
+                />
+                <StatCard
+                  title="مرفوضة"
+                  value={stats?.rejected || 0}
+                  icon={XCircleIcon}
+                  color="danger"
+                />
+              </>
             )}
           </div>
-        </div>
+
+          {!loading && stats && (
+            <div className="mt-6 p-4 bg-gradient-to-br from-gray-50 to-white rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-1">معدل الحل</h4>
+                  <p className="text-sm text-gray-600">
+                    تم حل {stats.resolved} من أصل {stats.total_complaints} شكوى
+                  </p>
+                </div>
+                <ProgressRing progress={completionRate} color="success" />
+              </div>
+            </div>
+          )}
+        </ChartCard>
+
+        <ChartCard 
+          title="آخر الشكاوى" 
+          subtitle="الشكاوى الأخيرة المقدمة"
+          actions={
+            <button
+              onClick={() => navigate('/complaints')}
+              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+            >
+              عرض الكل ←
+            </button>
+          }
+        >
+          {loading ? (
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="animate-pulse bg-gray-100 h-20 rounded-lg"></div>
+              ))}
+            </div>
+          ) : recentComplaints.length > 0 ? (
+            <div className="space-y-3">
+              {recentComplaints.map((complaint) => (
+                <div
+                  key={complaint.id}
+                  onClick={() => navigate(`/complaints/${complaint.id}`)}
+                  className="p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 cursor-pointer transition-all"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-900 mb-1 line-clamp-1">
+                        {complaint.title || `شكوى #${complaint.id}`}
+                      </h4>
+                      <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                        {complaint.problem_description}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span>{format(new Date(complaint.created_at), 'd MMM yyyy', { locale: ar })}</span>
+                        <span>•</span>
+                        <span>{complaint.category_name}</span>
+                      </div>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(complaint.status)}`}>
+                      {getStatusLabel(complaint.status)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <DocumentTextIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 mb-4">لم تقم بتقديم أي شكوى بعد</p>
+              <button
+                onClick={() => navigate('/complaints?new=true')}
+                className="text-primary-600 hover:text-primary-700 font-medium"
+              >
+                تقديم شكوى جديدة
+              </button>
+            </div>
+          )}
+        </ChartCard>
       </div>
     </ResponsivePageShell>
   );

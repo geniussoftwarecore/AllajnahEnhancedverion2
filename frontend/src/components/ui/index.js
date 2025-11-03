@@ -7,3 +7,7 @@ export { default as NavDrawer } from './NavDrawer';
 export { default as NavigationButtons } from './NavigationButtons';
 export { default as ResponsivePageShell } from './ResponsivePageShell';
 export { default as StatCard } from './StatCard';
+export { default as ChartCard } from './ChartCard';
+export { default as QuickActionCard } from './QuickActionCard';
+export { default as FilterBar } from './FilterBar';
+export { default as ProgressRing } from './ProgressRing';
