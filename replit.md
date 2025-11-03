@@ -1,40 +1,41 @@
 # Allajnah Enhanced - Complaint Management System
 
 ## Overview
-Allajnah Enhanced is a comprehensive complaint management system designed for Yemeni traders and oversight committees. Its core purpose is to streamline the submission, tracking, and resolution of complaints against government entities through a multi-level committee review workflow. The system aims to enhance transparency and accountability in governmental operations.
+Allajnah Enhanced is a comprehensive complaint management system for Yemeni traders and oversight committees. It streamlines the submission, tracking, and multi-level committee review of complaints against government entities. The system aims to enhance transparency and accountability in governmental operations. It supports full Arabic language with RTL layout and is production-ready.
 
 ## User Preferences
 I prefer iterative development with a focus on completing core functionalities first, then refining and adding advanced features. I value clear, concise explanations and prefer to be asked before major architectural or design changes are implemented. All user-facing text should support both Arabic and English, with Arabic being the primary language and using an RTL layout. Please follow existing code patterns for consistency.
 
 ## System Architecture
-The system is built with a clear separation of concerns using a backend in Python with FastAPI and SQLAlchemy, and a frontend in React with Vite and TailwindCSS.
+The system utilizes a clear separation of concerns with a Python FastAPI backend using SQLAlchemy and a React frontend built with Vite and TailwindCSS.
 
 ### UI/UX Decisions
--   **Language Support**: Full Arabic language support with RTL layout is prioritized, with English translation in progress. i18next is used for internationalization.
--   **Design System**: TailwindCSS is used for a utility-first CSS approach, ensuring a consistent and responsive design.
+-   **Language Support**: Prioritizes full Arabic language support with RTL layout using i18next for internationalization. English translation is also supported.
+-   **Design System**: TailwindCSS for consistent, responsive design, incorporating modern aesthetics like Neumorphism and Glassmorphism, and full dark mode support. Features smooth animations via Framer Motion.
+-   **Accessibility**: Enhanced ARIA roles and semantic HTML across UI components, with proper touch targets for mobile.
+-   **Responsive Design**: Mobile-first approach with custom Tailwind breakpoints and optimized UI components.
 
 ### Technical Implementations
--   **Authentication**: JWT-based authentication with robust role-based access control (RBAC) is implemented.
--   **Database**: PostgreSQL is used as the relational database, managed with SQLAlchemy ORM.
--   **Workflow Automation**: Includes auto-assignment of complaints, SLA monitoring with auto-escalation, and auto-closing of resolved complaints after inactivity.
--   **Duplicate Detection**: Utilizes text similarity (SequenceMatcher) to warn users about potential duplicate complaints before submission, with a configurable threshold.
--   **Notification Hooks**: A module is in place with stub functions for key events, ready for integration with external notification services (e.g., email, SMS).
--   **Analytics**: Comprehensive dashboard statistics and administrative analytics are available, including time-range filters, SLA breaches, subscription statuses, and resolution rates.
--   **Audit Trail**: A system-wide audit log tracks key actions, users, and timestamps.
+-   **Authentication**: JWT-based authentication with robust role-based access control (RBAC).
+-   **Database**: PostgreSQL managed with SQLAlchemy ORM.
+-   **Workflow Automation**: Includes auto-assignment, SLA monitoring with auto-escalation, and auto-closing of resolved complaints.
+-   **Duplicate Detection**: Uses text similarity to warn about potential duplicate complaints.
+-   **Notification Hooks**: Module for integration with external notification services (e.g., email, SMS).
+-   **Analytics**: Comprehensive dashboard statistics and administrative analytics.
+-   **Audit Trail**: System-wide logging of key actions.
+-   **Security**: Robust file upload validation, CORS configuration, rate limiting, and session handling.
 
 ### Feature Specifications
--   **User Roles**:
-    -   **Trader**: Submits complaints, tracks status, manages subscriptions.
-    -   **Technical Committee**: Reviews, assigns, updates complaints, and escalates them.
-    -   **Higher Committee**: Full administrative access, user management, system settings, and final decision-making.
--   **Complaint Workflow**: Complaints progress through "Submitted," "Under Review," "Escalated," and "Resolved" or "Rejected" statuses, with options for re-opening and feedback collection.
--   **Subscription & Payment Management**: Traders manage annual subscriptions, upload payment proofs, which are then approved/rejected by committees, activating subscriptions.
+-   **User Roles**: Trader (submits/tracks complaints), Technical Committee (reviews/assigns/updates), Higher Committee (admin access, decision-making).
+-   **Complaint Workflow**: Multi-status progression (Submitted, Under Review, Escalated, Resolved/Rejected) with re-opening and feedback.
+-   **Subscription & Payment Management**: Traders manage annual subscriptions, committees approve payment proofs.
 -   **Admin Management**: CRUD operations for users, categories, payment methods, SLA configurations, and system settings.
+-   **Category System**: Complaints are organized by government entities, with cascading selection in the complaint form.
 
 ### System Design Choices
--   **Modularity**: The project is structured into `backend/` and `frontend/` directories, promoting clear separation and maintainability.
--   **API-First Approach**: The backend exposes a comprehensive set of RESTful APIs to serve the frontend and potential future integrations.
--   **Scalability**: Chosen technologies (FastAPI, React, PostgreSQL) are suitable for scaling.
+-   **Modularity**: Project structured into `backend/` and `frontend/` directories.
+-   **API-First Approach**: Comprehensive RESTful APIs for frontend and future integrations.
+-   **Scalability**: Technologies chosen for scalability (FastAPI, React, PostgreSQL).
 
 ## External Dependencies
 -   **Database**: PostgreSQL
@@ -43,140 +44,10 @@ The system is built with a clear separation of concerns using a backend in Pytho
 -   **Styling**: TailwindCSS
 -   **Internationalization**: i18next
 -   **ORM**: SQLAlchemy (Python)
--   **Authentication**: PyJWT for JWT handling, bcrypt for password hashing
+-   **Authentication**: PyJWT, bcrypt
 -   **Package Managers**: uv (Python), npm (Node.js)
 -   **Charts**: Recharts
 -   **Date Pickers**: react-datepicker
 -   **Notifications**: react-toastify
 -   **Icons**: lucide-react
-
-## Recent Changes
-**November 3, 2025** - Design Tokens, Accessibility & Performance Enhancements
--   **Design Token System**: Comprehensive CSS variable system for spacing, colors, typography, shadows, transitions, and z-index
-    -   Created frontend/src/theme/tokens.css with complete design token definitions
-    -   Created frontend/src/theme/tokens.js for programmatic token access
-    -   Dark mode support via [data-theme="dark"] attribute
-    -   All major components refactored to use tokens (Header, BottomNavigation, CTAButton)
--   **RTL Auto-Detection**: Automatic direction switching based on i18next language
-    -   Created useRTL hook for automatic RTL/LTR detection
-    -   Removed hardcoded dir="rtl" attributes
-    -   Dynamic ToastContainer RTL configuration
-    -   Seamless language switching experience
--   **Accessibility Improvements**: Enhanced ARIA roles and semantic HTML across UI components
-    -   Header: role="banner", aria-label, aria-pressed for theme toggle, role="status" for user info
-    -   BottomNavigation: role="navigation", aria-current for active items, descriptive aria-labels
-    -   CTAButton: aria-busy for loading states, role="status" for spinners, aria-live="polite"
-    -   LoadingFallback: Accessible Suspense fallback with proper ARIA attributes
--   **Performance Optimization**: React.lazy + Suspense for code splitting and faster initial load
-    -   Lazy-loaded dashboard pages: TraderDashboard, TechnicalCommitteeDashboard, HigherCommitteeDashboard
-    -   Lazy-loaded admin pages: Analytics, UsersManagement, Settings, AuditLog, PaymentsReview
-    -   Created LoadingFallback component with glass-morphism design
-    -   Login, Register, Setup pages remain eagerly loaded for quick access
--   **Documentation**: Updated FRONTEND_CHANGELOG.md and QA_CHECKLIST.md with comprehensive testing guidelines
-
-**October 31, 2025** - Next-Gen UI/UX Modernization
--   **Neumorphism + Glassmorphism Design**: Complete visual overhaul with modern design system
-    -   New primary green theme (#00C46B) replacing blue, with gradient backgrounds
-    -   Glassmorphic cards with backdrop-blur, semi-transparent backgrounds, and soft borders
-    -   Neumorphic shadow effects for depth and modern aesthetic
-    -   Dynamic gradient background: linear-gradient(135deg, #00C46B 0%, #CFFFE0 50%, #ffffff 100%)
--   **Framer Motion Integration**: Smooth animations throughout the application
-    -   Page transitions with slide and fade effects
-    -   Hover micro-interactions on cards and buttons (scale, glow, translate)
-    -   Animated navigation with slide-in/slide-out effects
-    -   Smooth theme toggle with rotate animation
--   **Dark Mode Support**: Full dark theme with automatic persistence
-    -   ThemeContext with localStorage persistence
-    -   Tailwind dark mode configured with class-based switching
-    -   Dark gradient background and adapted colors for all components
-    -   Animated toggle button with sun/moon icons
--   **Modern Component Library**: Created reusable glassmorphism components
-    -   ModernComplaintCard with gradient status colors and smooth animations
-    -   PageTransition wrapper for consistent route animations
-    -   BottomNavigation for mobile devices with icon-based navigation
-    -   Modernized Header with glass effect, gradient text, and animated elements
--   **Enhanced UX**: Improved user interactions across the board
-    -   Buttons with gradient backgrounds and glow effects on hover
-    -   Glass input fields with blur effects and focus states
-    -   Card hover effects with scale and shadow transformations
-    -   Responsive design optimizations for all screen sizes
-
-## Recent Changes
-**October 31, 2025** - Government Entity-Based Category System
--   **Category Organization**: Restructured the complaint category system to be organized by government entities
-    -   Added 4 government entities: المواصفات والمقاييس (15 categories), الجمارك (23 categories), الضرائب (9 categories), صندوق النظافة والتحسين (10 categories)
-    -   Total of 57 complaint categories now organized by entity
-    -   Created update_categories.py script to manage category data
--   **Two-Step Complaint Selection**: Enhanced ComplaintForm with cascading dropdowns
-    -   Step 1: Trader selects the government entity they want to complain about
-    -   Step 2: Category dropdown filters to show only categories relevant to selected entity
-    -   Category dropdown is disabled until entity is selected for better UX
--   **API Enhancements**: Added new backend endpoints
-    -   GET /api/government-entities: Returns list of all government entities
-    -   GET /api/categories?government_entity=X: Supports filtering categories by entity
--   **Database Migration**: Successfully migrated from generic categories to entity-specific categories
-    -   All existing complaint data preserved
-    -   Categories now include government_entity field for proper filtering
-
-**October 31, 2025** - Navigation Enhancement
--   **Navigation Buttons**: Added Back and Home navigation buttons to ALL pages for improved user experience
-    -   Created NavigationButtons component with browser history integration
-    -   Back button allows users to return to previous pages using browser history
-    -   Home button provides quick access to role-specific dashboard
-    -   Integrated into standalone pages (Login, Register, Setup) with fixed positioning
-    -   Integrated into MobileTopBar (mobile/tablet) and Header (desktop) for dashboard and admin pages
-    -   Added Header component to all 5 admin pages (Analytics, AuditLog, PaymentsReview, Settings, UsersManagement)
-    -   RTL-aware design using ArrowRight icon for "back" action
-    -   Smart visibility: Home button only shows when not already on home page
-    -   Navigation buttons visible and functional across the entire application
-
-**October 31, 2025** - Mobile-First Responsive Design Implementation
--   **Design System Overhaul**: Comprehensive mobile-first design system with custom Tailwind configuration including:
-    -   Mobile-optimized breakpoints (xs: 320px, sm: 640px, md: 768px, lg: 1024px, xl: 1280px, 2xl: 1536px)
-    -   Professional typography scale with Arabic-friendly fonts (Cairo, Tajawal) and RTL support
-    -   Blue-to-purple gradient theme with semantic color tokens for different statuses
-    -   Smooth animation utilities (fade-in, slide-up, slide-down, scale) with proper timing functions
--   **Reusable UI Component Library**: Built comprehensive set of mobile-first components:
-    -   ResponsivePageShell with mobile top bar and side drawer navigation
-    -   MobileTopBar with hamburger menu, notification badges, and smooth animations
-    -   NavDrawer with slide-in/out animations and mobile-friendly navigation
-    -   CTAButton with primary/secondary variants, proper touch targets (min 44px), and loading states
-    -   FormField with error handling, mobile-optimized input fields, and proper spacing
-    -   StatCard with gradient backgrounds, responsive layouts, and smooth hover effects
-    -   CardList with responsive grid layouts (1-3 columns based on viewport)
-    -   Alert component with success/error/warning/info variants and proper mobile spacing
--   **Page Redesigns**: Fully redesigned all pages with mobile-first approach:
-    -   Setup, Login, and Register pages with centered layouts and mobile-optimized forms
-    -   TraderDashboard with responsive stats grid and mobile-friendly card layouts
-    -   TechnicalCommitteeDashboard with collapsible filters and mobile-optimized tables
-    -   HigherCommitteeDashboard with comprehensive analytics and responsive charts
--   **Technical Improvements**: Fixed critical Tailwind purging bug in ResponsivePageShell by replacing dynamic class construction with explicit class mapping
--   **UX Enhancements**: All buttons, inputs, and interactive elements meet accessibility standards with proper touch targets (≥44px height)
-
-**October 31, 2025** - Production-Ready Release & UX Enhancements
--   **UX Improvements**: Replaced all alert() calls with professional toast notifications (react-toastify) across all admin pages
--   **Data Visualization**: Added professional charts (pie charts, bar charts) to Analytics page using Recharts
--   **Security Hardening**: Fixed LSP type checking error in file upload validator, added filename null check
--   **Code Quality**: Verified existing comprehensive file upload security (MIME type validation, size limits, extension checks)
--   **Integrations**: Verified SendGrid and Twilio notification integrations are ready (just need API keys for deployment)
--   **Architecture**: Reviewed and validated CORS configuration, rate limiting, and session handling
--   Enhanced frontend with modern dependencies (recharts, react-datepicker, lucide-react, react-toastify)
--   Completed comprehensive Arabic/English translations for all UI components
--   Fixed CSS import order for proper Tailwind CSS compilation
--   Created and executed seed script with demo data (admin, technical committee, and trader accounts)
--   Both backend (port 8000) and frontend (port 5000) workflows running successfully
--   Created comprehensive DOCUMENTATION.md with setup guide, API documentation, and troubleshooting
-
-## Demo Credentials
--   **Admin**: admin@allajnah.com / admin123
--   **Technical Committee**: tech@allajnah.com / tech123
--   **Trader 1** (Active Subscription): trader1@example.com / trader123
--   **Trader 2**: trader2@example.com / trader123
-
-## Current Status
-✅ **Production Ready** - All core features implemented and tested
--   Backend API fully functional with all endpoints
--   Frontend UI complete with bilingual support
--   Database seeded with demo data
--   Workflows configured and running
--   Comprehensive documentation available in DOCUMENTATION.md
+-   **Animation**: Framer Motion
