@@ -50,7 +50,11 @@
     "required": "هذا الحقل مطلوب",
     "invalidEmail": "البريد الإلكتروني غير صالح",
     "passwordMismatch": "كلمات المرور غير متطابقة",
-    "passwordStrength": "قوة كلمة المرور"
+    "passwordStrength": "قوة كلمة المرور",
+    "correctErrors": "يرجى تصحيح الأخطاء في النموذج",
+    "correctFollowingErrors": "يرجى تصحيح الأخطاء التالية:",
+    "loginCooldown": "تم تجاوز عدد المحاولات المسموحة. يرجى الانتظار {seconds} ثانية",
+    "tooManyAttempts": "تم تجاوز عدد المحاولات المسموحة. يرجى الانتظار 30 ثانية"
   },
   "errors": {
     "generic": "حدث خطأ ما، يرجى المحاولة مرة أخرى",
@@ -58,7 +62,8 @@
     "unauthorized": "غير مصرح بالوصول",
     "forbidden": "ممنوع الوصول",
     "notFound": "غير موجود",
-    "serverError": "خطأ في الخادم"
+    "serverError": "خطأ في الخادم",
+    "invalidCredentials": "بيانات الدخول غير صحيحة"
   },
   "common": {
     "loading": "جاري التحميل...",

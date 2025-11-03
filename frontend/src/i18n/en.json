@@ -50,7 +50,11 @@
     "required": "This field is required",
     "invalidEmail": "Invalid email address",
     "passwordMismatch": "Passwords do not match",
-    "passwordStrength": "Password Strength"
+    "passwordStrength": "Password Strength",
+    "correctErrors": "Please correct the errors in the form",
+    "correctFollowingErrors": "Please correct the following errors:",
+    "loginCooldown": "Too many attempts. Please wait {seconds} seconds",
+    "tooManyAttempts": "Too many attempts. Please wait 30 seconds"
   },
   "errors": {
     "generic": "Something went wrong, please try again",
@@ -58,7 +62,8 @@
     "unauthorized": "Unauthorized access",
     "forbidden": "Access forbidden",
     "notFound": "Not found",
-    "serverError": "Server error"
+    "serverError": "Server error",
+    "invalidCredentials": "Invalid credentials"
   },
   "common": {
     "loading": "Loading...",
