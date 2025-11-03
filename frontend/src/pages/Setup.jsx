@@ -33,6 +33,7 @@ function Setup() {
   const [loading, setLoading] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
   const [setupCompleted, setSetupCompleted] = useState(false);
+  const [justCompleted, setJustCompleted] = useState(false);
 
   useEffect(() => {
     const checkSetupStatus = async () => {
@@ -56,6 +57,15 @@ function Setup() {
 
     checkSetupStatus();
   }, []);
+
+  useEffect(() => {
+    if (justCompleted) {
+      const timer = setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [justCompleted, navigate]);
 
   const validateField = (name, value) => {
     let fieldError = null;
@@ -147,11 +157,7 @@ function Setup() {
       });
 
       localStorage.setItem('setup_completed', 'true');
-      setSetupCompleted(true);
-      
-      setTimeout(() => {
-        navigate('/login');
-      }, 1500);
+      setJustCompleted(true);
     } catch (err) {
       const errorMessage = mapBackendError(err, currentLang);
       setError(errorMessage);
@@ -171,6 +177,24 @@ function Setup() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-xl">{t('common.loading')}</div>
       </div>
+    );
+  }
+
+  if (justCompleted) {
+    return (
+      <FormWrapper
+        title={t('setup.success')}
+        subtitle={t('common.loading')}
+        icon={SparklesIcon}
+      >
+        <Alert
+          type="success"
+          message={t('setup.success')}
+        />
+        <div className="text-center text-gray-600">
+          {t('common.loading')}
+        </div>
+      </FormWrapper>
     );
   }
 
