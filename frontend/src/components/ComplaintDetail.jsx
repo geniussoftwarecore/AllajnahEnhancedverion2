@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { ConfirmDialog } from './ui';
+import { ConfirmDialog, ResponsivePageShell } from './ui';
 
-function ComplaintDetail({ complaint, onBack, role }) {
+function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = false }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
+  const [complaint, setComplaint] = useState(propComplaint || null);
+  const [loadingComplaint, setLoadingComplaint] = useState(!propComplaint);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [isInternal, setIsInternal] = useState(false);
@@ -16,12 +22,32 @@ function ComplaintDetail({ complaint, onBack, role }) {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, isLoading: false });
 
   useEffect(() => {
-    loadComments();
-    loadFeedback();
-    if (user.role !== 'trader') {
-      loadCommitteeUsers();
+    if (!propComplaint && id) {
+      loadComplaintData();
     }
-  }, []);
+  }, [id, propComplaint]);
+
+  useEffect(() => {
+    if (complaint) {
+      loadComments();
+      loadFeedback();
+      if (user.role !== 'trader') {
+        loadCommitteeUsers();
+      }
+    }
+  }, [complaint]);
+
+  const loadComplaintData = async () => {
+    try {
+      setLoadingComplaint(true);
+      const response = await api.get(`/complaints/${id}`);
+      setComplaint(response.data);
+    } catch (error) {
+      console.error('Error loading complaint:', error);
+    } finally {
+      setLoadingComplaint(false);
+    }
+  };
 
   const loadFeedback = async () => {
     try {
@@ -157,14 +183,41 @@ function ComplaintDetail({ complaint, onBack, role }) {
     return statusMap[status] || status;
   };
 
-  return (
+  if (loadingComplaint) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">جاري التحميل...</div>
+      </div>
+    );
+  }
+
+  if (!complaint) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl text-gray-600">الشكوى غير موجودة</div>
+      </div>
+    );
+  }
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      navigate(-1);
+    }
+  };
+
+  const content = (
     <div>
-      <button
-        onClick={onBack}
-        className="mb-4 text-blue-600 hover:text-blue-700"
-      >
-        ← العودة للقائمة
-      </button>
+      <div className="mb-6">
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeftIcon className="w-5 h-5" />
+          <span>العودة</span>
+        </button>
+      </div>
 
       {/* Trader Actions for Resolved/Rejected Complaints */}
       {user.role === 'trader' && ['resolved', 'rejected'].includes(complaint.status) && (
@@ -422,6 +475,21 @@ function ComplaintDetail({ complaint, onBack, role }) {
         isLoading={confirmDialog.isLoading}
       />
     </div>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
+  return (
+    <ResponsivePageShell 
+      title={`شكوى #${complaint.id}`}
+      subtitle={complaint.title}
+    >
+      <div className="max-w-6xl mx-auto">
+        {content}
+      </div>
+    </ResponsivePageShell>
   );
 }
 

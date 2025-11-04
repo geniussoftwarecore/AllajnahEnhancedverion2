@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ResponsivePageShell } from './ui';
 import api from '../api/axios';
 
 function ComplaintForm({ onSuccess }) {
+  const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm();
   const [governmentEntities, setGovernmentEntities] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -89,7 +93,11 @@ function ComplaintForm({ onSuccess }) {
 
     try {
       await api.post('/complaints', data);
-      onSuccess();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate('/complaints');
+      }
     } catch (err) {
       setError(err.response?.data?.detail || 'فشل تقديم الشكوى');
     } finally {
@@ -98,7 +106,23 @@ function ComplaintForm({ onSuccess }) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <ResponsivePageShell 
+      title="تقديم شكوى جديدة"
+      subtitle="املأ النموذج أدناه لتقديم شكواك"
+    >
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeftIcon className="w-5 h-5" />
+            <span>العودة</span>
+          </button>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 md:p-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           {error}
@@ -332,16 +356,26 @@ function ComplaintForm({ onSuccess }) {
         </div>
       </div>
 
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg disabled:opacity-50"
-        >
-          {loading ? 'جاري التقديم...' : 'تقديم الشكوى'}
-        </button>
+            <div className="flex gap-4 justify-end pt-4 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                إلغاء
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-lg disabled:opacity-50 transition-colors"
+              >
+                {loading ? 'جاري التقديم...' : 'تقديم الشكوى'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </form>
+    </ResponsivePageShell>
   );
 }
 

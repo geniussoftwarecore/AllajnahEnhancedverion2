@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FilterBar, ChartCard } from './ui';
+import { FilterBar, ChartCard, ResponsivePageShell } from './ui';
+import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { 
   DocumentTextIcon,
@@ -8,13 +9,16 @@ import {
   UserIcon,
   TagIcon,
   ChevronLeftIcon,
-  FolderOpenIcon
+  FolderOpenIcon,
+  ArrowLeftIcon,
+  PlusCircleIcon
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
 function ComplaintList({ onUpdate, role, embedded = false }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [complaints, setComplaints] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -290,9 +294,36 @@ function ComplaintList({ onUpdate, role, embedded = false }) {
   }
 
   return (
-    <ChartCard title="قائمة الشكاوى" subtitle={`إجمالي: ${complaints.length} شكوى`}>
-      {content}
-    </ChartCard>
+    <ResponsivePageShell 
+      title="قائمة الشكاوى"
+      subtitle={`إجمالي: ${complaints.length} شكوى`}
+    >
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeftIcon className="w-5 h-5" />
+            <span>العودة</span>
+          </button>
+          
+          {user?.role === 'trader' && (
+            <button
+              onClick={() => navigate('/complaints/new')}
+              className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              <PlusCircleIcon className="w-5 h-5" />
+              <span>شكوى جديدة</span>
+            </button>
+          )}
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          {content}
+        </div>
+      </div>
+    </ResponsivePageShell>
   );
 }
 
