@@ -150,5 +150,52 @@ class TaskQueueService:
         
         db.commit()
         logger.info(f"Rebalanced queue for role: {role}")
+    
+    @staticmethod
+    def reassign_task(complaint_id: int, excluding_user_id: Optional[int], db: Session) -> Optional[User]:
+        queue_entry = db.query(TaskQueue).filter(
+            TaskQueue.complaint_id == complaint_id
+        ).first()
+        
+        if not queue_entry:
+            logger.warning(f"No queue entry found for complaint {complaint_id}")
+            return None
+        
+        role = queue_entry.assigned_role
+        
+        active_users = db.query(User).filter(
+            and_(
+                User.role == role,
+                User.is_active == True,
+                User.id != excluding_user_id if excluding_user_id else True
+            )
+        ).all()
+        
+        if not active_users:
+            logger.warning(f"No other active users found for reassignment (role: {role})")
+            queue_entry.assigned_user_id = None
+            queue_entry.assigned_at = None
+            db.commit()
+            return None
+        
+        user_workloads = []
+        for user in active_users:
+            workload = TaskQueueService.calculate_workload_score(user, db)
+            user_workloads.append((user, workload))
+        
+        user_workloads.sort(key=lambda x: x[1])
+        
+        best_user, best_workload = user_workloads[0]
+        
+        queue_entry.assigned_user_id = best_user.id
+        queue_entry.workload_score = best_workload
+        queue_entry.assigned_at = datetime.utcnow()
+        
+        db.commit()
+        db.refresh(queue_entry)
+        
+        logger.info(f"Reassigned complaint {complaint_id} to user {best_user.id} (workload: {best_workload})")
+        
+        return best_user
 
 task_queue_service = TaskQueueService()

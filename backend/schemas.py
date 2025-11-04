@@ -77,6 +77,25 @@ class ComplaintUpdate(BaseModel):
     task_status: Optional[TaskStatus] = None
     lock_version: Optional[int] = None
 
+class TaskActionRequest(BaseModel):
+    reason: Optional[str] = None
+
+class TaskAcceptResponse(BaseModel):
+    success: bool
+    message: str
+    complaint: Optional['ComplaintResponse'] = None
+    
+    class Config:
+        from_attributes = True
+
+class TaskDeclineResponse(BaseModel):
+    success: bool
+    message: str
+    reassigned_to_id: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
 class ComplaintResponse(BaseModel):
     id: int
     user_id: int

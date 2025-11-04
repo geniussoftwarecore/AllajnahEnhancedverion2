@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from typing import Optional
+import asyncio
 
 from models import (
     Complaint, User, UserRole, ComplaintStatus, Category,
@@ -8,6 +9,7 @@ from models import (
 )
 from audit_helper import create_audit_log
 from task_queue_service import task_queue_service
+from notification_service import notification_service
 
 
 def get_setting(db: Session, key: str, default: str) -> str:
@@ -41,6 +43,22 @@ def auto_assign_complaint(db: Session, complaint: Complaint) -> Optional[User]:
                 )
                 
                 db.commit()
+                
+                try:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    loop.run_until_complete(
+                        notification_service.send_assignment_notification(
+                            assigned_user.email,
+                            assigned_user.phone,
+                            complaint.id,
+                            language="ar"
+                        )
+                    )
+                    loop.close()
+                except Exception as notif_error:
+                    print(f"Error sending assignment notification: {notif_error}")
+                
                 return assigned_user
         
         complaint.task_status = TaskStatus.IN_QUEUE
@@ -93,6 +111,23 @@ def check_sla_violations(db: Session, actor_id: Optional[int] = None) -> int:
                 if queue_entry and queue_entry.assigned_user_id:
                     complaint.assigned_to_id = queue_entry.assigned_user_id
                     complaint.task_status = TaskStatus.ASSIGNED
+                    
+                    assigned_user = db.query(User).filter(User.id == queue_entry.assigned_user_id).first()
+                    if assigned_user:
+                        try:
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            loop.run_until_complete(
+                                notification_service.send_assignment_notification(
+                                    assigned_user.email,
+                                    assigned_user.phone,
+                                    complaint.id,
+                                    language="ar"
+                                )
+                            )
+                            loop.close()
+                        except Exception as notif_error:
+                            print(f"Error sending escalation notification: {notif_error}")
                 else:
                     complaint.task_status = TaskStatus.IN_QUEUE
                 
