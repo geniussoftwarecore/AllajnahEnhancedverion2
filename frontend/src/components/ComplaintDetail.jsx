@@ -81,6 +81,44 @@ function ComplaintDetail({ complaint, onBack, role }) {
     }
   };
 
+  const handleAcceptTask = async () => {
+    try {
+      await api.post(`/complaints/${complaint.id}/accept-task`);
+      alert('تم قبول المهمة بنجاح');
+      onBack();
+    } catch (error) {
+      console.error('Error accepting task:', error);
+      alert(error.response?.data?.detail || 'فشل في قبول المهمة');
+    }
+  };
+
+  const handleRejectTask = async () => {
+    const reason = prompt('يرجى إدخال سبب رفض المهمة:');
+    if (!reason) return;
+
+    try {
+      await api.post(`/complaints/${complaint.id}/reject-task`, null, {
+        params: { reason }
+      });
+      alert('تم رفض المهمة وإعادة توزيعها بنجاح');
+      onBack();
+    } catch (error) {
+      console.error('Error rejecting task:', error);
+      alert(error.response?.data?.detail || 'فشل في رفض المهمة');
+    }
+  };
+
+  const handleStartWorking = async () => {
+    try {
+      await api.post(`/complaints/${complaint.id}/start-working`);
+      alert('تم البدء بالعمل على المهمة بنجاح');
+      onBack();
+    } catch (error) {
+      console.error('Error starting work:', error);
+      alert(error.response?.data?.detail || 'فشل في البدء بالعمل');
+    }
+  };
+
   const handleReopen = async () => {
     setConfirmDialog({ ...confirmDialog, isLoading: true });
 
@@ -249,6 +287,50 @@ function ComplaintDetail({ complaint, onBack, role }) {
           >
             حفظ التحديثات
           </button>
+
+          {/* Task Management Actions */}
+          {complaint.assigned_to_id === user.id && (
+            <div className="mt-6 border-t pt-4">
+              <h4 className="text-md font-semibold mb-3 text-gray-700">إدارة المهمة</h4>
+              <div className="flex gap-3 flex-wrap">
+                {complaint.task_status === 'assigned' && (
+                  <>
+                    <button
+                      onClick={handleAcceptTask}
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex-1"
+                    >
+                      قبول المهمة
+                    </button>
+                    <button
+                      onClick={handleRejectTask}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex-1"
+                    >
+                      رفض المهمة
+                    </button>
+                  </>
+                )}
+                {complaint.task_status === 'accepted' && (
+                  <button
+                    onClick={handleStartWorking}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex-1"
+                  >
+                    البدء بالعمل
+                  </button>
+                )}
+                {complaint.task_status && (
+                  <div className="w-full mt-2">
+                    <span className="text-sm text-gray-600">حالة المهمة: </span>
+                    <span className="text-sm font-semibold text-blue-600">
+                      {complaint.task_status === 'assigned' && 'معينة'}
+                      {complaint.task_status === 'accepted' && 'مقبولة'}
+                      {complaint.task_status === 'in_progress' && 'قيد التنفيذ'}
+                      {complaint.task_status === 'in_queue' && 'في قائمة الانتظار'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
