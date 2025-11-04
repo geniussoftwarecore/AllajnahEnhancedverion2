@@ -101,133 +101,150 @@ function UsersManagement() {
   return (
     <>
       <Header />
-      <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">إدارة المستخدمين</h1>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
-        >
-          + إضافة مستخدم جديد
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">بحث</label>
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              placeholder="الاسم أو البريد الإلكتروني"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">الدور</label>
-            <select
-              value={filters.role}
-              onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            >
-              <option value="">الكل</option>
-              <option value="trader">تاجر</option>
-              <option value="technical_committee">اللجنة الفنية</option>
-              <option value="higher_committee">اللجنة العليا</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">الحالة</label>
-            <select
-              value={filters.is_active}
-              onChange={(e) => setFilters({ ...filters, is_active: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            >
-              <option value="">الكل</option>
-              <option value="true">نشط</option>
-              <option value="false">معطل</option>
-            </select>
-          </div>
-          <div className="flex items-end">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                إدارة المستخدمين
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">إدارة وتحديث بيانات المستخدمين في النظام</p>
+            </div>
             <button
-              onClick={loadUsers}
-              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg"
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
             >
-              تحديث
+              <span className="text-xl">+</span>
+              <span>إضافة مستخدم جديد</span>
             </button>
           </div>
-        </div>
-      </div>
 
-      {/* Users Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-gray-500">جاري التحميل...</div>
-        ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">ID</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الاسم</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">البريد الإلكتروني</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الدور</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الهاتف</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الحالة</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">إجراءات</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.first_name} {user.last_name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                      {getRoleText(user.role)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.phone || '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {user.is_active ? 'نشط' : 'معطل'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setEditingUser(user)}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        تعديل
-                      </button>
-                      <button
-                        onClick={() => handleResetPassword(user.id)}
-                        className="text-purple-600 hover:text-purple-800"
-                      >
-                        إعادة تعيين كلمة المرور
-                      </button>
-                      {user.is_active && (
-                        <button
-                          onClick={() => setConfirmDialog({ isOpen: true, userId: user.id, isLoading: false })}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          تعطيل
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+          {/* Filters */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">تصفية البحث</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">بحث</label>
+                <input
+                  type="text"
+                  value={filters.search}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  placeholder="الاسم أو البريد الإلكتروني"
+                  className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">الدور</label>
+                <select
+                  value={filters.role}
+                  onChange={(e) => setFilters({ ...filters, role: e.target.value })}
+                  className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                >
+                  <option value="">الكل</option>
+                  <option value="trader">تاجر</option>
+                  <option value="technical_committee">اللجنة الفنية</option>
+                  <option value="higher_committee">اللجنة العليا</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">الحالة</label>
+                <select
+                  value={filters.is_active}
+                  onChange={(e) => setFilters({ ...filters, is_active: e.target.value })}
+                  className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+                >
+                  <option value="">الكل</option>
+                  <option value="true">نشط</option>
+                  <option value="false">معطل</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={loadUsers}
+                  className="w-full px-4 py-2.5 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all"
+                >
+                  🔄 تحديث
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Users Table */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+            {loading ? (
+              <div className="p-12 text-center">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+                <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">جاري التحميل...</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gradient-to-r from-blue-600 to-purple-600">
+                    <tr>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">ID</th>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الاسم</th>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">البريد الإلكتروني</th>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الدور</th>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الهاتف</th>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الحالة</th>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {users.map((user, index) => (
+                      <tr key={user.id} className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all transform hover:scale-[1.01]">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">{user.id}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                          {user.first_name} {user.last_name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{user.email}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md">
+                            {getRoleText(user.role)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{user.phone || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <span className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-md ${
+                            user.is_active 
+                              ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' 
+                              : 'bg-gradient-to-r from-red-500 to-pink-500 text-white'
+                          }`}>
+                            {user.is_active ? '✓ نشط' : '✗ معطل'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setEditingUser(user)}
+                              className="px-3 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg font-semibold transition-all transform hover:scale-110"
+                            >
+                              ✏️ تعديل
+                            </button>
+                            <button
+                              onClick={() => handleResetPassword(user.id)}
+                              className="px-3 py-1.5 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-lg font-semibold transition-all transform hover:scale-110"
+                            >
+                              🔑 إعادة كلمة المرور
+                            </button>
+                            {user.is_active && (
+                              <button
+                                onClick={() => setConfirmDialog({ isOpen: true, userId: user.id, isLoading: false })}
+                                className="px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg font-semibold transition-all transform hover:scale-110"
+                              >
+                                🚫 تعطيل
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Create User Modal */}
@@ -297,62 +314,62 @@ function UserFormModal({ user, onClose, onSubmit, title }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold mb-6">{title}</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700 animate-scale-in">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">{title}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">البريد الإلكتروني *</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">البريد الإلكتروني *</label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 disabled={!!user}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
+                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 dark:disabled:bg-gray-700 dark:bg-gray-700 dark:text-white transition-all"
               />
             </div>
             {!user && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">كلمة المرور *</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">كلمة المرور *</label>
                 <input
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required={!user}
                   minLength={6}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
                 />
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">الاسم الأول *</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">الاسم الأول *</label>
               <input
                 type="text"
                 value={formData.first_name}
                 onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">الاسم الأخير *</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">الاسم الأخير *</label>
               <input
                 type="text"
                 value={formData.last_name}
                 onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">الدور *</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">الدور *</label>
               <select
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
               >
                 <option value="trader">تاجر</option>
                 <option value="technical_committee">اللجنة الفنية</option>
@@ -360,69 +377,69 @@ function UserFormModal({ user, onClose, onSubmit, title }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">رقم الهاتف</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">رقم الهاتف</label>
               <input
                 type="text"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">واتساب</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">واتساب</label>
               <input
                 type="text"
                 value={formData.whatsapp}
                 onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">تليجرام</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">تليجرام</label>
               <input
                 type="text"
                 value={formData.telegram}
                 onChange={(e) => setFormData({ ...formData, telegram: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">العنوان</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">العنوان</label>
               <textarea
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
               />
             </div>
             {user && (
               <div className="md:col-span-2">
-                <label className="flex items-center gap-2">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.is_active}
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="rounded"
+                    className="w-5 h-5 rounded"
                   />
-                  <span className="text-sm font-medium text-gray-700">نشط</span>
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">نشط</span>
                 </label>
               </div>
             )}
           </div>
-          <div className="flex justify-end gap-3 mt-6">
+          <div className="flex justify-end gap-3 mt-8">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="px-6 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 font-semibold text-gray-700 dark:text-gray-300 transition-all"
             >
               إلغاء
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold disabled:opacity-50 shadow-lg hover:shadow-xl transition-all"
             >
-              {loading ? 'جاري الحفظ...' : 'حفظ'}
+              {loading ? '⏳ جاري الحفظ...' : '💾 حفظ'}
             </button>
           </div>
         </form>
