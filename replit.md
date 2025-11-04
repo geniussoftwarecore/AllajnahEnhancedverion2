@@ -54,6 +54,63 @@ The system utilizes a clear separation of concerns with a Python FastAPI backend
 
 ## Recent Changes
 
+### **November 4, 2025** - Advanced Multi-User Workflow Management Enhancement
+-   **Major Upgrade**: Transformed complaint workflow to handle multiple members per role effectively
+    -   ✅ **Smart Task Queue System** (task_queue_service.py):
+        - Intelligent load-balanced task distribution
+        - Workload scoring system for fair assignment
+        - Automatic queue rebalancing when tasks are rejected
+        - Role-based queue management for Technical & Higher Committees
+    
+    -   ✅ **Task Acceptance/Rejection Mechanism** (complaint_task_service.py):
+        - Committee members can accept or reject assigned tasks
+        - Rejected tasks automatically cleared from queue for reassignment
+        - Task claiming system with `claimed_by_id` tracking
+        - New task states: IN_QUEUE, ASSIGNED, ACCEPTED, IN_PROGRESS
+    
+    -   ✅ **Concurrency Protection**:
+        - Optimistic locking with `lock_version` field
+        - Prevents simultaneous updates by multiple users
+        - Race condition protection for task assignments
+    
+    -   ✅ **Higher Committee Approval System** (ComplaintApproval model):
+        - Multi-step approval workflow for escalated complaints
+        - Approval states: PENDING, APPROVED, REJECTED, NEEDS_REVISION
+        - Complete audit trail for approval decisions
+        - Integration with complaint lifecycle
+    
+    -   ✅ **New API Endpoints**:
+        - POST `/api/complaints/{id}/accept-task` - Accept assigned task
+        - POST `/api/complaints/{id}/reject-task` - Reject and requeue task
+        - POST `/api/complaints/{id}/start-working` - Start working on accepted task
+        - POST `/api/complaints/{id}/release-claim` - Release task claim
+        - POST `/api/approvals` - Request Higher Committee approval
+        - PUT `/api/approvals/{id}` - Update approval decision
+        - GET `/api/approvals/complaint/{id}` - Get complaint approvals
+        - GET `/api/approvals/pending` - Get pending approvals for current user
+    
+    -   ✅ **Enhanced Workflow Automation**:
+        - Auto-assign uses smart queue distribution instead of random
+        - Auto-escalation with intelligent assignment to Higher Committee
+        - Automatic workload balancing across team members
+    
+    -   ✅ **Comprehensive Audit Logging**:
+        - All task actions logged (accept, reject, claim, release)
+        - Approval decisions tracked with timestamps
+        - Complete visibility into who did what and when
+
+-   **Database Schema Updates**:
+    -   New `task_queues` table for queue management
+    -   New fields in `complaints`: task_status, accepted_at, claimed_by_id, lock_version
+    -   New `complaint_approvals` table for approval workflow
+    -   New enums: TaskStatus, ApprovalStatus
+
+-   **Architecture Improvements**:
+    -   Separation of concerns: dedicated services for queue and task management
+    -   Scalable design supporting unlimited committee members
+    -   Professional workflow similar to enterprise ticketing systems
+    -   Critical bug fix: Rejected tasks now properly cleared from queue
+
 ### **November 3, 2025** - Complete System Verification & Production Ready
 -   **Migration Completed**: Successfully migrated from Replit Agent to production environment
     -   ✅ Backend running on port 8000 (FastAPI + PostgreSQL)
