@@ -24,6 +24,9 @@ const PaymentsReview = lazy(() => import('./pages/Admin/PaymentsReview'));
 const Settings = lazy(() => import('./pages/Admin/Settings'));
 const Analytics = lazy(() => import('./pages/Admin/Analytics'));
 const AuditLog = lazy(() => import('./pages/Admin/AuditLog'));
+const ComplaintList = lazy(() => import('./components/ComplaintList'));
+const ComplaintForm = lazy(() => import('./components/ComplaintForm'));
+const ComplaintDetail = lazy(() => import('./components/ComplaintDetail'));
 
 function PrivateRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -112,6 +115,32 @@ function AppRoutes() {
           }
         />
         
+        {/* Complaint Routes */}
+        <Route
+          path="/complaints"
+          element={
+            <PrivateRoute allowedRoles={['trader', 'technical_committee', 'higher_committee']}>
+              <ComplaintList />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/complaints/new"
+          element={
+            <PrivateRoute allowedRoles={['trader']}>
+              <ComplaintForm />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/complaints/:id"
+          element={
+            <PrivateRoute allowedRoles={['trader', 'technical_committee', 'higher_committee']}>
+              <ComplaintDetail />
+            </PrivateRoute>
+          }
+        />
+
         {/* Trader Routes */}
         <Route
           path="/subscription"
