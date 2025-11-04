@@ -278,7 +278,6 @@ function UsersManagement() {
         type="danger"
         isLoading={confirmDialog.isLoading}
       />
-    </div>
     </>
   );
 }
