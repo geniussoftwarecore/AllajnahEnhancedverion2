@@ -140,36 +140,36 @@ function TraderDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             onClick={() => navigate('/complaints?new=true')}
-            className="flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
+            className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
           >
-            <PlusCircleIcon className="w-12 h-12 text-blue-600 mb-3" />
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">شكوى جديدة</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">تقديم شكوى جديدة</p>
+            <PlusCircleIcon className="w-12 h-12 text-white mb-3" />
+            <h3 className="text-lg font-bold text-white">شكوى جديدة</h3>
+            <p className="text-sm text-blue-100">تقديم شكوى جديدة</p>
           </button>
           <button
             onClick={() => navigate('/complaints')}
-            className="flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
+            className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
           >
-            <ViewfinderCircleIcon className="w-12 h-12 text-gray-600 mb-3" />
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">متابعة الشكاوى</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">عرض جميع الشكاوى</p>
+            <ViewfinderCircleIcon className="w-12 h-12 text-white mb-3" />
+            <h3 className="text-lg font-bold text-white">متابعة الشكاوى</h3>
+            <p className="text-sm text-blue-100">عرض جميع الشكاوى</p>
           </button>
           <button
             onClick={() => navigate('/subscription')}
-            className="flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer relative"
+            className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer relative"
           >
             {subscription?.status !== 'active' && <span className="absolute top-3 right-3 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>}
-            <CreditCardIcon className={`w-12 h-12 mb-3 ${subscription?.status === 'active' ? 'text-green-600' : 'text-yellow-600'}`} />
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">الاشتراك</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">إدارة الاشتراك والدفع</p>
+            <CreditCardIcon className="w-12 h-12 text-white mb-3" />
+            <h3 className="text-lg font-bold text-white">الاشتراك</h3>
+            <p className="text-sm text-blue-100">إدارة الاشتراك والدفع</p>
           </button>
           <button
             onClick={() => navigate('/complaints')}
-            className="flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
+            className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
           >
-            <BellAlertIcon className="w-12 h-12 text-gray-600 mb-3" />
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">الإشعارات</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">التحديثات والرسائل</p>
+            <BellAlertIcon className="w-12 h-12 text-white mb-3" />
+            <h3 className="text-lg font-bold text-white">الإشعارات</h3>
+            <p className="text-sm text-blue-100">التحديثات والرسائل</p>
           </button>
         </div>
 
