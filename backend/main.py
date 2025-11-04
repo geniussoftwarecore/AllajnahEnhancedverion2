@@ -73,9 +73,16 @@ async def startup_event():
     try:
         from database import Base, engine, SessionLocal
         from sqlalchemy import text, inspect
+        from sqlalchemy.exc import IntegrityError, ProgrammingError
         
-        Base.metadata.create_all(bind=engine)
-        print("✓ Database tables verified/created")
+        try:
+            Base.metadata.create_all(bind=engine)
+            print("✓ Database tables verified/created")
+        except (IntegrityError, ProgrammingError) as e:
+            if 'already exists' in str(e).lower() or 'duplicate key' in str(e).lower():
+                print("✓ Database tables already exist")
+            else:
+                raise
         
         inspector = inspect(engine)
         existing_indexes = [idx['name'] for idx in inspector.get_indexes('categories')]
