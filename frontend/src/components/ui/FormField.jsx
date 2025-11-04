@@ -1,5 +1,5 @@
 import React, { forwardRef, useState } from 'react';
-import { ExclamationCircleIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { ExclamationCircleIcon, EyeIcon, EyeSlashIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
 const FormField = forwardRef(({ 
   label,
@@ -25,18 +25,20 @@ const FormField = forwardRef(({
   ...props
 }, ref) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const inputType = type === 'password' && showPassword ? 'text' : type;
-  const baseInputClasses = 'input-touch w-full px-4 py-3 rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:bg-gray-100 disabled:cursor-not-allowed text-base hover:border-gray-400';
+  
+  const baseInputClasses = 'input-touch w-full px-4 py-3.5 rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 disabled:bg-gray-100/50 disabled:cursor-not-allowed disabled:opacity-60 text-base font-medium placeholder:text-gray-400 placeholder:font-normal';
   
   const stateClasses = error 
-    ? 'border-danger-300 focus:border-danger-500 focus:ring-danger-500/30 hover:border-danger-400 bg-danger-50/30' 
-    : value 
-    ? 'border-primary-300 focus:border-primary-500 focus:ring-primary-500/30 bg-primary-50/20'
-    : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500/30';
+    ? 'border-danger-300 bg-danger-50/30 focus:border-danger-500 focus:ring-danger-500/10 hover:border-danger-400' 
+    : value && !isFocused
+    ? 'border-primary-300 bg-primary-50/20 focus:border-primary-500 focus:ring-primary-500/10 hover:border-primary-400'
+    : 'border-gray-200 bg-white/60 backdrop-blur-sm focus:border-primary-500 focus:ring-primary-500/10 focus:bg-white hover:border-gray-300';
 
   const iconPaddingClasses = {
     left: leftIcon ? 'pr-12' : '',
-    right: rightIcon ? 'pl-12' : '',
+    right: rightIcon || error ? 'pl-12' : '',
   };
 
   const renderInput = () => {
@@ -53,7 +55,11 @@ const FormField = forwardRef(({
       name,
       value,
       onChange,
-      onBlur,
+      onBlur: (e) => {
+        setIsFocused(false);
+        onBlur?.(e);
+      },
+      onFocus: () => setIsFocused(true),
       disabled,
       required,
       ref,
@@ -107,15 +113,17 @@ const FormField = forwardRef(({
   return (
     <div className={`space-y-2 ${className}`}>
       {label && (
-        <label htmlFor={name} className="block text-sm font-semibold text-gray-700">
+        <label htmlFor={name} className="block text-sm font-bold text-gray-700 transition-colors duration-200">
           {label}
           {required && <span className="text-danger-500 mr-1">*</span>}
         </label>
       )}
       
-      <div className="relative">
+      <div className="relative group">
         {leftIcon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+          <div className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${
+            isFocused ? 'text-primary-500' : error ? 'text-danger-500' : 'text-gray-400'
+          }`}>
             {leftIcon}
           </div>
         )}
@@ -126,7 +134,7 @@ const FormField = forwardRef(({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded focus:text-primary-600"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg p-1 hover:bg-primary-50"
             aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
           >
             {showPassword ? (
@@ -138,20 +146,28 @@ const FormField = forwardRef(({
         )}
         
         {rightIcon && !error && type !== 'password' && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+          <div className={`absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${
+            isFocused ? 'text-primary-500' : 'text-gray-400'
+          }`}>
             {rightIcon}
           </div>
         )}
         
         {error && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-danger-500 pointer-events-none">
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-danger-500 pointer-events-none animate-wiggle">
             <ExclamationCircleIcon className="w-5 h-5" />
+          </div>
+        )}
+        
+        {!error && value && type !== 'password' && type !== 'textarea' && type !== 'select' && !rightIcon && (
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-success-500 pointer-events-none animate-scale-in">
+            <CheckCircleIcon className="w-5 h-5" />
           </div>
         )}
       </div>
       
       {error && (
-        <p id={`${name}-error`} className="text-sm text-danger-600 flex items-center gap-1 animate-slide-in-up" role="alert">
+        <p id={`${name}-error`} className="text-sm text-danger-600 font-medium flex items-center gap-1.5 animate-slide-in-up" role="alert">
           <ExclamationCircleIcon className="w-4 h-4 flex-shrink-0" />
           <span>{error}</span>
         </p>

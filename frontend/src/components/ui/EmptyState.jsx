@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { 
   InboxIcon, 
   DocumentTextIcon, 
@@ -60,29 +61,54 @@ function EmptyState({
   const displayMessage = message || defaults.message;
   
   return (
-    <div className={`flex flex-col items-center justify-center py-12 px-4 text-center ${className}`}>
-      <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-        <Icon className="w-10 h-10 text-gray-400" />
-      </div>
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={`flex flex-col items-center justify-center py-16 px-4 text-center ${className}`}
+    >
+      <motion.div 
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+        className="w-24 h-24 rounded-3xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center mb-6 shadow-soft"
+      >
+        <Icon className="w-12 h-12 text-gray-400" strokeWidth={1.5} />
+      </motion.div>
       
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+      <motion.h3 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="text-xl font-black text-gray-900 mb-3"
+      >
         {displayTitle}
-      </h3>
+      </motion.h3>
       
-      <p className="text-gray-500 max-w-md mb-6">
+      <motion.p 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="text-gray-500 max-w-md mb-8 leading-relaxed font-medium"
+      >
         {displayMessage}
-      </p>
+      </motion.p>
       
       {actionLabel && onAction && (
-        <CTAButton
-          variant="primary"
-          size="md"
-          onClick={onAction}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
         >
-          {actionLabel}
-        </CTAButton>
+          <CTAButton
+            variant="primary"
+            size="md"
+            onClick={onAction}
+          >
+            {actionLabel}
+          </CTAButton>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
