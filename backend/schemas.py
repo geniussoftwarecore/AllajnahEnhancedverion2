@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
-from models import UserRole, ComplaintStatus, Priority, SubscriptionStatus, PaymentStatus
+from models import UserRole, ComplaintStatus, Priority, SubscriptionStatus, PaymentStatus, TaskStatus, ApprovalStatus
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -74,6 +74,8 @@ class ComplaintUpdate(BaseModel):
     status: Optional[ComplaintStatus] = None
     assigned_to_id: Optional[int] = None
     priority: Optional[Priority] = None
+    task_status: Optional[TaskStatus] = None
+    lock_version: Optional[int] = None
 
 class ComplaintResponse(BaseModel):
     id: int
@@ -97,6 +99,10 @@ class ComplaintResponse(BaseModel):
     legal_proceedings: Optional[str] = None
     priority: Priority
     status: ComplaintStatus
+    task_status: TaskStatus
+    accepted_at: Optional[datetime] = None
+    claimed_by_id: Optional[int] = None
+    lock_version: int
     created_at: datetime
     updated_at: datetime
     resolved_at: Optional[datetime] = None
@@ -105,6 +111,7 @@ class ComplaintResponse(BaseModel):
     user: Optional[UserResponse] = None
     category: Optional[CategoryResponse] = None
     assigned_to_user: Optional[UserResponse] = None
+    claimed_by_user: Optional[UserResponse] = None
     
     class Config:
         from_attributes = True
@@ -331,6 +338,41 @@ class SystemSettingsResponse(BaseModel):
     setting_value: str
     description: Optional[str] = None
     updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class TaskQueueResponse(BaseModel):
+    id: int
+    complaint_id: int
+    assigned_role: UserRole
+    assigned_user_id: Optional[int] = None
+    queue_position: int
+    workload_score: float
+    assigned_at: Optional[datetime] = None
+    created_at: datetime
+    assigned_user: Optional[UserResponse] = None
+    
+    class Config:
+        from_attributes = True
+
+class ComplaintApprovalCreate(BaseModel):
+    complaint_id: int
+    approval_notes: Optional[str] = None
+
+class ComplaintApprovalUpdate(BaseModel):
+    approval_status: ApprovalStatus
+    approval_notes: Optional[str] = None
+
+class ComplaintApprovalResponse(BaseModel):
+    id: int
+    complaint_id: int
+    approver_id: int
+    approval_status: ApprovalStatus
+    approval_notes: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    created_at: datetime
+    approver: Optional[UserResponse] = None
     
     class Config:
         from_attributes = True

@@ -22,6 +22,20 @@ class Priority(str, enum.Enum):
     HIGH = "high"
     URGENT = "urgent"
 
+class TaskStatus(str, enum.Enum):
+    UNASSIGNED = "unassigned"
+    IN_QUEUE = "in_queue"
+    ASSIGNED = "assigned"
+    ACCEPTED = "accepted"
+    IN_PROGRESS = "in_progress"
+    PENDING_APPROVAL = "pending_approval"
+    COMPLETED = "completed"
+
+class ApprovalStatus(str, enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
 class SubscriptionStatus(str, enum.Enum):
     ACTIVE = "active"
     EXPIRED = "expired"
@@ -105,16 +119,22 @@ class Complaint(Base):
     
     priority = Column(SQLEnum(Priority), default=Priority.MEDIUM)
     status = Column(SQLEnum(ComplaintStatus), default=ComplaintStatus.SUBMITTED)
+    task_status = Column(SQLEnum(TaskStatus), default=TaskStatus.UNASSIGNED)
+    accepted_at = Column(DateTime, nullable=True)
+    claimed_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    lock_version = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     resolved_at = Column(DateTime)
     
     user = relationship("User", back_populates="complaints", foreign_keys=[user_id])
     assigned_to_user = relationship("User", back_populates="assigned_complaints", foreign_keys=[assigned_to_id])
+    claimed_by_user = relationship("User", foreign_keys=[claimed_by_id])
     category = relationship("Category", back_populates="complaints")
     comments = relationship("Comment", back_populates="complaint", cascade="all, delete-orphan")
     attachments = relationship("Attachment", back_populates="complaint", cascade="all, delete-orphan")
     feedbacks = relationship("ComplaintFeedback", back_populates="complaint", cascade="all, delete-orphan")
+    approvals = relationship("ComplaintApproval", back_populates="complaint", cascade="all, delete-orphan")
 
 class Comment(Base):
     __tablename__ = "comments"
@@ -232,3 +252,35 @@ class SystemSettings(Base):
     setting_value = Column(Text, nullable=False)
     description = Column(Text)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class TaskQueue(Base):
+    __tablename__ = "task_queues"
+    __table_args__ = (
+        UniqueConstraint('complaint_id', 'assigned_role', name='uq_taskqueue_complaint_role'),
+    )
+    
+    id = Column(Integer, primary_key=True, index=True)
+    complaint_id = Column(Integer, ForeignKey("complaints.id"), nullable=False)
+    assigned_role = Column(SQLEnum(UserRole), nullable=False)
+    assigned_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    queue_position = Column(Integer, default=0)
+    workload_score = Column(Float, default=0.0)
+    assigned_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    complaint = relationship("Complaint")
+    assigned_user = relationship("User")
+
+class ComplaintApproval(Base):
+    __tablename__ = "complaint_approvals"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    complaint_id = Column(Integer, ForeignKey("complaints.id"), nullable=False)
+    approver_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    approval_status = Column(SQLEnum(ApprovalStatus), default=ApprovalStatus.PENDING)
+    approval_notes = Column(Text)
+    approved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    complaint = relationship("Complaint", back_populates="approvals")
+    approver = relationship("User")

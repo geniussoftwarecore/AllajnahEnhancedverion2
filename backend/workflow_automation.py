@@ -1,13 +1,13 @@
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from typing import Optional
-import random
 
 from models import (
     Complaint, User, UserRole, ComplaintStatus, Category,
-    SLAConfig, SystemSettings, Priority
+    SLAConfig, SystemSettings, Priority, TaskStatus
 )
 from audit_helper import create_audit_log
+from task_queue_service import task_queue_service
 
 
 def get_setting(db: Session, key: str, default: str) -> str:
@@ -17,29 +17,35 @@ def get_setting(db: Session, key: str, default: str) -> str:
 
 def auto_assign_complaint(db: Session, complaint: Complaint) -> Optional[User]:
     try:
-        available_tech_members = db.query(User).filter(
-            User.role == UserRole.TECHNICAL_COMMITTEE,
-            User.is_active == True
-        ).all()
-        
-        if not available_tech_members:
-            return None
-        
-        assigned_user = random.choice(available_tech_members)
-        complaint.assigned_to_id = assigned_user.id
-        complaint.status = ComplaintStatus.UNDER_REVIEW
-        
-        create_audit_log(
-            db, 
-            assigned_user.id, 
-            "AUTO_ASSIGN", 
-            "complaint", 
-            complaint.id,
-            f"Auto-assigned complaint #{complaint.id} to {assigned_user.email}"
+        queue_entry = task_queue_service.add_to_queue(
+            complaint_id=complaint.id,
+            assigned_role=UserRole.TECHNICAL_COMMITTEE,
+            db=db
         )
         
+        if queue_entry and queue_entry.assigned_user_id:
+            assigned_user = db.query(User).filter(User.id == queue_entry.assigned_user_id).first()
+            
+            if assigned_user:
+                complaint.assigned_to_id = assigned_user.id
+                complaint.status = ComplaintStatus.UNDER_REVIEW
+                complaint.task_status = TaskStatus.ASSIGNED
+                
+                create_audit_log(
+                    db, 
+                    assigned_user.id, 
+                    "AUTO_ASSIGN", 
+                    "complaint", 
+                    complaint.id,
+                    f"Auto-assigned complaint #{complaint.id} to {assigned_user.email} via smart queue"
+                )
+                
+                db.commit()
+                return assigned_user
+        
+        complaint.task_status = TaskStatus.IN_QUEUE
         db.commit()
-        return assigned_user
+        return None
     except Exception as e:
         print(f"Error in auto_assign_complaint: {e}")
         db.rollback()
@@ -78,13 +84,25 @@ def check_sla_violations(db: Session, actor_id: Optional[int] = None) -> int:
             if time_since_creation > escalation_threshold:
                 complaint.status = ComplaintStatus.ESCALATED
                 
+                queue_entry = task_queue_service.add_to_queue(
+                    complaint_id=complaint.id,
+                    assigned_role=UserRole.HIGHER_COMMITTEE,
+                    db=db
+                )
+                
+                if queue_entry and queue_entry.assigned_user_id:
+                    complaint.assigned_to_id = queue_entry.assigned_user_id
+                    complaint.task_status = TaskStatus.ASSIGNED
+                else:
+                    complaint.task_status = TaskStatus.IN_QUEUE
+                
                 create_audit_log(
                     db,
                     actor_id,
                     "AUTO_ESCALATE",
                     "complaint",
                     complaint.id,
-                    f"Auto-escalated complaint #{complaint.id} due to SLA violation (threshold: {escalation_threshold})"
+                    f"Auto-escalated complaint #{complaint.id} due to SLA violation (threshold: {escalation_threshold}), added to Higher Committee queue"
                 )
                 
                 escalation_count += 1

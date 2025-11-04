@@ -14,8 +14,8 @@ from database import get_db
 from models import (
     User, Complaint, Comment, Attachment, Category, 
     Subscription, Payment, ComplaintFeedback, AuditLog,
-    PaymentMethod, SLAConfig, SystemSettings,
-    UserRole, ComplaintStatus, SubscriptionStatus, PaymentStatus, Priority
+    PaymentMethod, SLAConfig, SystemSettings, TaskQueue, ComplaintApproval,
+    UserRole, ComplaintStatus, SubscriptionStatus, PaymentStatus, Priority, TaskStatus, ApprovalStatus
 )
 from schemas import (
     UserCreate, UserLogin, UserResponse, Token, UserUpdate, PasswordReset,
@@ -27,7 +27,8 @@ from schemas import (
     FeedbackCreate, FeedbackResponse, AuditLogResponse,
     PaymentMethodCreate, PaymentMethodUpdate, PaymentMethodResponse,
     SLAConfigCreate, SLAConfigUpdate, SLAConfigResponse,
-    SystemSettingsCreate, SystemSettingsUpdate, SystemSettingsResponse
+    SystemSettingsCreate, SystemSettingsUpdate, SystemSettingsResponse,
+    TaskQueueResponse, ComplaintApprovalCreate, ComplaintApprovalUpdate, ComplaintApprovalResponse
 )
 from auth import (
     get_password_hash, verify_password, create_access_token,
@@ -563,6 +564,178 @@ def get_attachments(
     
     attachments = db.query(Attachment).filter(Attachment.complaint_id == complaint_id).all()
     return attachments
+
+
+@app.post("/api/complaints/{complaint_id}/accept-task", response_model=ComplaintResponse)
+async def accept_complaint_task(
+    complaint_id: int,
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    from complaint_task_service import complaint_task_service
+    complaint = complaint_task_service.accept_task(complaint_id, current_user, db)
+    return complaint
+
+
+@app.post("/api/complaints/{complaint_id}/reject-task", response_model=ComplaintResponse)
+async def reject_complaint_task(
+    complaint_id: int,
+    reason: str,
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    from complaint_task_service import complaint_task_service
+    complaint = complaint_task_service.reject_task(complaint_id, current_user, reason, db)
+    return complaint
+
+
+@app.post("/api/complaints/{complaint_id}/start-working", response_model=ComplaintResponse)
+async def start_working_on_complaint(
+    complaint_id: int,
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    from complaint_task_service import complaint_task_service
+    complaint = complaint_task_service.start_working(complaint_id, current_user, db)
+    return complaint
+
+
+@app.post("/api/complaints/{complaint_id}/release-claim", response_model=ComplaintResponse)
+async def release_complaint_claim(
+    complaint_id: int,
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    from complaint_task_service import complaint_task_service
+    complaint = complaint_task_service.release_claim(complaint_id, current_user, db)
+    return complaint
+
+
+@app.post("/api/approvals", response_model=ComplaintApprovalResponse)
+async def create_approval_request(
+    approval: ComplaintApprovalCreate,
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    complaint = db.query(Complaint).filter(Complaint.id == approval.complaint_id).first()
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    if complaint.assigned_to_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You must be assigned to this complaint to request approval")
+    
+    higher_committee_users = db.query(User).filter(
+        User.role == UserRole.HIGHER_COMMITTEE,
+        User.is_active == True
+    ).all()
+    
+    if not higher_committee_users:
+        raise HTTPException(status_code=400, detail="No active Higher Committee members found")
+    
+    new_approval = ComplaintApproval(
+        complaint_id=approval.complaint_id,
+        approver_id=higher_committee_users[0].id,
+        approval_notes=approval.approval_notes
+    )
+    
+    complaint.status = ComplaintStatus.ESCALATED
+    complaint.task_status = TaskStatus.PENDING_APPROVAL
+    
+    db.add(new_approval)
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "REQUEST_APPROVAL",
+        "complaint",
+        approval.complaint_id,
+        f"Requested approval for complaint #{approval.complaint_id}"
+    )
+    
+    db.commit()
+    db.refresh(new_approval)
+    
+    return new_approval
+
+
+@app.put("/api/approvals/{approval_id}", response_model=ComplaintApprovalResponse)
+async def update_approval(
+    approval_id: int,
+    approval_update: ComplaintApprovalUpdate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    approval = db.query(ComplaintApproval).filter(ComplaintApproval.id == approval_id).first()
+    
+    if not approval:
+        raise HTTPException(status_code=404, detail="Approval not found")
+    
+    if approval.approver_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not assigned to this approval")
+    
+    approval.approval_status = approval_update.approval_status
+    approval.approval_notes = approval_update.approval_notes or approval.approval_notes
+    approval.approved_at = datetime.utcnow()
+    
+    complaint = db.query(Complaint).filter(Complaint.id == approval.complaint_id).first()
+    
+    if approval_update.approval_status == ApprovalStatus.APPROVED:
+        complaint.status = ComplaintStatus.RESOLVED
+        complaint.task_status = TaskStatus.COMPLETED
+        complaint.resolved_at = datetime.utcnow()
+        
+        create_audit_log(
+            db,
+            current_user.id,
+            "APPROVE_COMPLAINT",
+            "complaint",
+            complaint.id,
+            f"Approved complaint #{complaint.id}"
+        )
+    elif approval_update.approval_status == ApprovalStatus.REJECTED:
+        complaint.status = ComplaintStatus.UNDER_REVIEW
+        complaint.task_status = TaskStatus.ACCEPTED
+        
+        create_audit_log(
+            db,
+            current_user.id,
+            "REJECT_APPROVAL",
+            "complaint",
+            complaint.id,
+            f"Rejected approval for complaint #{complaint.id}"
+        )
+    
+    db.commit()
+    db.refresh(approval)
+    
+    return approval
+
+
+@app.get("/api/approvals/complaint/{complaint_id}", response_model=List[ComplaintApprovalResponse])
+async def get_complaint_approvals(
+    complaint_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    approvals = db.query(ComplaintApproval).filter(
+        ComplaintApproval.complaint_id == complaint_id
+    ).all()
+    
+    return approvals
+
+
+@app.get("/api/approvals/pending", response_model=List[ComplaintApprovalResponse])
+async def get_pending_approvals(
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    approvals = db.query(ComplaintApproval).filter(
+        ComplaintApproval.approver_id == current_user.id,
+        ComplaintApproval.approval_status == ApprovalStatus.PENDING
+    ).all()
+    
+    return approvals
+
 
 @app.get("/api/dashboard/stats", response_model=DashboardStats)
 def get_dashboard_stats(
@@ -1541,6 +1714,49 @@ async def get_password_requirements():
         "require_digits": settings.PASSWORD_REQUIRE_DIGITS,
         "require_special": settings.PASSWORD_REQUIRE_SPECIAL
     }
+
+
+@app.get("/api/task-queue/my-queue", response_model=List[TaskQueueResponse])
+async def get_my_task_queue(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from task_queue_service import task_queue_service
+    queue_items = task_queue_service.get_my_queue(current_user.id, db)
+    return queue_items
+
+
+@app.get("/api/task-queue/role-queue", response_model=List[TaskQueueResponse])
+async def get_role_task_queue(
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    from task_queue_service import task_queue_service
+    queue_items = task_queue_service.get_role_queue(current_user.role, db)
+    return queue_items
+
+
+@app.post("/api/task-queue/rebalance")
+async def rebalance_task_queue(
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    from task_queue_service import task_queue_service
+    from audit_helper import create_audit_log
+    
+    task_queue_service.rebalance_queue(UserRole.TECHNICAL_COMMITTEE, db)
+    task_queue_service.rebalance_queue(UserRole.HIGHER_COMMITTEE, db)
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "REBALANCE_QUEUE",
+        "system",
+        0,
+        "Rebalanced task queues for all roles"
+    )
+    
+    return {"message": "Task queues rebalanced successfully"}
 
 
 @app.get("/")
