@@ -447,10 +447,20 @@ def reopen_complaint(
     if not complaint.can_reopen_until or datetime.utcnow() > complaint.can_reopen_until:
         raise HTTPException(status_code=400, detail="Reopen window has expired")
     
+    old_status = complaint.status
     complaint.status = ComplaintStatus.SUBMITTED
     complaint.resolved_at = None
     complaint.can_reopen_until = None
     complaint.updated_at = datetime.utcnow()
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "REOPEN_COMPLAINT",
+        "complaint",
+        complaint.id,
+        f"Reopened complaint #{complaint.id} from status {old_status.value}"
+    )
     
     db.commit()
     db.refresh(complaint)
@@ -484,6 +494,17 @@ def create_comment(
     db.add(new_comment)
     db.commit()
     db.refresh(new_comment)
+    
+    comment_type = "internal" if comment_data.is_internal else "public"
+    create_audit_log(
+        db,
+        current_user.id,
+        "CREATE_COMMENT",
+        "comment",
+        new_comment.id,
+        f"Added {comment_type} comment to complaint #{complaint_id}",
+        metadata={"complaint_id": complaint_id, "is_internal": comment_data.is_internal}
+    )
     
     return CommentResponse.model_validate(new_comment)
 
@@ -547,6 +568,21 @@ async def upload_attachment(
     db.commit()
     db.refresh(new_attachment)
     
+    create_audit_log(
+        db,
+        current_user.id,
+        "UPLOAD_ATTACHMENT",
+        "attachment",
+        new_attachment.id,
+        f"Uploaded file '{file.filename}' to complaint #{complaint_id}",
+        metadata={
+            "complaint_id": complaint_id,
+            "filename": file.filename,
+            "file_type": file.content_type,
+            "file_size": file_size
+        }
+    )
+    
     return AttachmentResponse.model_validate(new_attachment)
 
 @app.get("/api/complaints/{complaint_id}/attachments", response_model=List[AttachmentResponse])
@@ -574,6 +610,15 @@ async def accept_complaint_task(
 ):
     from complaint_task_service import complaint_task_service
     complaint = complaint_task_service.accept_task(complaint_id, current_user, db)
+    
+    await notification_service.send_task_notification(
+        current_user.email,
+        current_user.phone,
+        complaint.id,
+        "accepted",
+        language="ar"
+    )
+    
     return complaint
 
 
@@ -597,6 +642,15 @@ async def start_working_on_complaint(
 ):
     from complaint_task_service import complaint_task_service
     complaint = complaint_task_service.start_working(complaint_id, current_user, db)
+    
+    await notification_service.send_task_notification(
+        current_user.email,
+        current_user.phone,
+        complaint.id,
+        "started",
+        language="ar"
+    )
+    
     return complaint
 
 
@@ -655,6 +709,16 @@ async def create_approval_request(
     db.commit()
     db.refresh(new_approval)
     
+    approver = higher_committee_users[0]
+    requester_name = f"{current_user.first_name} {current_user.last_name}"
+    await notification_service.send_approval_request_notification(
+        approver.email,
+        approver.phone,
+        complaint.id,
+        requester_name,
+        language="ar"
+    )
+    
     return new_approval
 
 
@@ -678,6 +742,9 @@ async def update_approval(
     approval.approved_at = datetime.utcnow()
     
     complaint = db.query(Complaint).filter(Complaint.id == approval.complaint_id).first()
+    assigned_user = db.query(User).filter(User.id == complaint.assigned_to_id).first()
+    complainant = db.query(User).filter(User.id == complaint.user_id).first()
+    approver_name = f"{current_user.first_name} {current_user.last_name}"
     
     if approval_update.approval_status == ApprovalStatus.APPROVED:
         complaint.status = ComplaintStatus.RESOLVED
@@ -707,6 +774,28 @@ async def update_approval(
     
     db.commit()
     db.refresh(approval)
+    
+    decision = "approved" if approval_update.approval_status == ApprovalStatus.APPROVED else "rejected"
+    
+    if assigned_user:
+        await notification_service.send_approval_decision_notification(
+            assigned_user.email,
+            assigned_user.phone,
+            complaint.id,
+            decision,
+            approver_name,
+            approval.approval_notes,
+            language="ar"
+        )
+    
+    if complainant:
+        await notification_service.send_complaint_status_update(
+            complainant.email,
+            complainant.phone,
+            complaint.id,
+            complaint.status.value,
+            language="ar"
+        )
     
     return approval
 
@@ -1265,6 +1354,16 @@ def create_feedback(
     db.add(new_feedback)
     db.commit()
     db.refresh(new_feedback)
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "CREATE_FEEDBACK",
+        "feedback",
+        new_feedback.id,
+        f"Submitted feedback (rating: {feedback_data.rating}/5) for complaint #{complaint_id}",
+        metadata={"complaint_id": complaint_id, "rating": feedback_data.rating}
+    )
     
     return FeedbackResponse.model_validate(new_feedback)
 

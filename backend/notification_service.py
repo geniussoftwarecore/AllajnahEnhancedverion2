@@ -146,6 +146,156 @@ class NotificationService:
             sms_sent = await self.send_sms(user_phone, sms)
         
         return email_sent or sms_sent
+    
+    async def send_approval_request_notification(
+        self,
+        user_email: str,
+        user_phone: Optional[str],
+        complaint_id: int,
+        requester_name: str,
+        language: str = "ar"
+    ):
+        if language == "ar":
+            subject = f"طلب موافقة جديد للشكوى #{complaint_id}"
+            body = f"""
+            <html dir="rtl">
+                <body>
+                    <h2>طلب موافقة جديد</h2>
+                    <p>تم تصعيد الشكوى رقم <strong>#{complaint_id}</strong> وتحتاج موافقتك</p>
+                    <p>طالب الموافقة: <strong>{requester_name}</strong></p>
+                    <p>يرجى مراجعة الطلب واتخاذ القرار المناسب من خلال لوحة التحكم.</p>
+                </body>
+            </html>
+            """
+            sms = f"طلب موافقة جديد للشكوى #{complaint_id} من {requester_name}"
+        else:
+            subject = f"New Approval Request for Complaint #{complaint_id}"
+            body = f"""
+            <html>
+                <body>
+                    <h2>New Approval Request</h2>
+                    <p>Complaint <strong>#{complaint_id}</strong> has been escalated and requires your approval</p>
+                    <p>Requested by: <strong>{requester_name}</strong></p>
+                    <p>Please review and make a decision from the dashboard.</p>
+                </body>
+            </html>
+            """
+            sms = f"New approval request for complaint #{complaint_id} from {requester_name}"
+        
+        email_sent = await self.send_email(user_email, subject, body)
+        sms_sent = False
+        if user_phone:
+            sms_sent = await self.send_sms(user_phone, sms)
+        
+        return email_sent or sms_sent
+    
+    async def send_approval_decision_notification(
+        self,
+        user_email: str,
+        user_phone: Optional[str],
+        complaint_id: int,
+        decision: str,
+        approver_name: str,
+        notes: Optional[str] = None,
+        language: str = "ar"
+    ):
+        decision_ar = "موافق عليها" if decision == "approved" else "مرفوضة"
+        decision_en = "Approved" if decision == "approved" else "Rejected"
+        
+        if language == "ar":
+            subject = f"قرار الموافقة للشكوى #{complaint_id}: {decision_ar}"
+            body = f"""
+            <html dir="rtl">
+                <body>
+                    <h2>قرار الموافقة</h2>
+                    <p>تم اتخاذ قرار بشأن الشكوى رقم <strong>#{complaint_id}</strong></p>
+                    <p>القرار: <strong>{decision_ar}</strong></p>
+                    <p>بواسطة: <strong>{approver_name}</strong></p>
+                    {f'<p>ملاحظات: {notes}</p>' if notes else ''}
+                    <p>يمكنك متابعة الشكوى من خلال لوحة التحكم.</p>
+                </body>
+            </html>
+            """
+            sms = f"الشكوى #{complaint_id}: {decision_ar} بواسطة {approver_name}"
+        else:
+            subject = f"Approval Decision for Complaint #{complaint_id}: {decision_en}"
+            body = f"""
+            <html>
+                <body>
+                    <h2>Approval Decision</h2>
+                    <p>A decision has been made for complaint <strong>#{complaint_id}</strong></p>
+                    <p>Decision: <strong>{decision_en}</strong></p>
+                    <p>By: <strong>{approver_name}</strong></p>
+                    {f'<p>Notes: {notes}</p>' if notes else ''}
+                    <p>You can track the complaint from the dashboard.</p>
+                </body>
+            </html>
+            """
+            sms = f"Complaint #{complaint_id}: {decision_en} by {approver_name}"
+        
+        email_sent = await self.send_email(user_email, subject, body)
+        sms_sent = False
+        if user_phone:
+            sms_sent = await self.send_sms(user_phone, sms)
+        
+        return email_sent or sms_sent
+    
+    async def send_task_notification(
+        self,
+        user_email: str,
+        user_phone: Optional[str],
+        complaint_id: int,
+        task_action: str,
+        language: str = "ar"
+    ):
+        action_ar_map = {
+            "accepted": "تم قبول المهمة",
+            "rejected": "تم رفض المهمة",
+            "started": "بدء العمل على المهمة",
+            "released": "تم إلغاء المطالبة بالمهمة"
+        }
+        action_en_map = {
+            "accepted": "Task Accepted",
+            "rejected": "Task Rejected",
+            "started": "Work Started",
+            "released": "Task Released"
+        }
+        
+        if language == "ar":
+            action_text = action_ar_map.get(task_action, task_action)
+            subject = f"تحديث مهمة الشكوى #{complaint_id}"
+            body = f"""
+            <html dir="rtl">
+                <body>
+                    <h2>تحديث المهمة</h2>
+                    <p>الشكوى رقم <strong>#{complaint_id}</strong></p>
+                    <p>الإجراء: <strong>{action_text}</strong></p>
+                    <p>يرجى مراجعة المهمة من خلال لوحة التحكم.</p>
+                </body>
+            </html>
+            """
+            sms = f"الشكوى #{complaint_id}: {action_text}"
+        else:
+            action_text = action_en_map.get(task_action, task_action)
+            subject = f"Task Update for Complaint #{complaint_id}"
+            body = f"""
+            <html>
+                <body>
+                    <h2>Task Update</h2>
+                    <p>Complaint <strong>#{complaint_id}</strong></p>
+                    <p>Action: <strong>{action_text}</strong></p>
+                    <p>Please review the task from the dashboard.</p>
+                </body>
+            </html>
+            """
+            sms = f"Complaint #{complaint_id}: {action_text}"
+        
+        email_sent = await self.send_email(user_email, subject, body)
+        sms_sent = False
+        if user_phone:
+            sms_sent = await self.send_sms(user_phone, sms)
+        
+        return email_sent or sms_sent
 
 
 notification_service = NotificationService()

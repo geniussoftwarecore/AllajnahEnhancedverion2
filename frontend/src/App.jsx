@@ -17,6 +17,8 @@ const TraderDashboard = lazy(() => import('./pages/TraderDashboard'));
 const TraderSubscription = lazy(() => import('./pages/TraderSubscription'));
 const TechnicalCommitteeDashboard = lazy(() => import('./pages/TechnicalCommitteeDashboard'));
 const HigherCommitteeDashboard = lazy(() => import('./pages/HigherCommitteeDashboard'));
+const TaskQueue = lazy(() => import('./pages/TaskQueue'));
+const ApprovalManagement = lazy(() => import('./pages/ApprovalManagement'));
 const UsersManagement = lazy(() => import('./pages/Admin/UsersManagement'));
 const PaymentsReview = lazy(() => import('./pages/Admin/PaymentsReview'));
 const Settings = lazy(() => import('./pages/Admin/Settings'));
@@ -116,6 +118,26 @@ function AppRoutes() {
           element={
             <PrivateRoute allowedRoles={['trader']}>
               <TraderSubscription />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Task Queue Routes */}
+        <Route
+          path="/task-queue"
+          element={
+            <PrivateRoute allowedRoles={['technical_committee', 'higher_committee']}>
+              <TaskQueue />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Approval Management Routes */}
+        <Route
+          path="/approvals"
+          element={
+            <PrivateRoute allowedRoles={['higher_committee']}>
+              <ApprovalManagement />
             </PrivateRoute>
           }
         />
