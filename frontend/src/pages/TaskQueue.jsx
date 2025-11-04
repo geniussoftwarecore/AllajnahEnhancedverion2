@@ -201,7 +201,7 @@ function TaskQueue() {
             {filteredTasks.map((task) => (
               <div
                 key={task.id}
-                className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transform hover:scale-[1.01] transition-all"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">

@@ -127,7 +127,7 @@ function TraderDashboard() {
           </div>
         </div>
 
-        <div className="card bg-gradient-to-br from-primary-500 to-primary-700 p-6 text-white">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-primary-500 to-primary-700 text-white">
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-2xl font-bold mb-2">لوحة التحكم الذكية</h2>
@@ -138,59 +138,64 @@ function TraderDashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <QuickActionCard
-            icon={PlusCircleIcon}
-            title="شكوى جديدة"
-            description="تقديم شكوى جديدة"
-            color="primary"
+          <button
             onClick={() => navigate('/complaints?new=true')}
-          />
-          <QuickActionCard
-            icon={ViewfinderCircleIcon}
-            title="متابعة الشكاوى"
-            description="عرض جميع الشكاوى"
-            color="gray"
+            className="flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <PlusCircleIcon className="w-12 h-12 text-blue-600 mb-3" />
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">شكوى جديدة</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">تقديم شكوى جديدة</p>
+          </button>
+          <button
             onClick={() => navigate('/complaints')}
-          />
-          <QuickActionCard
-            icon={CreditCardIcon}
-            title="الاشتراك"
-            description="إدارة الاشتراك والدفع"
-            color={subscription?.status === 'active' ? 'success' : 'warning'}
-            badge={subscription?.status !== 'active' ? '!' : null}
+            className="flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <ViewfinderCircleIcon className="w-12 h-12 text-gray-600 mb-3" />
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">متابعة الشكاوى</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">عرض جميع الشكاوى</p>
+          </button>
+          <button
             onClick={() => navigate('/subscription')}
-          />
-          <QuickActionCard
-            icon={BellAlertIcon}
-            title="الإشعارات"
-            description="التحديثات والرسائل"
-            color="gray"
+            className="flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer relative"
+          >
+            {subscription?.status !== 'active' && <span className="absolute top-3 right-3 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>}
+            <CreditCardIcon className={`w-12 h-12 mb-3 ${subscription?.status === 'active' ? 'text-green-600' : 'text-yellow-600'}`} />
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">الاشتراك</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">إدارة الاشتراك والدفع</p>
+          </button>
+          <button
             onClick={() => navigate('/complaints')}
-          />
+            className="flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <BellAlertIcon className="w-12 h-12 text-gray-600 mb-3" />
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">الإشعارات</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">التحديثات والرسائل</p>
+          </button>
         </div>
 
         {subscription && (
-          <ChartCard 
-            title="حالة الاشتراك"
-            subtitle={subscription.status === 'active' ? 'الاشتراك نشط' : 'يتطلب تجديد'}
-          >
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">حالة الاشتراك</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{subscription.status === 'active' ? 'الاشتراك نشط' : 'يتطلب تجديد'}</p>
             <div className="flex items-center gap-6">
-              <div className={`flex-1 p-4 rounded-lg ${subscription.status === 'active' ? 'bg-success-50 border border-success-200' : 'bg-warning-50 border border-warning-200'}`}>
+              <div className={`flex-1 p-6 rounded-xl border-2 ${subscription.status === 'active' ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300' : 'bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-300'}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">تاريخ الانتهاء</p>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-sm text-gray-600 mb-1 font-semibold">تاريخ الانتهاء</p>
+                    <p className="text-xl font-bold text-gray-900">
                       {format(new Date(subscription.end_date), 'd MMMM yyyy', { locale: ar })}
                     </p>
                   </div>
-                  <CalendarIcon className={`w-8 h-8 ${subscription.status === 'active' ? 'text-success-600' : 'text-warning-600'}`} />
+                  <CalendarIcon className={`w-10 h-10 ${subscription.status === 'active' ? 'text-green-600' : 'text-yellow-600'}`} />
                 </div>
               </div>
             </div>
-          </ChartCard>
+          </div>
         )}
 
-        <ChartCard title="إحصائيات الشكاوى" subtitle="نظرة عامة على شكاواك">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">إحصائيات الشكاوى</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">نظرة عامة على شكاواك</p>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {loading ? (
               <>
@@ -235,7 +240,7 @@ function TraderDashboard() {
           </div>
 
           {!loading && stats && (
-            <div className="mt-6 p-4 bg-gradient-to-br from-gray-50 to-white rounded-lg border border-gray-200">
+            <div className="mt-6 p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl border-2 border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-bold text-gray-900 mb-1">معدل الحل</h4>
@@ -247,24 +252,25 @@ function TraderDashboard() {
               </div>
             </div>
           )}
-        </ChartCard>
+        </div>
 
-        <ChartCard 
-          title="آخر الشكاوى" 
-          subtitle="الشكاوى الأخيرة المقدمة"
-          actions={
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">آخر الشكاوى</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">الشكاوى الأخيرة المقدمة</p>
+            </div>
             <button
               onClick={() => navigate('/complaints')}
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
             >
               عرض الكل ←
             </button>
-          }
-        >
+          </div>
           {loading ? (
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="animate-pulse bg-gray-100 h-20 rounded-lg"></div>
+                <div key={i} className="animate-pulse bg-gray-100 dark:bg-gray-700 h-20 rounded-xl"></div>
               ))}
             </div>
           ) : recentComplaints.length > 0 ? (
@@ -273,17 +279,17 @@ function TraderDashboard() {
                 <div
                   key={complaint.id}
                   onClick={() => navigate(`/complaints/${complaint.id}`)}
-                  className="p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 cursor-pointer transition-all"
+                  className="p-4 bg-gradient-to-r from-white to-gray-50 dark:from-gray-700 dark:to-gray-800 hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-600 dark:hover:to-gray-700 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-blue-300 cursor-pointer transition-all shadow-md hover:shadow-lg"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <h4 className="font-bold text-gray-900 mb-1 line-clamp-1">
+                      <h4 className="font-bold text-gray-900 dark:text-white mb-1 line-clamp-1">
                         {complaint.title || `شكوى #${complaint.id}`}
                       </h4>
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
                         {complaint.problem_description}
                       </p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                         <span>{format(new Date(complaint.created_at), 'd MMM yyyy', { locale: ar })}</span>
                         <span>•</span>
                         <span>{complaint.category_name}</span>
@@ -298,17 +304,17 @@ function TraderDashboard() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <DocumentTextIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 mb-4">لم تقم بتقديم أي شكوى بعد</p>
+              <DocumentTextIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 mb-4 font-medium">لم تقم بتقديم أي شكوى بعد</p>
               <button
                 onClick={() => navigate('/complaints?new=true')}
-                className="text-primary-600 hover:text-primary-700 font-medium"
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
               >
                 تقديم شكوى جديدة
               </button>
             </div>
           )}
-        </ChartCard>
+        </div>
       </div>
     </ResponsivePageShell>
   );

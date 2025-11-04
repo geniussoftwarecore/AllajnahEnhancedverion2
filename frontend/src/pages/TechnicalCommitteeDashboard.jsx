@@ -172,7 +172,7 @@ function TechnicalCommitteeDashboard() {
           </div>
         </div>
 
-        <div className="card bg-gradient-to-br from-primary-600 to-primary-800 p-6 text-white">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-primary-600 to-primary-800 text-white">
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-2xl font-bold mb-2">لوحة اللجنة الفنية</h2>
@@ -183,47 +183,53 @@ function TechnicalCommitteeDashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <QuickActionCard
-            icon={FolderOpenIcon}
-            title="قائمة الانتظار"
-            description={`${pendingCount} شكوى جديدة`}
-            color="primary"
-            badge={pendingCount > 0 ? pendingCount : null}
+          <button
             onClick={() => {
               setStatusFilter('submitted');
               window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             }}
-          />
-          <QuickActionCard
-            icon={ClockIcon}
-            title="قيد المراجعة"
-            description={`${stats?.under_review || 0} شكوى`}
-            color="warning"
+            className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer relative"
+          >
+            {pendingCount > 0 && <span className="absolute top-3 right-3 px-2 py-1 bg-white text-blue-600 text-xs font-bold rounded-full">{pendingCount}</span>}
+            <FolderOpenIcon className="w-12 h-12 text-white mb-3" />
+            <h3 className="text-lg font-bold text-white">قائمة الانتظار</h3>
+            <p className="text-sm text-blue-100">{pendingCount} شكوى جديدة</p>
+          </button>
+          <button
             onClick={() => {
               setStatusFilter('under_review');
               window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             }}
-          />
-          <QuickActionCard
-            icon={ChartBarIcon}
-            title="التحليلات"
-            description="إحصائيات الأداء"
-            color="gray"
+            className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <ClockIcon className="w-12 h-12 text-white mb-3" />
+            <h3 className="text-lg font-bold text-white">قيد المراجعة</h3>
+            <p className="text-sm text-blue-100">{stats?.under_review || 0} شكوى</p>
+          </button>
+          <button
             onClick={() => navigate('/complaints')}
-          />
-          <QuickActionCard
-            icon={BellAlertIcon}
-            title="التنبيهات"
-            description="الشكاوى العاجلة"
-            color="danger"
+            className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <ChartBarIcon className="w-12 h-12 text-white mb-3" />
+            <h3 className="text-lg font-bold text-white">التحليلات</h3>
+            <p className="text-sm text-blue-100">إحصائيات الأداء</p>
+          </button>
+          <button
             onClick={() => {
               setPriorityFilter('urgent');
               window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             }}
-          />
+            className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <BellAlertIcon className="w-12 h-12 text-white mb-3" />
+            <h3 className="text-lg font-bold text-white">التنبيهات</h3>
+            <p className="text-sm text-blue-100">الشكاوى العاجلة</p>
+          </button>
         </div>
 
-        <ChartCard title="إحصائيات الشكاوى" subtitle="نظرة عامة على حالة الشكاوى">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">إحصائيات الشكاوى</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">نظرة عامة على حالة الشكاوى</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {loading ? (
               <>
@@ -260,9 +266,11 @@ function TechnicalCommitteeDashboard() {
               </>
             )}
           </div>
-        </ChartCard>
+        </div>
 
-        <ChartCard title="إدارة الشكاوى" subtitle="البحث والفلترة">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">إدارة الشكاوى</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">البحث والفلترة</p>
           <FilterBar
             searchValue={searchTerm}
             onSearchChange={setSearchTerm}
@@ -283,14 +291,14 @@ function TechnicalCommitteeDashboard() {
                 <div
                   key={complaint.id}
                   onClick={() => navigate(`/complaints/${complaint.id}`)}
-                  className="p-4 bg-white hover:bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-primary-300 cursor-pointer transition-all"
+                  className="p-4 bg-gradient-to-r from-white to-gray-50 dark:from-gray-700 dark:to-gray-800 hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-600 dark:hover:to-gray-700 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-blue-300 cursor-pointer transition-all shadow-md hover:shadow-lg"
                 >
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1">
-                      <h4 className="font-bold text-gray-900 mb-1">
+                      <h4 className="font-bold text-gray-900 dark:text-white mb-1">
                         شكوى #{complaint.id}
                       </h4>
-                      <p className="text-sm text-gray-600 line-clamp-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
                         {complaint.problem_description}
                       </p>
                     </div>
@@ -303,7 +311,7 @@ function TechnicalCommitteeDashboard() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                     <span>{format(new Date(complaint.created_at), 'd MMM yyyy', { locale: ar })}</span>
                     <span>•</span>
                     <span>{complaint.category_name}</span>
@@ -318,12 +326,12 @@ function TechnicalCommitteeDashboard() {
               ))
             ) : (
               <div className="text-center py-12">
-                <FolderOpenIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">لا توجد شكاوى تطابق الفلاتر المحددة</p>
+                <FolderOpenIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400 font-medium">لا توجد شكاوى تطابق الفلاتر المحددة</p>
               </div>
             )}
           </div>
-        </ChartCard>
+        </div>
       </div>
     </ResponsivePageShell>
   );

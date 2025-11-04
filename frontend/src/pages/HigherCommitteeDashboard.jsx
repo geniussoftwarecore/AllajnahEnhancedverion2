@@ -124,7 +124,7 @@ function HigherCommitteeDashboard() {
           </div>
         </div>
 
-        <div className="card bg-gradient-to-br from-purple-600 to-purple-800 p-6 text-white">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-purple-600 to-purple-800 text-white">
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-2xl font-bold mb-2">لوحة اللجنة العليا</h2>
@@ -135,45 +135,52 @@ function HigherCommitteeDashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <QuickActionCard
-            icon={UserGroupIcon}
-            title="المستخدمين"
-            description="إدارة المستخدمين"
-            color="primary"
+          <button
             onClick={() => navigate('/admin/users')}
-          />
-          <QuickActionCard
-            icon={CreditCardIcon}
-            title="الدفعات"
-            description="مراجعة الدفعات"
-            color="success"
+            className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <UserGroupIcon className="w-12 h-12 text-white mb-3" />
+            <h3 className="text-lg font-bold text-white">المستخدمين</h3>
+            <p className="text-sm text-blue-100">إدارة المستخدمين</p>
+          </button>
+          <button
             onClick={() => navigate('/admin/payments')}
-          />
-          <QuickActionCard
-            icon={ChartBarIcon}
-            title="التحليلات"
-            description="تقارير شاملة"
-            color="warning"
+            className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <CreditCardIcon className="w-12 h-12 text-white mb-3" />
+            <h3 className="text-lg font-bold text-white">الدفعات</h3>
+            <p className="text-sm text-blue-100">مراجعة الدفعات</p>
+          </button>
+          <button
             onClick={() => navigate('/admin/analytics')}
-          />
-          <QuickActionCard
-            icon={ClipboardDocumentListIcon}
-            title="سجل التدقيق"
-            description="سجل النشاطات"
-            color="gray"
+            className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <ChartBarIcon className="w-12 h-12 text-white mb-3" />
+            <h3 className="text-lg font-bold text-white">التحليلات</h3>
+            <p className="text-sm text-blue-100">تقارير شاملة</p>
+          </button>
+          <button
             onClick={() => navigate('/admin/audit-log')}
-          />
-          <QuickActionCard
-            icon={CogIcon}
-            title="الإعدادات"
-            description="إعدادات النظام"
-            color="gray"
+            className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <ClipboardDocumentListIcon className="w-12 h-12 text-white mb-3" />
+            <h3 className="text-lg font-bold text-white">سجل التدقيق</h3>
+            <p className="text-sm text-blue-100">سجل النشاطات</p>
+          </button>
+          <button
             onClick={() => navigate('/admin/settings')}
-          />
+            className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all cursor-pointer"
+          >
+            <CogIcon className="w-12 h-12 text-white mb-3" />
+            <h3 className="text-lg font-bold text-white">الإعدادات</h3>
+            <p className="text-sm text-blue-100">إعدادات النظام</p>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartCard title="إحصائيات عامة" subtitle="نظرة شاملة على النظام">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">إحصائيات عامة</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">نظرة شاملة على النظام</p>
             <div className="grid grid-cols-2 gap-4 mb-6">
               {loading ? (
                 <>
@@ -212,7 +219,7 @@ function HigherCommitteeDashboard() {
             </div>
 
             {!loading && stats && (
-              <div className="p-4 bg-gradient-to-br from-primary-50 to-white rounded-lg border border-primary-200">
+              <div className="p-4 bg-gradient-to-br from-primary-50 to-white rounded-xl border-2 border-primary-200">
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-bold text-gray-900 mb-1">معدل الحل الإجمالي</h4>
@@ -224,50 +231,53 @@ function HigherCommitteeDashboard() {
                 </div>
               </div>
             )}
-          </ChartCard>
+          </div>
 
-          <ChartCard title="التنبيهات الهامة" subtitle="يتطلب انتباه فوري">
-            <div className={`p-4 rounded-lg border-2 ${escalatedCount > 0 ? 'bg-warning-50 border-warning-200' : 'bg-gray-50 border-gray-200'}`}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">التنبيهات الهامة</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">يتطلب انتباه فوري</p>
+            <div className={`p-6 rounded-xl border-2 ${escalatedCount > 0 ? 'bg-warning-50 border-warning-300' : 'bg-gray-50 border-gray-200'}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <BellAlertIcon className={`w-8 h-8 ${escalatedCount > 0 ? 'text-warning-600' : 'text-gray-400'}`} />
+                  <BellAlertIcon className={`w-10 h-10 ${escalatedCount > 0 ? 'text-warning-600' : 'text-gray-400'}`} />
                   <div>
-                    <h4 className="font-bold text-gray-900">شكاوى متصاعدة</h4>
-                    <p className="text-sm text-gray-600">تتطلب مراجعة اللجنة العليا</p>
+                    <h4 className="font-bold text-gray-900 dark:text-white">شكاوى متصاعدة</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">تتطلب مراجعة اللجنة العليا</p>
                   </div>
                 </div>
-                <span className={`text-2xl font-bold ${escalatedCount > 0 ? 'text-warning-600' : 'text-gray-400'}`}>
+                <span className={`text-3xl font-bold ${escalatedCount > 0 ? 'text-warning-600' : 'text-gray-400'}`}>
                   {escalatedCount}
                 </span>
               </div>
               {escalatedCount > 0 && (
                 <button
                   onClick={() => navigate('/complaints?status=escalated')}
-                  className="mt-3 w-full py-2 bg-warning-600 hover:bg-warning-700 text-white rounded-lg font-medium transition-colors"
+                  className="mt-4 w-full px-4 py-2.5 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all"
                 >
                   عرض الشكاوى المتصاعدة
                 </button>
               )}
             </div>
-          </ChartCard>
+          </div>
         </div>
 
-        <ChartCard 
-          title="الشكاوى المتصاعدة" 
-          subtitle="الشكاوى التي تتطلب قرار نهائي"
-          actions={
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">الشكاوى المتصاعدة</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">الشكاوى التي تتطلب قرار نهائي</p>
+            </div>
             <button
               onClick={() => navigate('/complaints?status=escalated')}
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
             >
               عرض الكل ←
             </button>
-          }
-        >
+          </div>
           {loading ? (
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="animate-pulse bg-gray-100 h-20 rounded-lg"></div>
+                <div key={i} className="animate-pulse bg-gray-100 dark:bg-gray-700 h-20 rounded-xl"></div>
               ))}
             </div>
           ) : recentComplaints.length > 0 ? (
@@ -276,17 +286,17 @@ function HigherCommitteeDashboard() {
                 <div
                   key={complaint.id}
                   onClick={() => navigate(`/complaints/${complaint.id}`)}
-                  className="p-4 bg-white hover:bg-gray-50 rounded-lg border-2 border-warning-200 hover:border-warning-400 cursor-pointer transition-all"
+                  className="p-4 bg-gradient-to-r from-white to-gray-50 dark:from-gray-700 dark:to-gray-800 hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-600 dark:hover:to-gray-700 rounded-xl border-2 border-warning-200 dark:border-warning-800 hover:border-warning-400 cursor-pointer transition-all shadow-md hover:shadow-lg"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <h4 className="font-bold text-gray-900 mb-1">
+                      <h4 className="font-bold text-gray-900 dark:text-white mb-1">
                         شكوى #{complaint.id}
                       </h4>
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
                         {complaint.problem_description}
                       </p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                         <span>{format(new Date(complaint.created_at), 'd MMM yyyy', { locale: ar })}</span>
                         <span>•</span>
                         <span>{complaint.category_name}</span>
@@ -306,11 +316,11 @@ function HigherCommitteeDashboard() {
               ))}</div>
           ) : (
             <div className="text-center py-12">
-              <FolderOpenIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">لا توجد شكاوى متصاعدة حالياً</p>
+              <FolderOpenIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 font-medium">لا توجد شكاوى متصاعدة حالياً</p>
             </div>
           )}
-        </ChartCard>
+        </div>
       </div>
     </ResponsivePageShell>
   );
