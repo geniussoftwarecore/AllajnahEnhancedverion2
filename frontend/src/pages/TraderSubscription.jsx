@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Header from '../components/Header';
+import { ResponsivePageShell } from '../components/ui';
 import api from '../api/axios';
 
 function TraderSubscription() {
@@ -77,38 +77,24 @@ function TraderSubscription() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900">
-        <Header />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="p-12 text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">جاري التحميل...</p>
-          </div>
+      <ResponsivePageShell 
+        title="الاشتراك والدفع"
+        subtitle="إدارة اشتراكك وتتبع المدفوعات"
+      >
+        <div className="p-12 text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">جاري التحميل...</p>
         </div>
-      </div>
+      </ResponsivePageShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900">
-      <Header />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-              الاشتراك والدفع
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">إدارة اشتراكك وتتبع المدفوعات</p>
-          </div>
-          <Link 
-            to="/" 
-            className="px-6 py-2.5 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all"
-          >
-            العودة إلى لوحة التحكم
-          </Link>
-        </div>
-
+    <ResponsivePageShell 
+      title="الاشتراك والدفع"
+      subtitle="إدارة اشتراكك وتتبع المدفوعات"
+    >
+      <div className="space-y-6">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
             حالة الاشتراك
@@ -217,15 +203,16 @@ function TraderSubscription() {
           )}
         </div>
 
-        {showPaymentModal && (
-          <PaymentModal 
-            subscription={subscription} 
-            onClose={() => setShowPaymentModal(false)} 
-            onSuccess={loadData} 
-          />
-        )}
       </div>
-    </div>
+      
+      {showPaymentModal && (
+        <PaymentModal 
+          subscription={subscription} 
+          onClose={() => setShowPaymentModal(false)} 
+          onSuccess={loadData} 
+        />
+      )}
+    </ResponsivePageShell>
   );
 }
 
