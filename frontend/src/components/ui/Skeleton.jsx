@@ -1,7 +1,7 @@
 import React from 'react';
 
 const Skeleton = ({ className = '', variant = 'default', count = 1, height, width }) => {
-  const baseClasses = 'animate-pulse bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded';
+  const baseClasses = 'animate-pulse bg-gradient-to-r from-gray-200/80 via-gray-100/80 to-gray-200/80 rounded relative overflow-hidden';
   
   const variants = {
     default: 'h-4',
@@ -22,12 +22,10 @@ const Skeleton = ({ className = '', variant = 'default', count = 1, height, widt
   if (count === 1) {
     return (
       <div 
-        className={`${baseClasses} ${variantClass} ${heightClass} ${widthClass} ${className}`} 
-        style={{ 
-          backgroundSize: '200% 100%',
-          animation: 'shimmer 1.5s infinite',
-        }}
-      />
+        className={`${baseClasses} ${variantClass} ${heightClass} ${widthClass} ${className} motion-reduce:animate-none motion-reduce:bg-gray-200`} 
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent -translate-x-full motion-safe:animate-shimmer"></div>
+      </div>
     );
   }
   
@@ -36,13 +34,13 @@ const Skeleton = ({ className = '', variant = 'default', count = 1, height, widt
       {Array.from({ length: count }).map((_, index) => (
         <div 
           key={index}
-          className={`${baseClasses} ${variantClass} ${heightClass} ${widthClass}`}
-          style={{ 
-            backgroundSize: '200% 100%',
-            animation: 'shimmer 1.5s infinite',
-            animationDelay: `${index * 0.1}s`,
-          }}
-        />
+          className={`${baseClasses} ${variantClass} ${heightClass} ${widthClass} motion-reduce:animate-none motion-reduce:bg-gray-200`}
+        >
+          <div 
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent -translate-x-full motion-safe:animate-shimmer"
+            style={{ animationDelay: `${index * 0.1}s` }}
+          />
+        </div>
       ))}
     </div>
   );

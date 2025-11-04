@@ -142,8 +142,17 @@ export default {
         'neumorphic': '12px 12px 20px rgba(0, 0, 0, 0.08), -12px -12px 20px rgba(255, 255, 255, 0.8)',
         'neumorphic-inset': 'inset 6px 6px 12px rgba(0, 0, 0, 0.08), inset -6px -6px 12px rgba(255, 255, 255, 0.8)',
         'glass': '0 8px 32px rgba(0, 196, 107, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05)',
+        'glass-strong': '0 8px 32px rgba(0, 196, 107, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)',
         'card': '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
         'card-hover': '0 10px 20px rgba(0, 0, 0, 0.12), 0 6px 6px rgba(0, 0, 0, 0.08)',
+        'premium': '0 25px 50px -12px rgba(0, 196, 107, 0.25), 0 10px 25px -10px rgba(0, 0, 0, 0.1)',
+        'premium-hover': '0 35px 60px -15px rgba(0, 196, 107, 0.3), 0 15px 30px -12px rgba(0, 0, 0, 0.15)',
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+        'gradient-mesh': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        'shimmer': 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in',
