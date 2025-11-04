@@ -3,6 +3,8 @@
 ## Overview
 Allajnah Enhanced is a comprehensive complaint management system for Yemeni traders and oversight committees. It streamlines the submission, tracking, and multi-level committee review of complaints against government entities. The system aims to enhance transparency and accountability in governmental operations. It supports full Arabic language with RTL layout and is production-ready.
 
+**Latest Update (Nov 2025)**: Completed comprehensive UI/UX redesign with modern aesthetics including gradients, glassmorphism effects, smooth animations, enhanced shadows, and refined visual hierarchy across all pages and user roles.
+
 ## User Preferences
 I prefer iterative development with a focus on completing core functionalities first, then refining and adding advanced features. I value clear, concise explanations and prefer to be asked before major architectural or design changes are implemented. All user-facing text should support both Arabic and English, with Arabic being the primary language and using an RTL layout. Please follow existing code patterns for consistency.
 
