@@ -31,11 +31,11 @@ function TraderSubscription() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'expired': return 'bg-red-100 text-red-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active': return 'bg-gradient-to-r from-green-500 to-emerald-500 text-white';
+      case 'expired': return 'bg-gradient-to-r from-red-500 to-pink-500 text-white';
+      case 'pending': return 'bg-gradient-to-r from-yellow-500 to-amber-500 text-white';
+      case 'cancelled': return 'bg-gradient-to-r from-gray-500 to-slate-500 text-white';
+      default: return 'bg-gradient-to-r from-gray-500 to-slate-500 text-white';
     }
   };
 
@@ -51,10 +51,10 @@ function TraderSubscription() {
 
   const getPaymentStatusColor = (status) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'pending': return 'bg-gradient-to-r from-yellow-500 to-amber-500 text-white';
+      case 'approved': return 'bg-gradient-to-r from-green-500 to-emerald-500 text-white';
+      case 'rejected': return 'bg-gradient-to-r from-red-500 to-pink-500 text-white';
+      default: return 'bg-gradient-to-r from-gray-500 to-slate-500 text-white';
     }
   };
 
@@ -77,63 +77,72 @@ function TraderSubscription() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900">
         <Header />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-gray-500">جاري التحميل...</div>
+          <div className="p-12 text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">جاري التحميل...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">الاشتراك والدفع</h1>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              الاشتراك والدفع
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">إدارة اشتراكك وتتبع المدفوعات</p>
+          </div>
           <Link 
             to="/" 
-            className="text-blue-600 hover:text-blue-800"
+            className="px-6 py-2.5 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all"
           >
             العودة إلى لوحة التحكم
           </Link>
         </div>
 
-        {/* Subscription Status */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-2xl font-bold mb-4">حالة الاشتراك</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
+            حالة الاشتراك
+          </h2>
           
           {subscription ? (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">الحالة</p>
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm mt-1 ${getStatusColor(subscription.status)}`}>
+                <div className="p-4 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-700 dark:to-blue-900 rounded-xl">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">الحالة</p>
+                  <span className={`inline-block px-3 py-1.5 rounded-full text-xs font-bold shadow-md ${getStatusColor(subscription.status)}`}>
                     {getStatusText(subscription.status)}
                   </span>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">تاريخ البداية</p>
-                  <p className="font-medium">{new Date(subscription.start_date).toLocaleDateString('ar')}</p>
+                <div className="p-4 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-700 dark:to-purple-900 rounded-xl">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">تاريخ البداية</p>
+                  <p className="font-bold text-gray-900 dark:text-white">{new Date(subscription.start_date).toLocaleDateString('ar')}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">تاريخ الانتهاء</p>
-                  <p className="font-medium">{new Date(subscription.end_date).toLocaleDateString('ar')}</p>
+                <div className="p-4 bg-gradient-to-br from-gray-50 to-indigo-50 dark:from-gray-700 dark:to-indigo-900 rounded-xl">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">تاريخ الانتهاء</p>
+                  <p className="font-bold text-gray-900 dark:text-white">{new Date(subscription.end_date).toLocaleDateString('ar')}</p>
                 </div>
               </div>
 
               {isExpiredOrExpiring() && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-yellow-800 font-medium">
+                <div className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900 dark:to-amber-900 border-2 border-yellow-400 dark:border-yellow-600 rounded-xl p-6">
+                  <p className="text-yellow-800 dark:text-yellow-200 font-semibold mb-3">
                     {subscription.status === 'expired' 
                       ? 'اشتراكك منتهي. يرجى تجديد الاشتراك للاستمرار في تقديم الشكاوى.' 
                       : 'اشتراكك سينتهي قريباً. يرجى تجديده في أقرب وقت ممكن.'}
                   </p>
                   <button
                     onClick={() => setShowPaymentModal(true)}
-                    className="mt-3 bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-lg"
+                    className="px-6 py-2.5 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
                   >
                     تجديد الاشتراك الآن
                   </button>
@@ -141,11 +150,11 @@ function TraderSubscription() {
               )}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-600 mb-4">لا يوجد اشتراك نشط</p>
+            <div className="text-center py-12">
+              <p className="text-gray-600 dark:text-gray-400 mb-4 text-lg">لا يوجد اشتراك نشط</p>
               <button
                 onClick={() => setShowPaymentModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
               >
                 اشترك الآن
               </button>
@@ -153,100 +162,80 @@ function TraderSubscription() {
           )}
         </div>
 
-        {/* Payment History */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold">سجل الدفعات</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              سجل الدفعات
+            </h2>
             <button
               onClick={() => setShowPaymentModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
             >
               + دفعة جديدة
             </button>
           </div>
 
           {payments.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              لا توجد دفعات
+            <div className="text-center py-12">
+              <p className="text-gray-500 dark:text-gray-400 text-lg">لا توجد دفعات</p>
             </div>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">ID</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">المبلغ</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الطريقة</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الحالة</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">التاريخ</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">ملاحظات</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {payments.map((payment) => (
-                  <tr key={payment.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{payment.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                      {Number(payment.amount).toFixed(2)} ريال
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{payment.method}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={`px-2 py-1 rounded-full text-xs ${getPaymentStatusColor(payment.status)}`}>
-                        {getPaymentStatusText(payment.status)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(payment.created_at).toLocaleDateString('ar')}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {payment.approval_notes || '-'}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gradient-to-r from-blue-600 to-purple-600">
+                  <tr>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">ID</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">المبلغ</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">طريقة الدفع</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الحالة</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">التاريخ</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الملاحظات</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {payments.map((payment) => (
+                    <tr key={payment.id} className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all transform hover:scale-[1.01]">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">{payment.id}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600 dark:text-green-400">
+                        {Number(payment.amount).toFixed(2)} ريال
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{payment.method}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-md ${getPaymentStatusColor(payment.status)}`}>
+                          {getPaymentStatusText(payment.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                        {new Date(payment.created_at).toLocaleDateString('ar')}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{payment.approval_notes || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
-      </div>
 
-      {/* Payment Upload Modal */}
-      {showPaymentModal && (
-        <PaymentUploadModal
-          onClose={() => setShowPaymentModal(false)}
-          onSuccess={() => {
-            setShowPaymentModal(false);
-            loadData();
-          }}
-        />
-      )}
+        {showPaymentModal && (
+          <PaymentModal 
+            subscription={subscription} 
+            onClose={() => setShowPaymentModal(false)} 
+            onSuccess={loadData} 
+          />
+        )}
+      </div>
     </div>
   );
 }
 
-function PaymentUploadModal({ onClose, onSuccess }) {
-  const [paymentMethods, setPaymentMethods] = useState([]);
+function PaymentModal({ subscription, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
-    amount: '',
-    method: '',
-    file: null
+    method: 'bank_transfer',
+    proof: null
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    loadPaymentMethods();
-  }, []);
-
-  const loadPaymentMethods = async () => {
-    try {
-      const response = await api.get('/admin/payment-methods', { params: { is_active: true } });
-      setPaymentMethods(response.data);
-      if (response.data.length > 0) {
-        setFormData(f => ({ ...f, method: response.data[0].name_ar }));
-      }
-    } catch (error) {
-      console.error('Error loading payment methods:', error);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -254,93 +243,80 @@ function PaymentUploadModal({ onClose, onSuccess }) {
     setError('');
 
     try {
-      const submitData = new FormData();
-      submitData.append('amount', formData.amount);
-      submitData.append('method', formData.method);
-      submitData.append('file', formData.file);
+      const formDataToSend = new FormData();
+      formDataToSend.append('method', formData.method);
+      if (formData.proof) {
+        formDataToSend.append('proof', formData.proof);
+      }
 
-      await api.post('/payments', submitData, {
+      await api.post('/payments', formDataToSend, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      alert('تم رفع إثبات الدفع بنجاح. سيتم مراجعته من قبل اللجنة العليا.');
       onSuccess();
+      onClose();
     } catch (err) {
-      setError(err.response?.data?.detail || 'فشل في رفع إثبات الدفع');
+      setError(err.response?.data?.detail || 'حدث خطأ أثناء تقديم الدفع');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-6">رفع إثبات الدفع</h2>
-
+    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-lg w-full border-2 border-gray-200 dark:border-gray-700">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
+          دفعة جديدة
+        </h2>
+        
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="mb-4 p-4 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900 dark:to-pink-900 border-2 border-red-400 dark:border-red-600 rounded-xl text-red-800 dark:text-red-200">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">المبلغ (ريال) *</label>
-            <input
-              type="number"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              required
-              min="0"
-              step="0.01"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
+          <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 rounded-xl">
+            <p className="text-sm text-blue-700 dark:text-blue-300 mb-1">المبلغ المطلوب</p>
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">200.00 ريال</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">طريقة الدفع *</label>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">طريقة الدفع</label>
             <select
               value={formData.method}
               onChange={(e) => setFormData({ ...formData, method: e.target.value })}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
             >
-              {paymentMethods.map((method) => (
-                <option key={method.id} value={method.name_ar}>
-                  {method.name_ar}
-                </option>
-              ))}
+              <option value="bank_transfer">تحويل بنكي</option>
+              <option value="credit_card">بطاقة ائتمان</option>
+              <option value="cash">نقداً</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">إثبات الدفع (صورة/PDF) *</label>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">إثبات الدفع (اختياري)</label>
             <input
               type="file"
-              onChange={(e) => setFormData({ ...formData, file: e.target.files[0] })}
-              required
-              accept="image/*,application/pdf"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              onChange={(e) => setFormData({ ...formData, proof: e.target.files[0] })}
+              className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              يرجى رفع صورة واضحة أو ملف PDF لإثبات الدفع
-            </p>
           </div>
 
-          <div className="flex justify-end gap-3 mt-6">
+          <div className="flex gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex-1 px-6 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 font-semibold text-gray-700 dark:text-gray-300 transition-all"
             >
               إلغاء
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="flex-1 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'جاري الرفع...' : 'رفع'}
+              {loading ? 'جاري الإرسال...' : 'تقديم الدفع'}
             </button>
           </div>
         </form>
