@@ -299,25 +299,17 @@ function ComplaintList({ onUpdate, role, embedded = false }) {
       subtitle={`إجمالي: ${complaints.length} شكوى`}
     >
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeftIcon className="w-5 h-5" />
-            <span>العودة</span>
-          </button>
-          
-          {user?.role === 'trader' && (
+        {user?.role === 'trader' && (
+          <div className="flex justify-end">
             <button
               onClick={() => navigate('/complaints/new')}
-              className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
             >
               <PlusCircleIcon className="w-5 h-5" />
               <span>شكوى جديدة</span>
             </button>
-          )}
-        </div>
+          </div>
+        )}
         
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           {content}

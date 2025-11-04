@@ -1,32 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import Header from '../../components/Header';
-import { ConfirmDialog } from '../../components/ui';
+import { ResponsivePageShell, ConfirmDialog } from '../../components/ui';
 import api from '../../api/axios';
 
 function Settings() {
   const [activeTab, setActiveTab] = useState('categories');
 
   return (
-    <>
-      <Header />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-              الإعدادات
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">إدارة إعدادات النظام والتصنيفات</p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl mb-6 border border-gray-200 dark:border-gray-700">
+    <ResponsivePageShell 
+      title="الإعدادات"
+      subtitle="إدارة إعدادات النظام والتصنيفات"
+    >
+      <div className="space-y-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-6 border border-gray-200 dark:border-gray-700">
             <div className="flex flex-wrap border-b-2 border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setActiveTab('categories')}
                 className={`px-6 py-3 font-semibold transition-all ${
                   activeTab === 'categories'
-                    ? 'border-b-4 border-blue-600 text-blue-600 bg-gradient-to-t from-blue-50 to-transparent dark:from-blue-900'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'border-b-4 border-primary-600 text-primary-600 bg-gray-50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 التصنيفات
@@ -35,8 +28,8 @@ function Settings() {
                 onClick={() => setActiveTab('sla')}
                 className={`px-6 py-3 font-semibold transition-all ${
                   activeTab === 'sla'
-                    ? 'border-b-4 border-blue-600 text-blue-600 bg-gradient-to-t from-blue-50 to-transparent dark:from-blue-900'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'border-b-4 border-primary-600 text-primary-600 bg-gray-50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 إعدادات SLA
@@ -45,8 +38,8 @@ function Settings() {
                 onClick={() => setActiveTab('payment-methods')}
                 className={`px-6 py-3 font-semibold transition-all ${
                   activeTab === 'payment-methods'
-                    ? 'border-b-4 border-blue-600 text-blue-600 bg-gradient-to-t from-blue-50 to-transparent dark:from-blue-900'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'border-b-4 border-primary-600 text-primary-600 bg-gray-50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 طرق الدفع
@@ -55,8 +48,8 @@ function Settings() {
                 onClick={() => setActiveTab('system')}
                 className={`px-6 py-3 font-semibold transition-all ${
                   activeTab === 'system'
-                    ? 'border-b-4 border-blue-600 text-blue-600 bg-gradient-to-t from-blue-50 to-transparent dark:from-blue-900'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'border-b-4 border-primary-600 text-primary-600 bg-gray-50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 إعدادات النظام
@@ -64,15 +57,14 @@ function Settings() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
-            {activeTab === 'categories' && <CategoriesTab />}
-            {activeTab === 'sla' && <SLATab />}
-            {activeTab === 'payment-methods' && <PaymentMethodsTab />}
-            {activeTab === 'system' && <SystemSettingsTab />}
-          </div>
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+          {activeTab === 'categories' && <CategoriesTab />}
+          {activeTab === 'sla' && <SLATab />}
+          {activeTab === 'payment-methods' && <PaymentMethodsTab />}
+          {activeTab === 'system' && <SystemSettingsTab />}
         </div>
       </div>
-    </>
+    </ResponsivePageShell>
   );
 }
 

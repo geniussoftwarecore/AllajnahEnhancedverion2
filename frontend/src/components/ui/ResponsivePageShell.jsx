@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import MobileTopBar from './MobileTopBar';
@@ -10,15 +10,18 @@ import {
   Cog6ToothIcon, 
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
-  Bars3Icon
+  Bars3Icon,
+  ArrowLeftIcon
 } from '@heroicons/react/24/outline';
 
 const ResponsivePageShell = ({ 
   children, 
   title, 
+  subtitle,
   showNotifications = true,
   notificationCount = 0,
   showNav = true,
+  showBackButton = true,
   maxWidth = '7xl',
   padding = true
 }) => {
@@ -26,6 +29,7 @@ const ResponsivePageShell = ({
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const openDrawer = () => setIsDrawerOpen(true);
   const closeDrawer = () => setIsDrawerOpen(false);
@@ -91,6 +95,17 @@ const ResponsivePageShell = ({
                 </div>
 
                 <div className="flex items-center gap-3">
+                  {showBackButton && location.pathname !== '/' && (
+                    <button
+                      onClick={() => navigate(-1)}
+                      className="flex items-center gap-2 p-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all"
+                      aria-label="رجوع"
+                    >
+                      <ArrowLeftIcon className="w-6 h-6" />
+                      <span className="hidden lg:inline text-sm font-medium">رجوع</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => navigate('/')}
                     className="hidden sm:flex p-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all"
@@ -150,8 +165,14 @@ const ResponsivePageShell = ({
         </>
       )}
       
-      <main className={`min-h-[calc(100vh-4rem)] ${padding ? 'py-4 sm:py-6 lg:py-8' : ''}`}>
+      <main className={`min-h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900 ${padding ? 'py-4 sm:py-6 lg:py-8' : ''}`}>
         <div className={`mx-auto w-full ${padding ? 'px-4 sm:px-6 lg:px-8' : ''} ${maxWidthClass}`}>
+          {title && (
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{title}</h1>
+              {subtitle && <p className="mt-2 text-gray-600 dark:text-gray-400">{subtitle}</p>}
+            </div>
+          )}
           {children}
         </div>
       </main>

@@ -209,16 +209,6 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
 
   const content = (
     <div>
-      <div className="mb-6">
-        <button
-          onClick={handleBack}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          <ArrowLeftIcon className="w-5 h-5" />
-          <span>العودة</span>
-        </button>
-      </div>
-
       {/* Trader Actions for Resolved/Rejected Complaints */}
       {user.role === 'trader' && ['resolved', 'rejected'].includes(complaint.status) && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -485,10 +475,9 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
     <ResponsivePageShell 
       title={`شكوى #${complaint.id}`}
       subtitle={complaint.title}
+      maxWidth="6xl"
     >
-      <div className="max-w-6xl mx-auto">
-        {content}
-      </div>
+      {content}
     </ResponsivePageShell>
   );
 }

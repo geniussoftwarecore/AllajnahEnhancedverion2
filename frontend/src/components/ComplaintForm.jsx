@@ -109,20 +109,10 @@ function ComplaintForm({ onSuccess }) {
     <ResponsivePageShell 
       title="تقديم شكوى جديدة"
       subtitle="املأ النموذج أدناه لتقديم شكواك"
+      maxWidth="4xl"
     >
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeftIcon className="w-5 h-5" />
-            <span>العودة</span>
-          </button>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 md:p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 md:p-8">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           {error}
@@ -374,7 +364,6 @@ function ComplaintForm({ onSuccess }) {
             </div>
           </form>
         </div>
-      </div>
     </ResponsivePageShell>
   );
 }
