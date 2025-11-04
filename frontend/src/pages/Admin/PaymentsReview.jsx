@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import Header from '../../components/Header';
+import { ResponsivePageShell } from '../../components/ui';
 import api from '../../api/axios';
 
 function PaymentsReview() {
@@ -83,16 +83,11 @@ function PaymentsReview() {
   };
 
   return (
-    <>
-      <Header />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-              مراجعة الدفعات
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">مراجعة والموافقة على دفعات التجار</p>
-          </div>
+    <ResponsivePageShell 
+      title="مراجعة الدفعات"
+      subtitle="مراجعة والموافقة على دفعات التجار"
+    >
+      <div className="space-y-6">
 
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">تصفية حسب الحالة</h3>
@@ -279,8 +274,7 @@ function PaymentsReview() {
             </div>
           )}
         </div>
-      </div>
-    </>
+      </ResponsivePageShell>
   );
 }
 

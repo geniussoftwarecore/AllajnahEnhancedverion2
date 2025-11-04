@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import Header from '../../components/Header';
-import { ConfirmDialog } from '../../components/ui';
+import { ResponsivePageShell, ConfirmDialog } from '../../components/ui';
 import api from '../../api/axios';
 
 function UsersManagement() {
@@ -99,27 +98,22 @@ function UsersManagement() {
   };
 
   return (
-    <>
-      <Header />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-purple-900 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                إدارة المستخدمين
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">إدارة وتحديث بيانات المستخدمين في النظام</p>
-            </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
-            >
-              <span className="text-xl">+</span>
-              <span>إضافة مستخدم جديد</span>
-            </button>
-          </div>
+    <ResponsivePageShell 
+      title="إدارة المستخدمين"
+      subtitle="إدارة وتحديث بيانات المستخدمين في النظام"
+    >
+      <div className="space-y-6">
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+          >
+            <span className="text-xl">+</span>
+            <span>إضافة مستخدم جديد</span>
+          </button>
+        </div>
 
-          {/* Filters */}
+        {/* Filters */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">تصفية البحث</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -244,41 +238,40 @@ function UsersManagement() {
               </div>
             )}
           </div>
+
+          {/* Create User Modal */}
+          {showCreateModal && (
+            <UserFormModal
+              onClose={() => setShowCreateModal(false)}
+              onSubmit={handleCreateUser}
+              title="إضافة مستخدم جديد"
+            />
+          )}
+
+          {/* Edit User Modal */}
+          {editingUser && (
+            <UserFormModal
+              user={editingUser}
+              onClose={() => setEditingUser(null)}
+              onSubmit={(data) => handleUpdateUser(editingUser.id, data)}
+              title="تعديل المستخدم"
+            />
+          )}
+
+          {/* Confirm Dialog */}
+          <ConfirmDialog
+            isOpen={confirmDialog.isOpen}
+            onClose={() => setConfirmDialog({ isOpen: false, userId: null, isLoading: false })}
+            onConfirm={handleDeactivateUser}
+            title="تعطيل المستخدم"
+            message="هل أنت متأكد من تعطيل هذا المستخدم؟ لن يتمكن من تسجيل الدخول بعد تعطيله."
+            confirmText="تعطيل"
+            cancelText="إلغاء"
+            type="danger"
+            isLoading={confirmDialog.isLoading}
+          />
         </div>
-      </div>
-
-      {/* Create User Modal */}
-      {showCreateModal && (
-        <UserFormModal
-          onClose={() => setShowCreateModal(false)}
-          onSubmit={handleCreateUser}
-          title="إضافة مستخدم جديد"
-        />
-      )}
-
-      {/* Edit User Modal */}
-      {editingUser && (
-        <UserFormModal
-          user={editingUser}
-          onClose={() => setEditingUser(null)}
-          onSubmit={(data) => handleUpdateUser(editingUser.id, data)}
-          title="تعديل المستخدم"
-        />
-      )}
-
-      {/* Confirm Dialog */}
-      <ConfirmDialog
-        isOpen={confirmDialog.isOpen}
-        onClose={() => setConfirmDialog({ isOpen: false, userId: null, isLoading: false })}
-        onConfirm={handleDeactivateUser}
-        title="تعطيل المستخدم"
-        message="هل أنت متأكد من تعطيل هذا المستخدم؟ لن يتمكن من تسجيل الدخول بعد تعطيله."
-        confirmText="تعطيل"
-        cancelText="إلغاء"
-        type="danger"
-        isLoading={confirmDialog.isLoading}
-      />
-    </>
+      </ResponsivePageShell>
   );
 }
 
