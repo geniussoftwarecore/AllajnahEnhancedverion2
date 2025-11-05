@@ -2,19 +2,24 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-toastify';
+import api from '../../api/axios';
 import {
   UserCircleIcon,
   Cog6ToothIcon,
   KeyIcon,
   ArrowRightOnRectangleIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  CameraIcon
 } from '@heroicons/react/24/outline';
 
 function ProfileDropdown() {
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const dropdownRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -50,6 +55,46 @@ function ProfileDropdown() {
     const first = user.first_name?.charAt(0) || '';
     const last = user.last_name?.charAt(0) || '';
     return (first + last).toUpperCase() || 'U';
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('الرجاء اختيار صورة صالحة');
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('حجم الصورة يجب أن يكون أقل من 5 ميجابايت');
+      e.target.value = '';
+      return;
+    }
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await api.post('users/profile-picture', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const updatedUser = { ...user, profile_picture: response.data.profile_picture };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      toast.success('تم تحديث الصورة الشخصية بنجاح');
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      toast.error(error.response?.data?.detail || 'فشل تحميل الصورة');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
   };
 
   const menuItems = [
@@ -129,17 +174,55 @@ function ProfileDropdown() {
           >
             <div className="px-4 py-3 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
-                {user?.profile_picture ? (
-                  <img
-                    src={user.profile_picture}
-                    alt={`${user.first_name} ${user.last_name}`}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-primary-500"
+                <div className="relative group">
+                  {user?.profile_picture ? (
+                    <img
+                      src={user.profile_picture}
+                      alt={`${user.first_name} ${user.last_name}`}
+                      className={`w-12 h-12 rounded-full object-cover border-2 border-primary-500 transition-all ${
+                        uploading ? 'opacity-50 animate-pulse' : ''
+                      }`}
+                    />
+                  ) : (
+                    <div className={`flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-primary-600 to-primary-500 text-white font-bold text-lg shadow-md transition-all ${
+                      uploading ? 'opacity-50 animate-pulse' : ''
+                    }`}>
+                      {getInitials()}
+                    </div>
+                  )}
+                  
+                  {uploading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-full">
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                    </div>
+                  )}
+                  
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                    disabled={uploading}
+                    className="absolute -bottom-1 -right-1 p-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-lg transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100"
+                    aria-label="تغيير الصورة الشخصية"
+                  >
+                    {uploading ? (
+                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
+                    ) : (
+                      <CameraIcon className="w-3 h-3" />
+                    )}
+                  </motion.button>
+                  
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
                   />
-                ) : (
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-primary-600 to-primary-500 text-white font-bold text-lg shadow-md">
-                    {getInitials()}
-                  </div>
-                )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
                     {user?.first_name} {user?.last_name}
