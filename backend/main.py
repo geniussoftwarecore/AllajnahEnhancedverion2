@@ -18,7 +18,7 @@ from models import (
     UserRole, ComplaintStatus, SubscriptionStatus, PaymentStatus, Priority, TaskStatus, ApprovalStatus
 )
 from schemas import (
-    UserCreate, UserLogin, UserResponse, Token, UserUpdate, PasswordReset,
+    UserCreate, UserLogin, UserResponse, Token, UserUpdate, PasswordReset, ProfileUpdate, ChangePasswordRequest,
     ComplaintCreate, ComplaintUpdate, ComplaintResponse,
     CommentCreate, CommentResponse,
     AttachmentResponse, CategoryResponse, CategoryCreate, CategoryUpdate, DashboardStats, AnalyticsData,
@@ -320,6 +320,73 @@ def login(request: Request, credentials: UserLogin, db: Session = Depends(get_db
 @app.get("/api/auth/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
     return UserResponse.model_validate(current_user)
+
+@app.put("/api/users/profile", response_model=UserResponse)
+def update_own_profile(
+    profile_data: ProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    update_fields = profile_data.model_dump(exclude_unset=True)
+    
+    for field, value in update_fields.items():
+        setattr(current_user, field, value)
+    
+    current_user.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(current_user)
+    
+    return UserResponse.model_validate(current_user)
+
+@app.post("/api/users/profile-picture")
+@limiter.limit(UPLOAD_RATE_LIMIT)
+async def upload_profile_picture(
+    request: Request,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    validate_upload_file(file, allowed_types=['image/jpeg', 'image/jpg', 'image/png', 'image/webp'], max_size_mb=5)
+    
+    upload_dir = "uploads/profile_pictures"
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    if current_user.profile_picture and os.path.exists(current_user.profile_picture):
+        try:
+            os.remove(current_user.profile_picture)
+        except:
+            pass
+    
+    file_extension = os.path.splitext(file.filename)[1]
+    filename = f"user_{current_user.id}_{datetime.utcnow().timestamp()}{file_extension}"
+    file_path = os.path.join(upload_dir, filename)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    current_user.profile_picture = f"/{file_path}"
+    current_user.updated_at = datetime.utcnow()
+    db.commit()
+    
+    return {"profile_picture": current_user.profile_picture, "message": "Profile picture uploaded successfully"}
+
+@app.post("/api/users/change-password")
+def change_own_password(
+    password_data: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not verify_password(password_data.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+    
+    current_user.hashed_password = get_password_hash(password_data.new_password)
+    current_user.updated_at = datetime.utcnow()
+    db.commit()
+    
+    return {"message": "Password changed successfully"}
 
 @app.get("/api/categories", response_model=List[CategoryResponse])
 def get_categories(government_entity: str = None, db: Session = Depends(get_db)):

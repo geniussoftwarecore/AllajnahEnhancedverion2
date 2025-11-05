@@ -3,36 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import ProfileDropdown from './ui/ProfileDropdown';
 import { 
   HomeIcon, 
-  BellIcon, 
-  ArrowRightOnRectangleIcon,
-  UserCircleIcon,
+  BellIcon,
   Bars3Icon
 } from '@heroicons/react/24/outline';
 
 function Header() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  const getRoleText = (role) => {
-    switch (role) {
-      case 'trader':
-        return 'تاجر';
-      case 'technical_committee':
-        return 'لجنة فنية';
-      case 'higher_committee':
-        return 'لجنة عليا';
-      default:
-        return role;
-    }
-  };
 
   return (
     <motion.header 
@@ -90,31 +71,7 @@ function Header() {
               <span className="text-xl">{isDark ? '☀️' : '🌙'}</span>
             </motion.button>
             
-            <motion.div 
-              whileHover={{ scale: 1.02 }}
-              className="hidden sm:flex items-center gap-3 px-3 py-2 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600"
-            >
-              <UserCircleIcon className="w-8 h-8 text-primary-600 dark:text-primary-400" />
-              <div className="text-right">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                  {user?.first_name} {user?.last_name}
-                </p>
-                <p className="text-xs text-gray-600 dark:text-gray-300">
-                  {getRoleText(user?.role)}
-                </p>
-              </div>
-            </motion.div>
-            
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(220, 38, 38, 0.3)" }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white font-semibold rounded-xl shadow-md transition-all"
-              aria-label="تسجيل الخروج"
-            >
-              <ArrowRightOnRectangleIcon className="w-5 h-5" />
-              <span className="hidden sm:inline">تسجيل الخروج</span>
-            </motion.button>
+            <ProfileDropdown />
           </div>
         </div>
       </div>

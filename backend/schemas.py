@@ -29,6 +29,7 @@ class UserResponse(BaseModel):
     whatsapp: Optional[str] = None
     telegram: Optional[str] = None
     address: Optional[str] = None
+    profile_picture: Optional[str] = None
     is_active: bool = True
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -274,6 +275,18 @@ class UserUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 class PasswordReset(BaseModel):
+    new_password: str
+
+class ProfileUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+    whatsapp: Optional[str] = None
+    telegram: Optional[str] = None
+    address: Optional[str] = None
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
     new_password: str
 
 class AuditLogResponse(BaseModel):

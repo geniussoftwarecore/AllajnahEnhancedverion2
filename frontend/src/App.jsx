@@ -27,6 +27,9 @@ const AuditLog = lazy(() => import('./pages/Admin/AuditLog'));
 const ComplaintList = lazy(() => import('./components/ComplaintList'));
 const ComplaintForm = lazy(() => import('./components/ComplaintForm'));
 const ComplaintDetail = lazy(() => import('./components/ComplaintDetail'));
+const Profile = lazy(() => import('./pages/Profile'));
+const ChangePassword = lazy(() => import('./pages/ChangePassword'));
+const UserSettings = lazy(() => import('./pages/UserSettings'));
 
 function PrivateRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -137,6 +140,32 @@ function AppRoutes() {
           element={
             <PrivateRoute allowedRoles={['trader', 'technical_committee', 'higher_committee']}>
               <ComplaintDetail />
+            </PrivateRoute>
+          }
+        />
+
+        {/* User Profile Routes */}
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute allowedRoles={['trader', 'technical_committee', 'higher_committee']}>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/change-password"
+          element={
+            <PrivateRoute allowedRoles={['trader', 'technical_committee', 'higher_committee']}>
+              <ChangePassword />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <PrivateRoute allowedRoles={['trader', 'technical_committee', 'higher_committee']}>
+              <UserSettings />
             </PrivateRoute>
           }
         />

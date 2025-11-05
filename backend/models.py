@@ -60,6 +60,7 @@ class User(Base):
     whatsapp = Column(String)
     telegram = Column(String)
     address = Column(String)
+    profile_picture = Column(String)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
