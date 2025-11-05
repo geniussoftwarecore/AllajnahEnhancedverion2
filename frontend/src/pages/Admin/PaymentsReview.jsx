@@ -92,8 +92,19 @@ function PaymentsReview() {
       subtitle="مراجعة والموافقة على دفعات التجار"
     >
       <div className="space-y-6">
-        <div className="card-glass-strong overflow-hidden shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">تصفية حسب الحالة</h3>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card-glass-strong overflow-hidden shadow-xl p-6 border border-primary-100 dark:border-primary-900/30"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-md">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">تصفية حسب الحالة</h3>
+          </div>
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setFilter('all')}
@@ -136,33 +147,39 @@ function PaymentsReview() {
               مرفوضة
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {payments.length === 0 ? (
           <div className="card-premium p-12 text-center">
             <p className="text-gray-500 dark:text-gray-400 text-lg">لا توجد دفعات</p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="overflow-x-auto rounded-xl border-2 border-gray-200/80 dark:border-gray-700/80 shadow-xl"
+          >
             <table className="min-w-full divide-y divide-gray-200/60 dark:divide-gray-700/60">
               <thead>
-                <tr className="bg-gradient-to-b from-gray-50 to-gray-100/50 dark:from-gray-800 dark:to-gray-800/50">
-                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">المستخدم</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">المبلغ</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">طريقة الدفع</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">الحالة</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">تاريخ التقديم</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">إجراءات</th>
+                <tr className="bg-gradient-to-r from-green-600 via-emerald-600 to-green-700">
+                  <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">المستخدم</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">المبلغ</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">طريقة الدفع</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الحالة</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">تاريخ التقديم</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">إجراءات</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200/60 dark:divide-gray-700/60">
-                {payments.map((payment) => (
+                {payments.map((payment, index) => (
                   <motion.tr 
                     key={payment.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors duration-200"
+                    transition={{ delay: index * 0.05 }}
+                    className="hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 dark:hover:from-gray-800 dark:hover:to-gray-700 transition-all duration-200 border-b border-gray-100 dark:border-gray-800"
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{payment.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 font-medium">
@@ -193,7 +210,7 @@ function PaymentsReview() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </motion.div>
         )}
 
         {selectedPayment && (

@@ -82,8 +82,19 @@ function AuditLog() {
       subtitle="سجل شامل لجميع الأنشطة والعمليات في النظام"
     >
       <div className="space-y-6">
-        <div className="card-glass-strong overflow-hidden shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">تصفية البحث</h3>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card-glass-strong overflow-hidden shadow-xl p-6 border border-primary-100 dark:border-primary-900/30"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">تصفية البحث</h3>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">معرف المستخدم</label>
@@ -132,7 +143,7 @@ function AuditLog() {
               </CTAButton>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {logs.length === 0 ? (
           <div className="card-premium p-12 text-center">
@@ -140,26 +151,32 @@ function AuditLog() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="overflow-x-auto rounded-xl border-2 border-gray-200/80 dark:border-gray-700/80 shadow-xl"
+            >
               <table className="min-w-full divide-y divide-gray-200/60 dark:divide-gray-700/60">
                 <thead>
-                  <tr className="bg-gradient-to-b from-gray-50 to-gray-100/50 dark:from-gray-800 dark:to-gray-800/50">
-                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">ID</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">الإجراء</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">المستخدم</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">نوع الهدف</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">معرف الهدف</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">التفاصيل</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">التاريخ</th>
+                  <tr className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700">
+                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">ID</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الإجراء</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">المستخدم</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">نوع الهدف</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">معرف الهدف</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">التفاصيل</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">التاريخ</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200/60 dark:divide-gray-700/60">
-                  {logs.map((log) => (
+                  {logs.map((log, index) => (
                     <motion.tr 
                       key={log.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors duration-200"
+                      transition={{ delay: index * 0.03 }}
+                      className="hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-gray-800 dark:hover:to-gray-700 transition-all duration-200 border-b border-gray-100 dark:border-gray-800"
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{log.id}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -182,7 +199,7 @@ function AuditLog() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </motion.div>
 
             <div className="card-glass-strong p-4 flex items-center justify-between">
               <div className="flex-1 flex justify-between sm:hidden">

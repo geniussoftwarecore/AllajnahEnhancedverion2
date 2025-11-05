@@ -107,7 +107,11 @@ function UsersManagement() {
       subtitle="إدارة وتحديث بيانات المستخدمين في النظام"
     >
       <div className="space-y-6">
-        <div className="flex justify-end">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex justify-end"
+        >
           <CTAButton
             onClick={() => setShowCreateModal(true)}
             variant="primary"
@@ -116,10 +120,20 @@ function UsersManagement() {
           >
             إضافة مستخدم جديد
           </CTAButton>
-        </div>
+        </motion.div>
 
-        <div className="card-glass-strong overflow-hidden shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">تصفية البحث</h3>
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="card-glass-strong overflow-hidden shadow-xl p-6 border border-primary-100 dark:border-primary-900/30"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-md">
+              <RefreshCcw className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">تصفية البحث</h3>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">بحث</label>
@@ -168,28 +182,34 @@ function UsersManagement() {
               </CTAButton>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="overflow-x-auto rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="overflow-x-auto rounded-xl border-2 border-gray-200/80 dark:border-gray-700/80 shadow-xl"
+        >
           <table className="min-w-full divide-y divide-gray-200/60 dark:divide-gray-700/60">
             <thead>
-              <tr className="bg-gradient-to-b from-gray-50 to-gray-100/50 dark:from-gray-800 dark:to-gray-800/50">
-                <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">ID</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">الاسم</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">البريد الإلكتروني</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">الدور</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">الهاتف</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">الحالة</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">إجراءات</th>
+              <tr className="bg-gradient-to-r from-primary-600 via-primary-700 to-purple-700">
+                <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">ID</th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الاسم</th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">البريد الإلكتروني</th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الدور</th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الهاتف</th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الحالة</th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">إجراءات</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200/60 dark:divide-gray-700/60">
-              {users.map((user) => (
+              {users.map((user, index) => (
                 <motion.tr 
                   key={user.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors duration-200"
+                  transition={{ delay: index * 0.05 }}
+                  className="hover:bg-gradient-to-r hover:from-primary-50 hover:to-purple-50 dark:hover:from-gray-800 dark:hover:to-gray-700 transition-all duration-200 border-b border-gray-100 dark:border-gray-800"
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{user.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 font-medium">
@@ -245,7 +265,7 @@ function UsersManagement() {
               ))}
             </tbody>
           </table>
-        </div>
+        </motion.div>
 
           {/* Create User Modal */}
           {showCreateModal && (

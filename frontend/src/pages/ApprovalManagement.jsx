@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { ResponsivePageShell, Alert, EmptyState, Skeleton } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -121,14 +122,23 @@ function ApprovalManagement() {
     >
       <div className="space-y-6">
         {notification && (
-          <Alert
-            type={notification.type}
-            message={notification.message}
-            onClose={() => setNotification(null)}
-          />
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Alert
+              type={notification.type}
+              message={notification.message}
+              onClose={() => setNotification(null)}
+            />
+          </motion.div>
         )}
 
-        <div className="flex items-center justify-between gap-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between gap-4"
+        >
           <div className="flex items-center gap-2 text-sm">
             <span className={`inline-block w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-success-500' : 'bg-gray-400'} animate-pulse`}></span>
             <span className="text-gray-600 font-medium">{isConnected ? 'متصل' : 'غير متصل'}</span>
@@ -163,7 +173,7 @@ function ApprovalManagement() {
           >
             <ArrowPathIcon className="h-5 w-5 text-gray-700" />
           </button>
-        </div>
+        </motion.div>
 
         {loading ? (
           <div className="space-y-4">
@@ -177,10 +187,13 @@ function ApprovalManagement() {
           />
         ) : (
           <div className="space-y-4">
-            {approvals.map((approval) => (
-              <div
+            {approvals.map((approval, index) => (
+              <motion.div
                 key={approval.id}
-                className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border-2 border-gray-200 dark:border-gray-700 hover:shadow-xl hover:border-primary-300 dark:hover:border-primary-700 transition-all"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -255,7 +268,7 @@ function ApprovalManagement() {
                     </button>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}

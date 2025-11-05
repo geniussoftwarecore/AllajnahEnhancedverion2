@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { ResponsivePageShell } from '../components/ui';
 import api from '../api/axios';
 
@@ -95,7 +96,11 @@ function TraderSubscription() {
         subtitle="إدارة اشتراكك وتتبع المدفوعات"
       >
         <div className="space-y-6">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-200 dark:border-gray-700">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border-2 border-primary-100 dark:border-primary-900/30"
+        >
           <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
             حالة الاشتراك
           </h2>
@@ -146,9 +151,14 @@ function TraderSubscription() {
               </button>
             </div>
           )}
-        </div>
+        </motion.div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border-2 border-primary-100 dark:border-primary-900/30"
+        >
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               سجل الدفعات
@@ -201,7 +211,7 @@ function TraderSubscription() {
               </table>
             </div>
           )}
-        </div>
+        </motion.div>
 
         </div>
       </ResponsivePageShell>

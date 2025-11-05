@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { ResponsivePageShell, FilterBar, Alert, EmptyState, Skeleton } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -198,10 +199,13 @@ function TaskQueue() {
           />
         ) : (
           <div className="space-y-4">
-            {filteredTasks.map((task) => (
-              <div
+            {filteredTasks.map((task, index) => (
+              <motion.div
                 key={task.id}
-                className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transform hover:scale-[1.01] transition-all"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border-2 border-gray-200 dark:border-gray-700 hover:shadow-2xl hover:border-primary-300 dark:hover:border-primary-700 transform hover:scale-[1.01] transition-all"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -271,7 +275,7 @@ function TaskQueue() {
                     عرض التفاصيل
                   </button>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
