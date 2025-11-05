@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ResponsivePageShell, LoadingFallback, CTAButton } from '../../components/ui';
+import { ResponsivePageShell, LoadingFallback, CTAButton, AdminNavMenu } from '../../components/ui';
 import { RefreshCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../../api/axios';
 
@@ -82,6 +82,8 @@ function AuditLog() {
       subtitle="سجل شامل لجميع الأنشطة والعمليات في النظام"
     >
       <div className="space-y-6">
+        <AdminNavMenu />
+        
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

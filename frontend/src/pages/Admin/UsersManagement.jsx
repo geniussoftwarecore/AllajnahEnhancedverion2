@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ResponsivePageShell, ConfirmDialog, CTAButton, LoadingFallback } from '../../components/ui';
+import { ResponsivePageShell, ConfirmDialog, CTAButton, LoadingFallback, AdminNavMenu } from '../../components/ui';
 import { Plus, Edit2, Trash2, Key, X, Save, RefreshCcw } from 'lucide-react';
 import api from '../../api/axios';
 
@@ -107,6 +107,8 @@ function UsersManagement() {
       subtitle="إدارة وتحديث بيانات المستخدمين في النظام"
     >
       <div className="space-y-6">
+        <AdminNavMenu />
+        
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}

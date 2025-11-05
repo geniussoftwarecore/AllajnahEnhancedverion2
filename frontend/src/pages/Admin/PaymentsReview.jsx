@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ResponsivePageShell, LoadingFallback, CTAButton } from '../../components/ui';
+import { ResponsivePageShell, LoadingFallback, CTAButton, AdminNavMenu } from '../../components/ui';
 import { Eye, CheckCircle, XCircle, X } from 'lucide-react';
 import api from '../../api/axios';
 
@@ -92,6 +92,8 @@ function PaymentsReview() {
       subtitle="مراجعة والموافقة على دفعات التجار"
     >
       <div className="space-y-6">
+        <AdminNavMenu />
+        
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

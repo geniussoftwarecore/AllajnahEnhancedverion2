@@ -5,7 +5,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { ResponsivePageShell } from '../../components/ui';
+import { ResponsivePageShell, AdminNavMenu } from '../../components/ui';
 import api from '../../api/axios';
 
 function Analytics() {
@@ -61,8 +61,9 @@ function Analytics() {
       subtitle="تحليل شامل لأداء النظام والشكاوى"
     >
       <div className="space-y-6">
+        <AdminNavMenu />
 
-          <div className="card-premium p-6 sm:p-8 mb-6 shadow-xl border-2 border-primary-100 dark:border-primary-900/30">
+        <div className="card-premium p-6 sm:p-8 mb-6 shadow-xl border-2 border-primary-100 dark:border-primary-900/30">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

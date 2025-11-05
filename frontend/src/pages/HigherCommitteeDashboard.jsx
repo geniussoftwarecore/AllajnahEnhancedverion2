@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ResponsivePageShell, StatCard, CTAButton, Alert, ProgressRing, SkeletonDashboard, LoadingFallback } from '../components/ui';
+import { ResponsivePageShell, StatCard, CTAButton, Alert, ProgressRing, SkeletonDashboard, LoadingFallback, AdminNavMenu } from '../components/ui';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
@@ -53,6 +53,7 @@ function TabButton({ active, onClick, children }) {
 
 function HigherCommitteeDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [recentComplaints, setRecentComplaints] = useState([]);
@@ -138,6 +139,8 @@ function HigherCommitteeDashboard() {
       notificationCount={notification ? 1 : 0}
     >
       <div className="space-y-6">
+        <AdminNavMenu />
+        
         {notification && (
           <Alert
             type={notification.type}

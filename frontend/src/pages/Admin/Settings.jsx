@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { ResponsivePageShell, ConfirmDialog, CTAButton, LoadingFallback } from '../../components/ui';
+import { ResponsivePageShell, ConfirmDialog, CTAButton, LoadingFallback, AdminNavMenu } from '../../components/ui';
 import { Edit2, Trash2, Plus, X, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api/axios';
@@ -40,6 +40,8 @@ function Settings() {
       subtitle="إدارة إعدادات النظام والتصنيفات"
     >
       <div className="space-y-6">
+        <AdminNavMenu />
+        
         <div className="card-glass-strong overflow-hidden shadow-lg">
             <div className="flex flex-wrap border-b border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-b from-white/50 to-transparent dark:from-gray-800/50">
               <TabButton
