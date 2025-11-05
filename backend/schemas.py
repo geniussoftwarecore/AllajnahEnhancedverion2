@@ -289,6 +289,10 @@ class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
 
+class EmailUpdateRequest(BaseModel):
+    new_email: EmailStr
+    current_password: str
+
 class AuditLogResponse(BaseModel):
     id: int
     actor_user_id: int

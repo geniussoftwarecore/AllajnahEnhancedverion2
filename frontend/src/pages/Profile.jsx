@@ -2,6 +2,10 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import ResponsivePageShell from '../components/ui/ResponsivePageShell';
+import ProfileCompletionIndicator from '../components/ui/ProfileCompletionIndicator';
+import AccountStats from '../components/ui/AccountStats';
+import AccountInfo from '../components/ui/AccountInfo';
+import EmailUpdateModal from '../components/ui/EmailUpdateModal';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
 import {
@@ -10,13 +14,15 @@ import {
   EnvelopeIcon,
   PhoneIcon,
   MapPinIcon,
-  IdentificationIcon
+  IdentificationIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline';
 
 function Profile() {
   const { user, setUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     first_name: user?.first_name || '',
@@ -110,12 +116,20 @@ function Profile() {
 
   return (
     <ResponsivePageShell title="الملف الشخصي">
-      <div className="max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-strong p-6 md:p-8"
-        >
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="lg:col-span-1 space-y-6">
+            <ProfileCompletionIndicator user={user} />
+            {user?.role === 'trader' && <AccountStats user={user} />}
+            <AccountInfo user={user} />
+          </div>
+          
+          <div className="lg:col-span-2">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-strong p-6 md:p-8"
+            >
           <div className="flex flex-col items-center mb-8">
             <div className="relative group">
               {user?.profile_picture ? (
@@ -161,12 +175,34 @@ function Profile() {
               {getRoleText(user?.role)}
             </p>
             {user?.email && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2 mt-1">
-                <EnvelopeIcon className="w-4 h-4" />
-                {user.email}
-              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                  <EnvelopeIcon className="w-4 h-4" />
+                  {user.email}
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setEmailModalOpen(true)}
+                  className="p-1 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                  aria-label="تحديث البريد الإلكتروني"
+                  title="تحديث البريد الإلكتروني"
+                >
+                  <PencilIcon className="w-4 h-4" />
+                </motion.button>
+              </div>
             )}
           </div>
+          
+          <EmailUpdateModal
+            isOpen={emailModalOpen}
+            onClose={() => setEmailModalOpen(false)}
+            currentEmail={user?.email || ''}
+            onEmailUpdated={(newEmail) => {
+              const updatedUser = { ...user, email: newEmail };
+              setUser(updatedUser);
+            }}
+          />
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -291,7 +327,9 @@ function Profile() {
               </motion.button>
             </div>
           </form>
-        </motion.div>
+            </motion.div>
+          </div>
+        </div>
       </div>
     </ResponsivePageShell>
   );

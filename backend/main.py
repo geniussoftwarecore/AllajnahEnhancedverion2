@@ -18,7 +18,7 @@ from models import (
     UserRole, ComplaintStatus, SubscriptionStatus, PaymentStatus, Priority, TaskStatus, ApprovalStatus
 )
 from schemas import (
-    UserCreate, UserLogin, UserResponse, Token, UserUpdate, PasswordReset, ProfileUpdate, ChangePasswordRequest,
+    UserCreate, UserLogin, UserResponse, Token, UserUpdate, PasswordReset, ProfileUpdate, ChangePasswordRequest, EmailUpdateRequest,
     ComplaintCreate, ComplaintUpdate, ComplaintResponse,
     CommentCreate, CommentResponse,
     AttachmentResponse, CategoryResponse, CategoryCreate, CategoryUpdate, DashboardStats, AnalyticsData,
@@ -389,6 +389,41 @@ def change_own_password(
     db.commit()
     
     return {"message": "Password changed successfully"}
+
+@app.post("/api/users/update-email")
+def update_user_email(
+    email_data: EmailUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not verify_password(email_data.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+    
+    existing_user = db.query(User).filter(User.email == email_data.new_email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already in use by another account"
+        )
+    
+    old_email = current_user.email
+    current_user.email = email_data.new_email
+    current_user.updated_at = datetime.utcnow()
+    db.commit()
+    
+    create_audit_log(
+        db,
+        actor_user_id=current_user.id,
+        action="update_email",
+        target_type="user",
+        target_id=current_user.id,
+        details=f"Email changed from {old_email} to {email_data.new_email}"
+    )
+    
+    return {"message": "Email updated successfully", "new_email": current_user.email}
 
 @app.get("/api/categories", response_model=List[CategoryResponse])
 def get_categories(government_entity: str = None, db: Session = Depends(get_db)):
