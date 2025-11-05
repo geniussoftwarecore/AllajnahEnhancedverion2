@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { ResponsivePageShell } from '../../components/ui';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ResponsivePageShell, LoadingFallback, CTAButton } from '../../components/ui';
+import { Eye, CheckCircle, XCircle, X } from 'lucide-react';
 import api from '../../api/axios';
 
 function PaymentsReview() {
@@ -66,10 +68,10 @@ function PaymentsReview() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return 'bg-gradient-to-r from-yellow-500 to-amber-500 text-white';
-      case 'approved': return 'bg-gradient-to-r from-green-500 to-emerald-500 text-white';
-      case 'rejected': return 'bg-gradient-to-r from-red-500 to-pink-500 text-white';
-      default: return 'bg-gradient-to-r from-gray-500 to-slate-500 text-white';
+      case 'pending': return 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400';
+      case 'approved': return 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400';
+      case 'rejected': return 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400';
+      default: return 'bg-gray-50 dark:bg-gray-900/20 text-gray-700 dark:text-gray-400';
     }
   };
 
@@ -82,108 +84,141 @@ function PaymentsReview() {
     }
   };
 
+  if (loading) return <LoadingFallback message="جاري تحميل الدفعات..." />;
+
   return (
     <ResponsivePageShell 
       title="مراجعة الدفعات"
       subtitle="مراجعة والموافقة على دفعات التجار"
     >
       <div className="space-y-6">
-
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">تصفية حسب الحالة</h3>
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => setFilter('all')}
-                className={`px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all transform hover:scale-105 ${filter === 'all' ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
-              >
-                الكل ({payments.length})
-              </button>
-              <button
-                onClick={() => setFilter('pending')}
-                className={`px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all transform hover:scale-105 ${filter === 'pending' ? 'bg-gradient-to-r from-yellow-600 to-amber-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
-              >
-                قيد المراجعة
-              </button>
-              <button
-                onClick={() => setFilter('approved')}
-                className={`px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all transform hover:scale-105 ${filter === 'approved' ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
-              >
-                موافق عليها
-              </button>
-              <button
-                onClick={() => setFilter('rejected')}
-                className={`px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all transform hover:scale-105 ${filter === 'rejected' ? 'bg-gradient-to-r from-red-600 to-pink-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
-              >
-                مرفوضة
-              </button>
-            </div>
+        <div className="card-glass-strong overflow-hidden shadow-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">تصفية حسب الحالة</h3>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-6 py-2.5 rounded-xl font-semibold transition-all ${
+                filter === 'all' 
+                  ? 'bg-primary-600 dark:bg-primary-500 text-white shadow-md' 
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
+              }`}
+            >
+              الكل ({payments.length})
+            </button>
+            <button
+              onClick={() => setFilter('pending')}
+              className={`px-6 py-2.5 rounded-xl font-semibold transition-all ${
+                filter === 'pending' 
+                  ? 'bg-yellow-600 dark:bg-yellow-500 text-white shadow-md' 
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
+              }`}
+            >
+              قيد المراجعة
+            </button>
+            <button
+              onClick={() => setFilter('approved')}
+              className={`px-6 py-2.5 rounded-xl font-semibold transition-all ${
+                filter === 'approved' 
+                  ? 'bg-green-600 dark:bg-green-500 text-white shadow-md' 
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
+              }`}
+            >
+              موافق عليها
+            </button>
+            <button
+              onClick={() => setFilter('rejected')}
+              className={`px-6 py-2.5 rounded-xl font-semibold transition-all ${
+                filter === 'rejected' 
+                  ? 'bg-red-600 dark:bg-red-500 text-white shadow-md' 
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
+              }`}
+            >
+              مرفوضة
+            </button>
           </div>
+        </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700">
-            {loading ? (
-              <div className="p-12 text-center">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
-                <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">جاري التحميل...</p>
-              </div>
-            ) : payments.length === 0 ? (
-              <div className="p-12 text-center">
-                <p className="text-gray-500 dark:text-gray-400 text-lg">لا توجد دفعات</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gradient-to-r from-blue-600 to-purple-600">
-                    <tr>
-                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">ID</th>
-                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">المستخدم</th>
-                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">المبلغ</th>
-                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">طريقة الدفع</th>
-                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الحالة</th>
-                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">تاريخ التقديم</th>
-                      <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">إجراءات</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {payments.map((payment) => (
-                      <tr key={payment.id} className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all transform hover:scale-[1.01]">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">{payment.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                          {payment.user ? `${payment.user.first_name} ${payment.user.last_name}` : '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600 dark:text-green-400">
-                          {Number(payment.amount).toFixed(2)} ريال
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{payment.method}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <span className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-md ${getStatusColor(payment.status)}`}>
-                            {getStatusText(payment.status)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                          {new Date(payment.created_at).toLocaleDateString('ar')}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button
-                            onClick={() => setSelectedPayment(payment)}
-                            className="px-3 py-1.5 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg font-semibold transition-all transform hover:scale-110"
-                          >
-                            عرض التفاصيل
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+        {payments.length === 0 ? (
+          <div className="card-premium p-12 text-center">
+            <p className="text-gray-500 dark:text-gray-400 text-lg">لا توجد دفعات</p>
           </div>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200/60 dark:divide-gray-700/60">
+              <thead>
+                <tr className="bg-gradient-to-b from-gray-50 to-gray-100/50 dark:from-gray-800 dark:to-gray-800/50">
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">المستخدم</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">المبلغ</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">طريقة الدفع</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">الحالة</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">تاريخ التقديم</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200/60 dark:divide-gray-700/60">
+                {payments.map((payment) => (
+                  <motion.tr 
+                    key={payment.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors duration-200"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{payment.id}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 font-medium">
+                      {payment.user ? `${payment.user.first_name} ${payment.user.last_name}` : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600 dark:text-green-400">
+                      {Number(payment.amount).toFixed(2)} ريال
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{payment.method}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(payment.status)}`}>
+                        {getStatusText(payment.status)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                      {new Date(payment.created_at).toLocaleDateString('ar')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => setSelectedPayment(payment)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors duration-200 font-medium"
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span>التفاصيل</span>
+                      </button>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-          {selectedPayment && (
-            <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-gray-200 dark:border-gray-700 animate-scale-in">
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
-                  تفاصيل الدفع #{selectedPayment.id}
-                </h2>
+        {selectedPayment && (
+          <AnimatePresence>
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setSelectedPayment(null)}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ duration: 0.2 }}
+                className="card-premium p-6 sm:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-heading font-bold text-gray-900 dark:text-white">
+                    تفاصيل الدفع #{selectedPayment.id}
+                  </h2>
+                  <button
+                    onClick={() => setSelectedPayment(null)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                    aria-label="إغلاق"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
                 
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -246,33 +281,43 @@ function PaymentsReview() {
                   )}
                 </div>
 
-                <div className="flex justify-end gap-3 mt-8">
-                  <button
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <CTAButton
+                    type="button"
                     onClick={() => setSelectedPayment(null)}
-                    className="px-6 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 font-semibold text-gray-700 dark:text-gray-300 transition-all"
+                    variant="ghost"
+                    size="md"
+                    icon={X}
                   >
                     إغلاق
-                  </button>
+                  </CTAButton>
                   {selectedPayment.status === 'pending' && (
                     <>
-                      <button
+                      <CTAButton
+                        type="button"
                         onClick={() => handleReject(selectedPayment.id)}
-                        className="px-6 py-2.5 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-xl hover:from-red-700 hover:to-pink-700 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+                        variant="danger"
+                        size="md"
+                        icon={XCircle}
                       >
                         رفض
-                      </button>
-                      <button
+                      </CTAButton>
+                      <CTAButton
+                        type="button"
                         onClick={() => handleApprove(selectedPayment.id)}
-                        className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+                        variant="success"
+                        size="md"
+                        icon={CheckCircle}
                       >
                         موافقة
-                      </button>
+                      </CTAButton>
                     </>
                   )}
                 </div>
-              </div>
+              </motion.div>
             </div>
-          )}
+          </AnimatePresence>
+        )}
         </div>
       </ResponsivePageShell>
   );
