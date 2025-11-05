@@ -4,6 +4,7 @@
 Allajnah Enhanced is a comprehensive complaint management system for Yemeni traders and oversight committees. It streamlines the submission, tracking, and multi-level committee review of complaints against government entities. The system aims to enhance transparency and accountability in governmental operations. It supports full Arabic language with RTL layout and is production-ready.
 
 **Latest Update (Nov 2025)**: 
+- **Phase 2 Complete - Enhanced Profile Management**: Added profile completion indicator with visual progress bar showing filled/missing fields, account statistics dashboard displaying complaint metrics (total, pending, resolved, rejected), account information widget with member registration date and last update timestamp, and secure email update functionality with password confirmation and audit logging.
 - **Phase 1 Complete - Profile Management System**: Redesigned header UX by replacing the prominent red logout button with a professional profile dropdown menu. Added comprehensive self-service profile management including profile picture uploads with avatar fallback, secure password changes with server-side validation, and user settings for notification preferences. All user roles (Trader, Technical Committee, Higher Committee) can now manage their profiles independently.
 - Completed comprehensive UI/UX redesign with modern aesthetics including gradients, glassmorphism effects, smooth animations, enhanced shadows, and refined visual hierarchy across all pages and user roles. The ComplaintForm has been transformed into a premium wizard-style multi-step interface with progress indicators, step-by-step validation, animated transitions, and enhanced user guidance.
 
@@ -31,7 +32,14 @@ The system utilizes a clear separation of concerns with a Python FastAPI backend
 
 ### Feature Specifications
 -   **User Roles**: Trader (submits/tracks complaints), Technical Committee (reviews/assigns/updates), Higher Committee (admin access, decision-making).
--   **Profile Management**: Self-service profile editing with profile picture upload (image validation, avatar fallback with initials), secure password changes (server-side validation enforcing complexity requirements), and user settings including notification preferences and theme toggle.
+-   **Profile Management**: 
+    - Self-service profile editing with profile picture upload (image validation, avatar fallback with initials)
+    - Secure password changes (server-side validation enforcing complexity requirements)
+    - Email update with password confirmation and uniqueness validation
+    - Profile completion indicator showing percentage and missing fields
+    - Account statistics dashboard (for traders: total, pending, resolved, rejected complaints)
+    - Account information widget displaying registration date, last update, role, and active status
+    - User settings including notification preferences and theme toggle
 -   **Complaint Workflow**: Multi-status progression (Submitted, Under Review, Escalated, Resolved/Rejected) with re-opening and feedback. Includes task acceptance/rejection mechanisms and multi-step approvals.
 -   **Subscription & Payment Management**: Traders manage annual subscriptions, committees approve payment proofs.
 -   **Admin Management**: CRUD operations for users, categories, payment methods, SLA configurations, and system settings.
