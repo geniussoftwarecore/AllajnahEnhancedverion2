@@ -19,7 +19,9 @@ import api from '../api/axios';
 
 function ComplaintForm({ onSuccess }) {
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm();
+  const { register, handleSubmit, formState: { errors }, watch, setValue, trigger, getValues } = useForm({
+    mode: 'onBlur'
+  });
   const [governmentEntities, setGovernmentEntities] = useState([]);
   const [categories, setCategories] = useState([]);
   const [filteredCategories, setFilteredCategories] = useState([]);
@@ -40,6 +42,51 @@ function ComplaintForm({ onSuccess }) {
     { id: 3, name: 'معلومات إضافية', icon: InformationCircleIcon, description: 'تفاصيل المشكلة' },
     { id: 4, name: 'المعلومات الشخصية', icon: UserIcon, description: 'بيانات مقدم الشكوى' },
   ];
+
+  const stepFields = {
+    1: ['title', 'description', 'complaint_summary'],
+    2: ['government_entity', 'category_id'],
+    3: [],
+    4: ['complaining_on_behalf_of'],
+  };
+
+  const validateStep = async (step) => {
+    const fieldsToValidate = stepFields[step];
+    if (fieldsToValidate.length === 0) return true;
+    
+    const result = await trigger(fieldsToValidate);
+    return result;
+  };
+
+  const getFirstStepWithErrors = () => {
+    for (let i = 1; i <= 4; i++) {
+      const fields = stepFields[i];
+      if (fields.some(field => errors[field])) {
+        return i;
+      }
+    }
+    return currentStep;
+  };
+
+  const handleNextStep = async () => {
+    const isValid = await validateStep(currentStep);
+    if (isValid) {
+      setCurrentStep(currentStep + 1);
+      setError('');
+    } else {
+      setError('يرجى إكمال جميع الحقول المطلوبة قبل المتابعة');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+      setError('');
+    } else {
+      navigate(-1);
+    }
+  };
 
   useEffect(() => {
     loadGovernmentEntities();
@@ -120,9 +167,17 @@ function ComplaintForm({ onSuccess }) {
       }
     } catch (err) {
       setError(err.response?.data?.detail || 'فشل تقديم الشكوى');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setLoading(false);
     }
+  };
+
+  const onSubmitError = (errors) => {
+    const firstErrorStep = getFirstStepWithErrors();
+    setCurrentStep(firstErrorStep);
+    setError('يرجى إكمال جميع الحقول المطلوبة في جميع الخطوات');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const renderStepIndicator = () => (
@@ -607,7 +662,7 @@ function ComplaintForm({ onSuccess }) {
 
         {renderStepIndicator()}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={handleSubmit(onSubmit, onSubmitError)} className="space-y-8">
           <AnimatePresence mode="wait">
             {currentStep === 1 && renderStep1()}
             {currentStep === 2 && renderStep2()}
@@ -618,10 +673,7 @@ function ComplaintForm({ onSuccess }) {
           <div className="flex flex-col sm:flex-row gap-4 justify-between pt-8 border-t-2 border-gray-200">
             <button
               type="button"
-              onClick={() => {
-                if (currentStep > 1) setCurrentStep(currentStep - 1);
-                else navigate(-1);
-              }}
+              onClick={handlePreviousStep}
               className="flex items-center justify-center gap-2 px-8 py-4 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-300 font-bold text-lg hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
             >
               <ArrowRightIcon className="w-5 h-5" />
@@ -631,7 +683,7 @@ function ComplaintForm({ onSuccess }) {
             {currentStep < 4 ? (
               <button
                 type="button"
-                onClick={() => setCurrentStep(currentStep + 1)}
+                onClick={handleNextStep}
                 className="flex items-center justify-center gap-2 px-10 py-4 bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 hover:from-primary-700 hover:via-primary-600 hover:to-primary-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-glow-green transition-all duration-300 hover:scale-105 active:scale-95"
               >
                 التالي
