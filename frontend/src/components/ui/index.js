@@ -14,3 +14,4 @@ export { default as FilterBar } from './FilterBar';
 export { default as ProgressRing } from './ProgressRing';
 export { default as Skeleton, SkeletonCard, SkeletonStat, SkeletonTable, SkeletonDashboard } from './Skeleton';
 export { default as EmptyState } from './EmptyState';
+export { default as LoadingFallback } from '../LoadingFallback';
