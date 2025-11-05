@@ -14,7 +14,7 @@ from database import get_db
 from models import (
     User, Complaint, Comment, Attachment, Category, 
     Subscription, Payment, ComplaintFeedback, AuditLog,
-    PaymentMethod, SLAConfig, SystemSettings, TaskQueue, ComplaintApproval,
+    PaymentMethod, SLAConfig, SystemSettings, TaskQueue, ComplaintApproval, QuickReply,
     UserRole, ComplaintStatus, SubscriptionStatus, PaymentStatus, Priority, TaskStatus, ApprovalStatus
 )
 from schemas import (
@@ -28,7 +28,9 @@ from schemas import (
     PaymentMethodCreate, PaymentMethodUpdate, PaymentMethodResponse,
     SLAConfigCreate, SLAConfigUpdate, SLAConfigResponse,
     SystemSettingsCreate, SystemSettingsUpdate, SystemSettingsResponse,
-    TaskQueueResponse, ComplaintApprovalCreate, ComplaintApprovalUpdate, ComplaintApprovalResponse
+    TaskQueueResponse, ComplaintApprovalCreate, ComplaintApprovalUpdate, ComplaintApprovalResponse,
+    QuickReplyCreate, QuickReplyUpdate, QuickReplyResponse,
+    BulkAssignRequest, BulkStatusRequest, BulkActionResponse
 )
 from auth import (
     get_password_hash, verify_password, create_access_token,
@@ -572,6 +574,140 @@ def reopen_complaint(
     db.refresh(complaint)
     
     return ComplaintResponse.model_validate(complaint)
+
+@app.post("/api/complaints/bulk-assign", response_model=BulkActionResponse)
+def bulk_assign_complaints(
+    request_data: BulkAssignRequest,
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    """Bulk assign multiple complaints to a user"""
+    successful_ids = []
+    failed_ids = []
+    errors = []
+    
+    # Verify the assigned_to user exists and has appropriate role
+    assigned_to_user = db.query(User).filter(User.id == request_data.assigned_to_id).first()
+    if not assigned_to_user:
+        raise HTTPException(status_code=404, detail="Assigned user not found")
+    
+    if assigned_to_user.role not in [UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE]:
+        raise HTTPException(status_code=400, detail="Can only assign to technical or higher committee members")
+    
+    # Process each complaint
+    for complaint_id in request_data.complaint_ids:
+        try:
+            complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+            if not complaint:
+                failed_ids.append(complaint_id)
+                errors.append(f"Complaint #{complaint_id} not found")
+                continue
+            
+            old_assigned_to_id = complaint.assigned_to_id
+            complaint.assigned_to_id = request_data.assigned_to_id
+            
+            # Update status if currently submitted
+            if complaint.status == ComplaintStatus.SUBMITTED:
+                complaint.status = ComplaintStatus.UNDER_REVIEW
+            
+            complaint.updated_at = datetime.utcnow()
+            
+            # Create audit log entry
+            create_audit_log(
+                db,
+                current_user.id,
+                "BULK_ASSIGN_COMPLAINT",
+                "complaint",
+                complaint.id,
+                f"Bulk assigned complaint #{complaint.id} from user {old_assigned_to_id} to user {request_data.assigned_to_id}"
+            )
+            
+            successful_ids.append(complaint_id)
+            
+        except Exception as e:
+            failed_ids.append(complaint_id)
+            errors.append(f"Error processing complaint #{complaint_id}: {str(e)}")
+            db.rollback()
+    
+    # Commit all successful changes
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to commit changes: {str(e)}")
+    
+    return BulkActionResponse(
+        success_count=len(successful_ids),
+        failed_count=len(failed_ids),
+        total=len(request_data.complaint_ids),
+        successful_ids=successful_ids,
+        failed_ids=failed_ids,
+        errors=errors
+    )
+
+@app.post("/api/complaints/bulk-status", response_model=BulkActionResponse)
+def bulk_update_complaint_status(
+    request_data: BulkStatusRequest,
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    """Bulk update status of multiple complaints"""
+    successful_ids = []
+    failed_ids = []
+    errors = []
+    
+    # Process each complaint
+    for complaint_id in request_data.complaint_ids:
+        try:
+            complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+            if not complaint:
+                failed_ids.append(complaint_id)
+                errors.append(f"Complaint #{complaint_id} not found")
+                continue
+            
+            old_status = complaint.status
+            complaint.status = request_data.status
+            
+            # Handle status-specific logic
+            if request_data.status in [ComplaintStatus.RESOLVED, ComplaintStatus.REJECTED]:
+                complaint.resolved_at = datetime.utcnow()
+                from dateutil.relativedelta import relativedelta
+                complaint.can_reopen_until = datetime.utcnow() + relativedelta(days=7)
+            
+            complaint.updated_at = datetime.utcnow()
+            
+            # Create audit log entry
+            create_audit_log(
+                db,
+                current_user.id,
+                "BULK_UPDATE_STATUS",
+                "complaint",
+                complaint.id,
+                f"Bulk updated complaint #{complaint.id} status from {old_status.value} to {request_data.status.value}"
+            )
+            
+            successful_ids.append(complaint_id)
+            
+        except Exception as e:
+            failed_ids.append(complaint_id)
+            errors.append(f"Error processing complaint #{complaint_id}: {str(e)}")
+            db.rollback()
+    
+    # Commit all successful changes
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to commit changes: {str(e)}")
+    
+    return BulkActionResponse(
+        success_count=len(successful_ids),
+        failed_count=len(failed_ids),
+        total=len(request_data.complaint_ids),
+        successful_ids=successful_ids,
+        failed_ids=failed_ids,
+        errors=errors
+    )
 
 @app.post("/api/complaints/{complaint_id}/comments", response_model=CommentResponse)
 def create_comment(
@@ -1962,6 +2098,112 @@ async def rebalance_task_queue(
     )
     
     return {"message": "Task queues rebalanced successfully"}
+
+
+@app.get("/api/quick-replies", response_model=List[QuickReplyResponse])
+async def get_quick_replies(
+    category: Optional[str] = None,
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    query = db.query(QuickReply).filter(QuickReply.is_active == True)
+    
+    if category:
+        query = query.filter(QuickReply.category == category)
+    
+    quick_replies = query.order_by(QuickReply.created_at.desc()).all()
+    return quick_replies
+
+
+@app.post("/api/quick-replies", response_model=QuickReplyResponse, status_code=status.HTTP_201_CREATED)
+async def create_quick_reply(
+    quick_reply: QuickReplyCreate,
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    new_quick_reply = QuickReply(
+        title=quick_reply.title,
+        content=quick_reply.content,
+        category=quick_reply.category,
+        created_by_id=current_user.id
+    )
+    
+    db.add(new_quick_reply)
+    db.commit()
+    db.refresh(new_quick_reply)
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "CREATE_QUICK_REPLY",
+        "quick_reply",
+        new_quick_reply.id,
+        f"Created quick reply: {quick_reply.title}"
+    )
+    
+    return new_quick_reply
+
+
+@app.put("/api/quick-replies/{quick_reply_id}", response_model=QuickReplyResponse)
+async def update_quick_reply(
+    quick_reply_id: int,
+    quick_reply_update: QuickReplyUpdate,
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    quick_reply = db.query(QuickReply).filter(QuickReply.id == quick_reply_id).first()
+    
+    if not quick_reply:
+        raise HTTPException(status_code=404, detail="Quick reply not found")
+    
+    if quick_reply_update.title is not None:
+        quick_reply.title = quick_reply_update.title
+    if quick_reply_update.content is not None:
+        quick_reply.content = quick_reply_update.content
+    if quick_reply_update.category is not None:
+        quick_reply.category = quick_reply_update.category
+    if quick_reply_update.is_active is not None:
+        quick_reply.is_active = quick_reply_update.is_active
+    
+    db.commit()
+    db.refresh(quick_reply)
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "UPDATE_QUICK_REPLY",
+        "quick_reply",
+        quick_reply.id,
+        f"Updated quick reply: {quick_reply.title}"
+    )
+    
+    return quick_reply
+
+
+@app.delete("/api/quick-replies/{quick_reply_id}")
+async def delete_quick_reply(
+    quick_reply_id: int,
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    quick_reply = db.query(QuickReply).filter(QuickReply.id == quick_reply_id).first()
+    
+    if not quick_reply:
+        raise HTTPException(status_code=404, detail="Quick reply not found")
+    
+    quick_reply.is_active = False
+    db.commit()
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "DELETE_QUICK_REPLY",
+        "quick_reply",
+        quick_reply.id,
+        f"Deleted quick reply: {quick_reply.title}"
+    )
+    
+    return {"message": "Quick reply deleted successfully"}
 
 
 @app.get("/")

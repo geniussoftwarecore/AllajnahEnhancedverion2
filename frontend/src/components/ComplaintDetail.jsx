@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ChatBubbleBottomCenterTextIcon } from '@heroicons/react/24/outline';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { ConfirmDialog, ResponsivePageShell } from './ui';
+import QuickReplySelector from './QuickReplySelector';
 
 function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = false }) {
   const { id } = useParams();
@@ -20,6 +21,7 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, isLoading: false });
+  const [showQuickReplySelector, setShowQuickReplySelector] = useState(false);
 
   useEffect(() => {
     if (!propComplaint && id) {
@@ -410,13 +412,24 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
         </div>
 
         <div className="space-y-3">
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            rows="3"
-            placeholder="أضف تعليقاً..."
-          />
+          <div className="relative">
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              rows="3"
+              placeholder="أضف تعليقاً..."
+            />
+            {(user.role === 'technical_committee' || user.role === 'higher_committee') && (
+              <button
+                onClick={() => setShowQuickReplySelector(true)}
+                className="absolute top-2 left-2 bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded-lg transition-colors"
+                title="استخدام رد سريع"
+              >
+                <ChatBubbleBottomCenterTextIcon className="w-5 h-5" />
+              </button>
+            )}
+          </div>
           {user.role !== 'trader' && (
             <div className="flex items-center">
               <input
@@ -463,6 +476,13 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
         cancelText="إلغاء"
         type="info"
         isLoading={confirmDialog.isLoading}
+      />
+
+      {/* Quick Reply Selector */}
+      <QuickReplySelector
+        isOpen={showQuickReplySelector}
+        onClose={() => setShowQuickReplySelector(false)}
+        onSelect={(content) => setNewComment(content)}
       />
     </div>
   );

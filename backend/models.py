@@ -285,3 +285,17 @@ class ComplaintApproval(Base):
     
     complaint = relationship("Complaint", back_populates="approvals")
     approver = relationship("User")
+
+class QuickReply(Base):
+    __tablename__ = "quick_replies"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+    category = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    created_by = relationship("User")

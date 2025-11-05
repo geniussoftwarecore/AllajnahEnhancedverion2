@@ -408,3 +408,44 @@ class ComplaintApprovalResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+class QuickReplyCreate(BaseModel):
+    title: str
+    content: str
+    category: Optional[str] = None
+
+class QuickReplyUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    category: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class QuickReplyResponse(BaseModel):
+    id: int
+    title: str
+    content: str
+    category: Optional[str] = None
+    is_active: bool
+    created_by_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    created_by: Optional[UserResponse] = None
+    
+    class Config:
+        from_attributes = True
+
+class BulkAssignRequest(BaseModel):
+    complaint_ids: List[int]
+    assigned_to_id: int
+
+class BulkStatusRequest(BaseModel):
+    complaint_ids: List[int]
+    status: ComplaintStatus
+
+class BulkActionResponse(BaseModel):
+    success_count: int
+    failed_count: int
+    total: int
+    successful_ids: List[int]
+    failed_ids: List[int]
+    errors: List[str] = []

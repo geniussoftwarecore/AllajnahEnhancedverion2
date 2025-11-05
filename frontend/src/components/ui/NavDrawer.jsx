@@ -12,7 +12,9 @@ import {
   ArrowRightOnRectangleIcon,
   XMarkIcon,
   UserCircleIcon,
-  BellIcon
+  BellIcon,
+  KeyIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 
 const NavDrawer = ({ isOpen, onClose }) => {
@@ -67,7 +69,17 @@ const NavDrawer = ({ isOpen, onClose }) => {
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-primary-600 to-primary-700">
             <div className="flex items-center gap-3">
-              <UserCircleIcon className="w-10 h-10 text-white" />
+              {user?.profile_picture ? (
+                <img
+                  src={user.profile_picture}
+                  alt="Profile"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
+                />
+              ) : (
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-white/20 text-white font-bold text-lg border-2 border-white shadow-md">
+                  {user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}
+                </div>
+              )}
               <div className="text-white">
                 <p className="font-semibold text-sm">
                   {user?.first_name} {user?.last_name}
@@ -86,6 +98,37 @@ const NavDrawer = ({ isOpen, onClose }) => {
             >
               <XMarkIcon className="w-6 h-6" />
             </button>
+          </div>
+          
+          {/* Quick Access Links */}
+          <div className="border-b border-gray-200 bg-gray-50 py-2 px-3">
+            <div className="text-xs font-semibold text-gray-500 px-4 mb-2">الوصول السريع</div>
+            <div className="space-y-1">
+              <Link
+                to="/profile"
+                onClick={onClose}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-white hover:shadow-sm transition-all duration-200 active:scale-95 btn-touch text-sm"
+              >
+                <UserCircleIcon className="w-4 h-4" />
+                <span>الملف الشخصي</span>
+              </Link>
+              <Link
+                to="/change-password"
+                onClick={onClose}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-white hover:shadow-sm transition-all duration-200 active:scale-95 btn-touch text-sm"
+              >
+                <KeyIcon className="w-4 h-4" />
+                <span>تغيير كلمة المرور</span>
+              </Link>
+              <Link
+                to="/settings"
+                onClick={onClose}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-white hover:shadow-sm transition-all duration-200 active:scale-95 btn-touch text-sm"
+              >
+                <Cog6ToothIcon className="w-4 h-4" />
+                <span>الإعدادات</span>
+              </Link>
+            </div>
           </div>
 
           <nav className="flex-1 overflow-y-auto py-4">

@@ -24,6 +24,7 @@ const PaymentsReview = lazy(() => import('./pages/Admin/PaymentsReview'));
 const Settings = lazy(() => import('./pages/Admin/Settings'));
 const Analytics = lazy(() => import('./pages/Admin/Analytics'));
 const AuditLog = lazy(() => import('./pages/Admin/AuditLog'));
+const QuickReplies = lazy(() => import('./pages/Admin/QuickReplies'));
 const ComplaintList = lazy(() => import('./components/ComplaintList'));
 const ComplaintForm = lazy(() => import('./components/ComplaintForm'));
 const ComplaintDetail = lazy(() => import('./components/ComplaintDetail'));
@@ -238,6 +239,14 @@ function AppRoutes() {
           element={
             <PrivateRoute allowedRoles={['higher_committee']}>
               <AuditLog />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/quick-replies"
+          element={
+            <PrivateRoute allowedRoles={['technical_committee', 'higher_committee']}>
+              <QuickReplies />
             </PrivateRoute>
           }
         />
