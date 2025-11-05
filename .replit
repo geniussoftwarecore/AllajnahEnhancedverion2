@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "python-3.11", "web"]
+modules = ["nodejs-20", "python-3.11", "web", "postgresql-16"]
 [agent]
 expertMode = true
 integrations = ["python_database:1.0.0"]
@@ -109,4 +109,4 @@ externalPort = 6800
 
 [nix]
 channel = "stable-25_05"
-packages = ["cargo", "file", "freetype", "glibcLocales", "libiconv", "libxcrypt", "rustc", "glib", "nspr", "nss", "dbus", "atk", "at-spi2-atk", "cups", "xorg.libxcb", "libxkbcommon", "at-spi2-core", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "mesa", "cairo", "pango", "alsa-lib"]
+packages = ["alsa-lib", "at-spi2-atk", "at-spi2-core", "atk", "cairo", "cargo", "cups", "dbus", "file", "freetype", "glib", "glibcLocales", "libiconv", "libxcrypt", "libxkbcommon", "mesa", "nspr", "nss", "pango", "rustc", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb"]

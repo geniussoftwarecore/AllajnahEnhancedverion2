@@ -119,30 +119,69 @@ async def startup_event():
             if db.query(Category).count() == 0:
                 print("Adding default categories...")
                 categories = [
-                    Category(
-                        name_ar="الموصفات والمقاييس",
-                        name_en="Standards and Measurements",
-                        government_entity="الموصفات والمقاييس",
-                        description_ar="شكاوى متعلقة بالموصفات والمقاييس"
-                    ),
-                    Category(
-                        name_ar="الجمارك",
-                        name_en="Customs",
-                        government_entity="الجمارك",
-                        description_ar="شكاوى متعلقة بالجمارك"
-                    ),
-                    Category(
-                        name_ar="الضرائب",
-                        name_en="Taxes",
-                        government_entity="الضرائب",
-                        description_ar="شكاوى متعلقة بالضرائب"
-                    ),
-                    Category(
-                        name_ar="صندوق النظافة والتحسين",
-                        name_en="Cleaning and Improvement Fund",
-                        government_entity="صندوق النظافة والتحسين",
-                        description_ar="شكاوى متعلقة بصندوق النظافة والتحسين"
-                    ),
+                    # الموصفات والمقاييس
+                    Category(name_ar="سحب عينات متكررة لنفس المنتج", name_en="repeated_sampling_same_product", government_entity="الموصفات والمقاييس"),
+                    Category(name_ar="عدم قبولهم الفحوصات السابقة", name_en="rejection_previous_tests", government_entity="الموصفات والمقاييس"),
+                    Category(name_ar="مبالغة في الاجراءات الشكلية والمعاينة الظاهرية", name_en="excessive_formal_procedures", government_entity="الموصفات والمقاييس"),
+                    Category(name_ar="رفض شهادات المطابقة ونتائج الاختبار", name_en="rejection_conformity_certificates", government_entity="الموصفات والمقاييس"),
+                    Category(name_ar="رفض تقارير اختبار العينات", name_en="rejection_sample_test_reports", government_entity="الموصفات والمقاييس"),
+                    Category(name_ar="التحريز الشامل لجميع محتويات الشاحنة", name_en="comprehensive_seizure_shipment", government_entity="الموصفات والمقاييس"),
+                    Category(name_ar="تأخير الإفراج - الفحص لمدة طويلة", name_en="delayed_release_long_inspection", government_entity="الموصفات والمقاييس"),
+                    Category(name_ar="ارتفاع أجور الفحص", name_en="high_inspection_fees", government_entity="الموصفات والمقاييس"),
+                    Category(name_ar="الإجراءات على منتج سليم بسبب منتج مخالف", name_en="procedures_sound_product_due_defective", government_entity="الموصفات والمقاييس"),
+                    Category(name_ar="تأخير الافراج", name_en="delayed_release", government_entity="الموصفات والمقاييس"),
+                    Category(name_ar="التأخير في نتائج الفحص الظاهر", name_en="delay_visual_inspection_results", government_entity="الموصفات والمقاييس"),
+                    Category(name_ar="تكرار الفحوصات لمنتجات سابقة", name_en="repeated_tests_previous_products", government_entity="الموصفات والمقاييس"),
+                    Category(name_ar="غرامات غير قانونية", name_en="illegal_fines", government_entity="الموصفات والمقاييس"),
+                    Category(name_ar="ابتزاز", name_en="extortion", government_entity="الموصفات والمقاييس"),
+                    Category(name_ar="إلزام المصنعين بمواصفات اختيارية", name_en="mandatory_optional_specifications", government_entity="الموصفات والمقاييس"),
+                    
+                    # الجمارك
+                    Category(name_ar="اهمال البضائع عند المطابقة", name_en="goods_neglect_during_matching", government_entity="الجمارك"),
+                    Category(name_ar="غرامات غير قانونية", name_en="illegal_fines_customs", government_entity="الجمارك"),
+                    Category(name_ar="معاملة المواد الخام كمنتج نهائي للاستهلاك", name_en="raw_materials_as_final_product", government_entity="الجمارك"),
+                    Category(name_ar="ازدواجية المطالبة بالضمان", name_en="duplicate_guarantee_demand", government_entity="الجمارك"),
+                    Category(name_ar="مخالفة اتفاق", name_en="agreement_violation", government_entity="الجمارك"),
+                    Category(name_ar="عدم البت في الاتلاف", name_en="no_decision_destruction", government_entity="الجمارك"),
+                    Category(name_ar="تفاوت أوقات المعاينة بين الجهات المعنية", name_en="varying_inspection_times", government_entity="الجمارك"),
+                    Category(name_ar="تأخر الافراج لعدم الوزن", name_en="release_delay_no_weighing", government_entity="الجمارك"),
+                    Category(name_ar="الافتقار لنظام واضح لقيمة البضائع", name_en="lack_clear_valuation_system", government_entity="الجمارك"),
+                    Category(name_ar="عدم حماية العلامة التجارية", name_en="no_trademark_protection", government_entity="الجمارك"),
+                    Category(name_ar="رفض اقرارات الشراء", name_en="purchase_declaration_rejection", government_entity="الجمارك"),
+                    Category(name_ar="كسر الاعفاء المقدم", name_en="exemption_breach", government_entity="الجمارك"),
+                    Category(name_ar="مخالفة للتعميمات", name_en="circulars_violation", government_entity="الجمارك"),
+                    Category(name_ar="زيادة في القيمة الجمركية", name_en="customs_value_increase", government_entity="الجمارك"),
+                    Category(name_ar="احتجاز بضائع خارجة من صنعاء", name_en="goods_detention_from_sanaa", government_entity="الجمارك"),
+                    Category(name_ar="استيفاء وثائق الهيئة العامة للاستثمار", name_en="investment_authority_documents", government_entity="الجمارك"),
+                    Category(name_ar="تأخير السلع منها سلع سريعة التلف", name_en="perishable_goods_delay", government_entity="الجمارك"),
+                    Category(name_ar="اختلال في التقييم للسعر", name_en="price_valuation_disruption", government_entity="الجمارك"),
+                    Category(name_ar="عدم إعادة الرسوم", name_en="no_fees_refund", government_entity="الجمارك"),
+                    Category(name_ar="إعادة الجمركة", name_en="re_customs", government_entity="الجمارك"),
+                    Category(name_ar="احتجار المرتجع", name_en="returned_goods_monopoly", government_entity="الجمارك"),
+                    Category(name_ar="فترة التخصيم", name_en="clearance_period", government_entity="الجمارك"),
+                    Category(name_ar="الية القيمة والثمن", name_en="value_price_mechanism", government_entity="الجمارك"),
+                    
+                    # الضرائب
+                    Category(name_ar="طلب اقرارات سابقة", name_en="previous_declarations_request", government_entity="الضرائب"),
+                    Category(name_ar="تأخير استلام الاقرارات الضريبية", name_en="tax_declarations_receipt_delay", government_entity="الضرائب"),
+                    Category(name_ar="سداد الضريبة نقداً وشيكات", name_en="tax_payment_cash_checks", government_entity="الضرائب"),
+                    Category(name_ar="رفع ضريبة الأرباح", name_en="profit_tax_increase", government_entity="الضرائب"),
+                    Category(name_ar="طلب اصل البيان الجمركي", name_en="original_customs_statement_request", government_entity="الضرائب"),
+                    Category(name_ar="طلب التجار من مباحث الأموال العامة", name_en="traders_request_public_funds_investigation", government_entity="الضرائب"),
+                    Category(name_ar="مبالغ تحت الحساب", name_en="amounts_on_account", government_entity="الضرائب"),
+                    Category(name_ar="عدم اتخاذ الإجراءات القانونية", name_en="no_legal_action", government_entity="الضرائب"),
+                    Category(name_ar="زيادة الإجراءات في المعاملات", name_en="increased_transaction_procedures", government_entity="الضرائب"),
+                    
+                    # صندوق النظافة والتحسين
+                    Category(name_ar="التحصيل بين المديريات في إطار المحافظة الواحدة", name_en="collection_between_directorates", government_entity="صندوق النظافة والتحسين"),
+                    Category(name_ar="رسوم الدعاية والاعلان وازدواجية تحصيل الرسوم بلوائح مختلفة", name_en="advertising_fees_duplicate_collection", government_entity="صندوق النظافة والتحسين"),
+                    Category(name_ar="ارتفاع الرسوم", name_en="high_fees", government_entity="صندوق النظافة والتحسين"),
+                    Category(name_ar="ازدواجية التحصيل", name_en="duplicate_collection", government_entity="صندوق النظافة والتحسين"),
+                    Category(name_ar="تحصيل رسوم بدون سندات", name_en="fees_collection_without_receipts", government_entity="صندوق النظافة والتحسين"),
+                    Category(name_ar="أسلوب الإكراه في الوسائل الإعلانية", name_en="coercion_advertising_methods", government_entity="صندوق النظافة والتحسين"),
+                    Category(name_ar="ضعف تنسيق الصندوق مع الامن", name_en="weak_coordination_security", government_entity="صندوق النظافة والتحسين"),
+                    Category(name_ar="التنصل عن تنفيذ الاتفاقات", name_en="agreements_execution_evasion", government_entity="صندوق النظافة والتحسين"),
+                    Category(name_ar="المزاجية في المعاملات الإدارية", name_en="arbitrary_administrative_transactions", government_entity="صندوق النظافة والتحسين"),
                 ]
                 for category in categories:
                     try:
