@@ -40,8 +40,8 @@ function Settings() {
       subtitle="إدارة إعدادات النظام والتصنيفات"
     >
       <div className="space-y-6">
-        <div className="card-glass-strong overflow-hidden">
-            <div className="flex flex-wrap border-b border-gray-200/50 dark:border-gray-700/50">
+        <div className="card-glass-strong overflow-hidden shadow-lg">
+            <div className="flex flex-wrap border-b border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-b from-white/50 to-transparent dark:from-gray-800/50">
               <TabButton
                 active={activeTab === 'categories'}
                 onClick={() => setActiveTab('categories')}
@@ -69,12 +69,21 @@ function Settings() {
             </div>
           </div>
 
-        <div className="card-premium p-6 sm:p-8">
-          {activeTab === 'categories' && <CategoriesTab />}
-          {activeTab === 'sla' && <SLATab />}
-          {activeTab === 'payment-methods' && <PaymentMethodsTab />}
-          {activeTab === 'system' && <SystemSettingsTab />}
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="card-premium p-6 sm:p-8 shadow-xl"
+          >
+            {activeTab === 'categories' && <CategoriesTab />}
+            {activeTab === 'sla' && <SLATab />}
+            {activeTab === 'payment-methods' && <PaymentMethodsTab />}
+            {activeTab === 'system' && <SystemSettingsTab />}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </ResponsivePageShell>
   );
@@ -1024,53 +1033,71 @@ function SystemSettingsTab() {
     }
   };
 
-  if (loading) return <div>جاري التحميل...</div>;
+  if (loading) return <LoadingFallback message="جاري تحميل إعدادات النظام..." />;
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">إعدادات النظام</h2>
-        <button
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-title font-bold text-gray-900 dark:text-white">إعدادات النظام</h2>
+          <p className="text-body text-gray-600 dark:text-gray-400 mt-1">إدارة الإعدادات العامة للنظام</p>
+        </div>
+        <CTAButton
           onClick={() => setShowCreate(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          variant="primary"
+          size="md"
+          icon={Plus}
         >
-          + إضافة إعداد
-        </button>
+          إضافة إعداد
+        </CTAButton>
       </div>
 
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">المفتاح</th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">القيمة</th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الوصف</th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">إجراءات</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {settings.map((setting) => (
-            <tr key={setting.setting_key}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">{setting.setting_key}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm">{setting.setting_value}</td>
-              <td className="px-6 py-4 text-sm">{setting.description}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm">
-                <button
-                  onClick={() => setEditing(setting)}
-                  className="text-blue-600 hover:text-blue-800 mr-4"
-                >
-                  تعديل
-                </button>
-                <button
-                  onClick={() => setConfirmDialog({ isOpen: true, id: setting.setting_key, isLoading: false })}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  حذف
-                </button>
-              </td>
+      <div className="overflow-x-auto rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm">
+        <table className="min-w-full divide-y divide-gray-200/60 dark:divide-gray-700/60">
+          <thead>
+            <tr className="bg-gradient-to-b from-gray-50 to-gray-100/50 dark:from-gray-800 dark:to-gray-800/50">
+              <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">المفتاح</th>
+              <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">القيمة</th>
+              <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">الوصف</th>
+              <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">إجراءات</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200/60 dark:divide-gray-700/60">
+            {settings.map((setting) => (
+              <motion.tr 
+                key={setting.setting_key}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors duration-200"
+              >
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono font-medium text-primary-600 dark:text-primary-400">{setting.setting_key}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 font-medium">{setting.setting_value}</td>
+                <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{setting.description || '-'}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setEditing(setting)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors duration-200 font-medium"
+                      aria-label="تعديل"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      <span>تعديل</span>
+                    </button>
+                    <button
+                      onClick={() => setConfirmDialog({ isOpen: true, id: setting.setting_key, isLoading: false })}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200 font-medium"
+                      aria-label="حذف"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>حذف</span>
+                    </button>
+                  </div>
+                </td>
+              </motion.tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {(showCreate || editing) && (
         <SettingFormModal
@@ -1111,53 +1138,93 @@ function SettingFormModal({ setting, onClose, onSubmit }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 max-w-2xl w-full">
-        <h2 className="text-2xl font-bold mb-6">
-          {setting ? 'تعديل الإعداد' : 'إضافة إعداد جديد'}
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">المفتاح *</label>
-            <input
-              type="text"
-              value={formData.setting_key}
-              onChange={(e) => setFormData({ ...formData, setting_key: e.target.value })}
-              required
-              disabled={!!setting}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono disabled:bg-gray-100"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">القيمة *</label>
-            <input
-              type="text"
-              value={formData.setting_value}
-              onChange={(e) => setFormData({ ...formData, setting_value: e.target.value })}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">الوصف</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-          </div>
-          <div className="flex justify-end gap-3 mt-6">
-            <button type="button" onClick={onClose} className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-              إلغاء
-            </button>
-            <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-              حفظ
+    <AnimatePresence>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ duration: 0.2 }}
+          className="card-premium p-6 sm:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-heading font-bold text-gray-900 dark:text-white">
+              {setting ? 'تعديل الإعداد' : 'إضافة إعداد جديد'}
+            </h2>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              aria-label="إغلاق"
+            >
+              <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
-        </form>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 gap-5">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  المفتاح <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.setting_key}
+                  onChange={(e) => setFormData({ ...formData, setting_key: e.target.value })}
+                  required
+                  disabled={!!setting}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all font-mono disabled:bg-gray-100 dark:disabled:bg-gray-700/50 disabled:cursor-not-allowed"
+                  placeholder="setting_key"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  القيمة <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.setting_value}
+                  onChange={(e) => setFormData({ ...formData, setting_value: e.target.value })}
+                  required
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  placeholder="أدخل القيمة"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">الوصف</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none"
+                  placeholder="أدخل وصف الإعداد (اختياري)"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <CTAButton
+                type="button"
+                onClick={onClose}
+                variant="ghost"
+                size="md"
+                icon={X}
+              >
+                إلغاء
+              </CTAButton>
+              <CTAButton
+                type="submit"
+                variant="primary"
+                size="md"
+                icon={Save}
+              >
+                حفظ
+              </CTAButton>
+            </div>
+          </form>
+        </motion.div>
       </div>
-    </div>
+    </AnimatePresence>
   );
 }
 
