@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useReducedMotion } from 'framer-motion';
-import { ResponsivePageShell, StatCard, QuickActionCard, ChartCard, Alert, ProgressRing, SkeletonDashboard } from '../components/ui';
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
+import { ResponsivePageShell, StatCard, QuickActionCard, ChartCard, Alert, ProgressRing, SkeletonDashboard, CTAButton, LoadingFallback } from '../components/ui';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
@@ -18,6 +18,7 @@ import {
   BellAlertIcon,
   CalendarIcon
 } from '@heroicons/react/24/outline';
+import { Plus, Eye, CreditCard, Bell, Sparkles, TrendingUp, FileText, Clock, CheckCircle, XCircle, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
@@ -100,7 +101,7 @@ function TraderDashboard() {
         title={`مرحباً، ${user?.full_name || 'التاجر'}`}
         notificationCount={0}
       >
-        <SkeletonDashboard />
+        <LoadingFallback message="جاري تحميل لوحة التحكم..." />
       </ResponsivePageShell>
     );
   }
@@ -141,7 +142,7 @@ function TraderDashboard() {
           initial={shouldReduceMotion ? {} : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.1 }}
-          className="relative overflow-hidden rounded-2xl shadow-2xl"
+          className="card-glass-strong relative overflow-hidden rounded-2xl shadow-2xl border-2 border-primary-200/30 dark:border-primary-700/30"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-purple-700"></div>
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30"></div>
@@ -169,7 +170,7 @@ function TraderDashboard() {
                 animate={shouldReduceMotion ? {} : { rotate: [0, 10, 0, -10, 0] }}
                 transition={{ repeat: Infinity, duration: 5 }}
               >
-                <SparklesIcon className="w-16 h-16 text-primary-200 drop-shadow-xl" />
+                <Sparkles className="w-16 h-16 text-primary-200 drop-shadow-xl" />
               </motion.div>
             </div>
           </div>
@@ -183,11 +184,11 @@ function TraderDashboard() {
             whileHover={shouldReduceMotion ? {} : { scale: 1.05, y: -5 }}
             whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
             onClick={() => navigate('/complaints?new=true')}
-            className="group relative overflow-hidden flex flex-col items-center justify-center p-7 bg-gradient-to-br from-blue-600 via-blue-600 to-purple-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all cursor-pointer"
+            className="card-glass group relative overflow-hidden flex flex-col items-center justify-center p-7 bg-gradient-to-br from-blue-600 via-blue-600 to-purple-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all cursor-pointer border-2 border-blue-400/20"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4 shadow-lg">
-              <PlusCircleIcon className="w-8 h-8 text-white" />
+              <Plus className="w-8 h-8 text-white" strokeWidth={2.5} />
             </div>
             <h3 className="text-xl font-bold text-white mb-1">شكوى جديدة</h3>
             <p className="text-sm text-blue-100 font-medium">تقديم شكوى جديدة</p>
@@ -199,11 +200,11 @@ function TraderDashboard() {
             whileHover={shouldReduceMotion ? {} : { scale: 1.05, y: -5 }}
             whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
             onClick={() => navigate('/complaints')}
-            className="group relative overflow-hidden flex flex-col items-center justify-center p-7 bg-gradient-to-br from-purple-600 via-purple-600 to-pink-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all cursor-pointer"
+            className="card-glass group relative overflow-hidden flex flex-col items-center justify-center p-7 bg-gradient-to-br from-purple-600 via-purple-600 to-pink-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all cursor-pointer border-2 border-purple-400/20"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4 shadow-lg">
-              <ViewfinderCircleIcon className="w-8 h-8 text-white" />
+              <Eye className="w-8 h-8 text-white" strokeWidth={2.5} />
             </div>
             <h3 className="text-xl font-bold text-white mb-1">متابعة الشكاوى</h3>
             <p className="text-sm text-purple-100 font-medium">عرض جميع الشكاوى</p>
@@ -215,7 +216,7 @@ function TraderDashboard() {
             whileHover={shouldReduceMotion ? {} : { scale: 1.05, y: -5 }}
             whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
             onClick={() => navigate('/subscription')}
-            className="group relative overflow-hidden flex flex-col items-center justify-center p-7 bg-gradient-to-br from-indigo-600 via-indigo-600 to-blue-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all cursor-pointer"
+            className="card-glass group relative overflow-hidden flex flex-col items-center justify-center p-7 bg-gradient-to-br from-indigo-600 via-indigo-600 to-blue-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all cursor-pointer border-2 border-indigo-400/20"
           >
             {subscription?.status !== 'active' && (
               <motion.span
@@ -226,7 +227,7 @@ function TraderDashboard() {
             )}
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4 shadow-lg">
-              <CreditCardIcon className="w-8 h-8 text-white" />
+              <CreditCard className="w-8 h-8 text-white" strokeWidth={2.5} />
             </div>
             <h3 className="text-xl font-bold text-white mb-1">الاشتراك</h3>
             <p className="text-sm text-indigo-100 font-medium">إدارة الاشتراك والدفع</p>
@@ -238,11 +239,11 @@ function TraderDashboard() {
             whileHover={shouldReduceMotion ? {} : { scale: 1.05, y: -5 }}
             whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
             onClick={() => navigate('/complaints')}
-            className="group relative overflow-hidden flex flex-col items-center justify-center p-7 bg-gradient-to-br from-pink-600 via-pink-600 to-rose-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all cursor-pointer"
+            className="card-glass group relative overflow-hidden flex flex-col items-center justify-center p-7 bg-gradient-to-br from-pink-600 via-pink-600 to-rose-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all cursor-pointer border-2 border-pink-400/20"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4 shadow-lg">
-              <BellAlertIcon className="w-8 h-8 text-white" />
+              <Bell className="w-8 h-8 text-white" strokeWidth={2.5} />
             </div>
             <h3 className="text-xl font-bold text-white mb-1">الإشعارات</h3>
             <p className="text-sm text-pink-100 font-medium">التحديثات والرسائل</p>
@@ -293,7 +294,7 @@ function TraderDashboard() {
                     ? 'bg-gradient-to-br from-green-500 to-emerald-600'
                     : 'bg-gradient-to-br from-yellow-500 to-amber-600'
                 }`}>
-                  <CalendarIcon className="w-9 h-9 text-white" />
+                  <Calendar className="w-9 h-9 text-white" strokeWidth={2.5} />
                 </div>
               </div>
             </div>
@@ -314,15 +315,18 @@ function TraderDashboard() {
                 </motion.div>
               </div>
               <div className="text-center py-8">
-                <CreditCardIcon className="w-20 h-20 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center mb-6 shadow-soft mx-auto">
+                  <CreditCard className="w-10 h-10 text-gray-400 dark:text-gray-500" />
+                </div>
                 <p className="text-gray-600 dark:text-gray-400 mb-6 font-medium">للاستمرار في استخدام النظام، يجب الاشتراك في إحدى الخطط المتاحة</p>
-                <button
+                <CTAButton
                   onClick={() => navigate('/subscription')}
-                  className="px-8 py-3.5 bg-gradient-to-r from-primary-600 via-primary-600 to-primary-700 hover:from-primary-700 hover:via-primary-700 hover:to-primary-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 transition-all duration-200 inline-flex items-center gap-3"
+                  variant="primary"
+                  size="lg"
+                  icon={CreditCard}
                 >
-                  <CreditCardIcon className="w-5 h-5" />
                   اشترك الآن
-                </button>
+                </CTAButton>
               </div>
             </>
           )}
@@ -357,31 +361,31 @@ function TraderDashboard() {
                 <StatCard
                   title="الإجمالي"
                   value={stats?.total_complaints || 0}
-                  icon={DocumentTextIcon}
+                  icon={FileText}
                   color="gray"
                 />
                 <StatCard
                   title="قيد المراجعة"
                   value={stats?.under_review || 0}
-                  icon={ClockIcon}
+                  icon={Clock}
                   color="primary"
                 />
                 <StatCard
                   title="تم التصعيد"
                   value={stats?.escalated || 0}
-                  icon={ArrowTrendingUpIcon}
+                  icon={TrendingUp}
                   color="warning"
                 />
                 <StatCard
                   title="محلولة"
                   value={stats?.resolved || 0}
-                  icon={CheckCircleIcon}
+                  icon={CheckCircle}
                   color="success"
                 />
                 <StatCard
                   title="مرفوضة"
                   value={stats?.rejected || 0}
-                  icon={XCircleIcon}
+                  icon={XCircle}
                   color="danger"
                 />
               </>
@@ -429,11 +433,14 @@ function TraderDashboard() {
             </div>
           ) : recentComplaints.length > 0 ? (
             <div className="space-y-3">
-              {recentComplaints.map((complaint) => (
-                <div
+              {recentComplaints.map((complaint, index) => (
+                <motion.div
                   key={complaint.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
                   onClick={() => navigate(`/complaints/${complaint.id}`)}
-                  className="p-4 bg-gradient-to-r from-white to-gray-50 dark:from-gray-700 dark:to-gray-800 hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-600 dark:hover:to-gray-700 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-blue-300 cursor-pointer transition-all shadow-md hover:shadow-lg"
+                  className="p-4 bg-gradient-to-r from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-800/50 hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-700/50 rounded-xl border-2 border-gray-200/60 dark:border-gray-700/60 hover:border-primary-300 dark:hover:border-primary-600 cursor-pointer transition-all shadow-sm hover:shadow-md"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -449,24 +456,32 @@ function TraderDashboard() {
                         <span>{complaint.category_name}</span>
                       </div>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(complaint.status)}`}>
+                    <span className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 whitespace-nowrap ${getStatusColor(complaint.status)}`}>
                       {getStatusLabel(complaint.status)}
                     </span>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <DocumentTextIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-500 dark:text-gray-400 mb-4 font-medium">لم تقم بتقديم أي شكوى بعد</p>
-              <button
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-12"
+            >
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center mb-6 shadow-soft mx-auto">
+                <FileText className="w-10 h-10 text-gray-400 dark:text-gray-500" />
+              </div>
+              <p className="text-gray-600 dark:text-gray-400 mb-4 font-medium">لم تقم بتقديم أي شكوى بعد</p>
+              <CTAButton
                 onClick={() => navigate('/complaints?new=true')}
-                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+                variant="primary"
+                size="md"
+                icon={Plus}
               >
                 تقديم شكوى جديدة
-              </button>
-            </div>
+              </CTAButton>
+            </motion.div>
           )}
         </motion.div>
       </div>

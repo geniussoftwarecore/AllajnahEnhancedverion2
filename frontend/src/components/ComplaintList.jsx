@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FilterBar, ChartCard, ResponsivePageShell, Alert, ConfirmDialog } from './ui';
+import { FilterBar, ChartCard, ResponsivePageShell, Alert, ConfirmDialog, CTAButton, LoadingFallback } from './ui';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { 
@@ -15,6 +15,8 @@ import {
   CheckIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
+import { Plus, Check, X, Filter } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
@@ -278,6 +280,8 @@ function ComplaintList({ onUpdate, role, embedded = false }) {
     setBulkStatus('');
   };
 
+  if (loading) return <LoadingFallback message="جاري تحميل الشكاوى..." />;
+
   const content = (
     <div className="space-y-6">
       {toast && (
@@ -288,45 +292,57 @@ function ComplaintList({ onUpdate, role, embedded = false }) {
         />
       )}
 
-      <FilterBar
-        searchValue={searchTerm}
-        onSearchChange={(value) => {
-          setSearchTerm(value);
-          setCurrentPage(1);
-        }}
-        statusFilter={statusFilter}
-        onStatusChange={(value) => {
-          setStatusFilter(value);
-          setCurrentPage(1);
-        }}
-        priorityFilter={priorityFilter}
-        onPriorityChange={(value) => {
-          setPriorityFilter(value);
-          setCurrentPage(1);
-        }}
-        categoryFilter={categoryFilter}
-        onCategoryChange={(value) => {
-          setCategoryFilter(value);
-          setCurrentPage(1);
-        }}
-        categories={categories}
-        showPriority={role === 'technical_committee' || role === 'higher_committee'}
-        onClearFilters={clearFilters}
-      />
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <FilterBar
+          searchValue={searchTerm}
+          onSearchChange={(value) => {
+            setSearchTerm(value);
+            setCurrentPage(1);
+          }}
+          statusFilter={statusFilter}
+          onStatusChange={(value) => {
+            setStatusFilter(value);
+            setCurrentPage(1);
+          }}
+          priorityFilter={priorityFilter}
+          onPriorityChange={(value) => {
+            setPriorityFilter(value);
+            setCurrentPage(1);
+          }}
+          categoryFilter={categoryFilter}
+          onCategoryChange={(value) => {
+            setCategoryFilter(value);
+            setCurrentPage(1);
+          }}
+          categories={categories}
+          showPriority={role === 'technical_committee' || role === 'higher_committee'}
+          onClearFilters={clearFilters}
+        />
+      </motion.div>
 
       {canUseBulkActions && selectedIds.length > 0 && (
-        <div className="bg-primary-50 border-2 border-primary-200 rounded-xl p-4 shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-primary-50 via-primary-100/50 to-primary-50 dark:from-primary-900/20 dark:via-primary-800/20 dark:to-primary-900/20 border-2 border-primary-200 dark:border-primary-700 rounded-xl p-5 shadow-lg"
+        >
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-            <div className="flex items-center gap-2">
-              <CheckIcon className="w-5 h-5 text-primary-600" />
-              <span className="font-bold text-primary-900">{selectedIds.length} شكوى محددة</span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-primary-100 dark:bg-primary-800 flex items-center justify-center">
+                <Check className="w-5 h-5 text-primary-600 dark:text-primary-400" strokeWidth={2.5} />
+              </div>
+              <span className="font-bold text-primary-900 dark:text-primary-100">{selectedIds.length} شكوى محددة</span>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-3 flex-1">
               <select
                 value={bulkAssignTo}
                 onChange={(e) => setBulkAssignTo(e.target.value)}
-                className="px-4 py-2 rounded-lg border-2 border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+                className="px-4 py-2.5 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all font-medium"
               >
                 <option value="">تعيين إلى...</option>
                 {committeeUsers.map(u => (
@@ -336,18 +352,20 @@ function ComplaintList({ onUpdate, role, embedded = false }) {
                 ))}
               </select>
 
-              <button
+              <CTAButton
                 onClick={handleBulkAssign}
                 disabled={!bulkAssignTo || bulkLoading}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                variant="primary"
+                size="md"
+                loading={bulkLoading}
               >
                 تعيين
-              </button>
+              </CTAButton>
 
               <select
                 value={bulkStatus}
                 onChange={(e) => setBulkStatus(e.target.value)}
-                className="px-4 py-2 rounded-lg border-2 border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+                className="px-4 py-2.5 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all font-medium"
               >
                 <option value="">تغيير الحالة...</option>
                 <option value="submitted">مقدمة</option>
@@ -357,142 +375,157 @@ function ComplaintList({ onUpdate, role, embedded = false }) {
                 <option value="rejected">مرفوضة</option>
               </select>
 
-              <button
+              <CTAButton
                 onClick={handleBulkStatusChange}
                 disabled={!bulkStatus || bulkLoading}
-                className="px-4 py-2 bg-success-600 hover:bg-success-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                variant="success"
+                size="md"
+                loading={bulkLoading}
               >
                 تحديث الحالة
-              </button>
+              </CTAButton>
             </div>
 
-            <button
+            <CTAButton
               onClick={clearSelection}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-all flex items-center gap-2"
+              variant="ghost"
+              size="md"
+              icon={X}
             >
-              <XMarkIcon className="w-5 h-5" />
               إلغاء التحديد
-            </button>
+            </CTAButton>
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {loading ? (
-        <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="animate-pulse bg-gray-100 h-32 rounded-lg"></div>
-          ))}
-        </div>
-      ) : complaints.length === 0 ? (
-        <div className="text-center py-16">
-          <FolderOpenIcon className="w-20 h-20 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">لا توجد شكاوى</h3>
-          <p className="text-gray-500 mb-6">
+      {complaints.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center py-16"
+        >
+          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center mb-6 shadow-soft mx-auto">
+            <FolderOpenIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+          </div>
+          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-3">لا توجد شكاوى</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6 font-medium">
             {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' || categoryFilter !== 'all'
               ? 'لا توجد نتائج تطابق الفلاتر المحددة'
               : 'لم يتم تقديم أي شكوى بعد'}
           </p>
           {(searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' || categoryFilter !== 'all') && (
-            <button
+            <CTAButton
               onClick={clearFilters}
-              className="text-primary-600 hover:text-primary-700 font-medium"
+              variant="outline"
+              size="md"
+              icon={Filter}
             >
               مسح جميع الفلاتر
-            </button>
+            </CTAButton>
           )}
-        </div>
+        </motion.div>
       ) : (
         <>
           {canUseBulkActions && complaints.length > 0 && (
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-center gap-3 p-4 bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-800 dark:to-gray-800/50 rounded-xl border border-gray-200/60 dark:border-gray-700/60"
+            >
               <input
                 type="checkbox"
                 id="select-all"
                 checked={selectedIds.length === complaints.length && complaints.length > 0}
                 onChange={handleSelectAll}
-                className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-2 focus:ring-primary-500"
+                className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-2 focus:ring-primary-500 cursor-pointer"
               />
-              <label htmlFor="select-all" className="font-medium text-gray-700 cursor-pointer">
+              <label htmlFor="select-all" className="font-bold text-gray-700 dark:text-gray-300 cursor-pointer">
                 تحديد الكل ({complaints.length})
               </label>
-            </div>
+            </motion.div>
           )}
 
-          <div className="space-y-3">
-            {complaints.map((complaint) => (
-              <div
-                key={complaint.id}
-                className="group p-5 bg-white hover:bg-gray-50 rounded-xl border-2 border-gray-200 hover:border-primary-300 transition-all shadow-sm hover:shadow-md"
-              >
-                <div className="flex items-start gap-4">
-                  {canUseBulkActions && (
-                    <div className="pt-1" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(complaint.id)}
-                        onChange={(e) => handleSelectOne(complaint.id, e)}
-                        className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-2 focus:ring-primary-500 cursor-pointer"
-                      />
-                    </div>
-                  )}
-                  <div
+          <div className="overflow-x-auto rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200/60 dark:divide-gray-700/60">
+              <thead>
+                <tr className="bg-gradient-to-b from-gray-50 to-gray-100/50 dark:from-gray-800 dark:to-gray-800/50">
+                  {canUseBulkActions && <th className="px-6 py-4 w-12"></th>}
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">الشكوى</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">الحالة</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">التصنيف</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">التاريخ</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider"></th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200/60 dark:divide-gray-700/60">
+                {complaints.map((complaint) => (
+                  <motion.tr
+                    key={complaint.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors duration-200 cursor-pointer"
                     onClick={() => handleComplaintClick(complaint.id)}
-                    className="flex-1 cursor-pointer"
                   >
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-semibold text-gray-500">#{complaint.id}</span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(complaint.status)}`}>
+                    {canUseBulkActions && (
+                      <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(complaint.id)}
+                          onChange={(e) => handleSelectOne(complaint.id, e)}
+                          className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-2 focus:ring-primary-500 cursor-pointer"
+                        />
+                      </td>
+                    )}
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-gray-500 dark:text-gray-400">#{complaint.id}</span>
+                          {complaint.priority && (
+                            <span className={`text-xs font-bold ${getPriorityColor(complaint.priority)}`}>
+                              ● {getPriorityLabel(complaint.priority)}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-900 dark:text-gray-100 font-medium line-clamp-2">
+                          {complaint.problem_description || 'بدون وصف'}
+                        </p>
+                        {complaint.trader_name && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            التاجر: {complaint.trader_name}
+                          </p>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 ${getStatusColor(complaint.status)}`}>
                         {getStatusLabel(complaint.status)}
                       </span>
-                      {complaint.priority && (
-                        <span className={`text-xs font-bold ${getPriorityColor(complaint.priority)}`}>
-                          ● {getPriorityLabel(complaint.priority)}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-gray-900 font-medium mb-2 line-clamp-2">
-                      {complaint.problem_description || 'بدون وصف'}
-                    </p>
-                  </div>
-                  <ChevronLeftIcon className="w-5 h-5 text-gray-400 group-hover:text-primary-500 transition-colors flex-shrink-0" />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <CalendarIcon className="w-4 h-4" />
-                    <span>{format(new Date(complaint.created_at), 'd MMM yyyy', { locale: ar })}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <TagIcon className="w-4 h-4" />
-                    <span className="truncate">{complaint.category_name || 'بدون فئة'}</span>
-                  </div>
-                  {complaint.trader_name && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <UserIcon className="w-4 h-4" />
-                      <span className="truncate">{complaint.trader_name}</span>
-                    </div>
-                  )}
-                  {complaint.assigned_to_name && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <DocumentTextIcon className="w-4 h-4" />
-                      <span className="truncate">مُعين لـ: {complaint.assigned_to_name}</span>
-                    </div>
-                  )}
-                </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 font-medium">
+                      {complaint.category_name || 'بدون فئة'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                      {format(new Date(complaint.created_at), 'd MMM yyyy', { locale: ar })}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <ChevronLeftIcon className="w-5 h-5 text-gray-400 group-hover:text-primary-500 transition-colors" />
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-center justify-center gap-2 mt-6"
+            >
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 rounded-lg bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="px-5 py-2.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed font-bold transition-all shadow-sm hover:shadow-md"
               >
                 السابق
               </button>
@@ -503,10 +536,10 @@ function ComplaintList({ onUpdate, role, embedded = false }) {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-10 h-10 rounded-lg font-medium transition-all ${
+                      className={`w-11 h-11 rounded-xl font-bold transition-all shadow-sm ${
                         currentPage === page
-                          ? 'bg-primary-600 text-white'
-                          : 'bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50'
+                          ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-md hover:shadow-lg'
+                          : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                       }`}
                     >
                       {page}
@@ -517,11 +550,11 @@ function ComplaintList({ onUpdate, role, embedded = false }) {
               <button
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 rounded-lg bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="px-5 py-2.5 rounded-xl bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed font-bold transition-all shadow-sm hover:shadow-md"
               >
                 التالي
               </button>
-            </div>
+            </motion.div>
           )}
         </>
       )}
@@ -551,20 +584,30 @@ function ComplaintList({ onUpdate, role, embedded = false }) {
     >
       <div className="space-y-6">
         {user?.role === 'trader' && (
-          <div className="flex justify-end">
-            <button
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-end"
+          >
+            <CTAButton
               onClick={() => navigate('/complaints/new')}
-              className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
+              variant="primary"
+              size="md"
+              icon={Plus}
             >
-              <PlusCircleIcon className="w-5 h-5" />
-              <span>شكوى جديدة</span>
-            </button>
-          </div>
+              شكوى جديدة
+            </CTAButton>
+          </motion.div>
         )}
         
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="card-premium p-6 sm:p-8 shadow-xl"
+        >
           {content}
-        </div>
+        </motion.div>
       </div>
     </ResponsivePageShell>
   );
