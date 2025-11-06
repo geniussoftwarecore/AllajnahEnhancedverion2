@@ -28,4 +28,5 @@ dependencies = [
     "sendgrid>=6.12.5",
     "python-docx>=1.2.0",
     "httpx>=0.28.1",
+    "alembic>=1.17.1",
 ]

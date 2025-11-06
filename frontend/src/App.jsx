@@ -12,6 +12,7 @@ import LoadingFallback from './components/LoadingFallback';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Setup from './pages/Setup';
+import MerchantRegister from './pages/MerchantRegister';
 
 const TraderDashboard = lazy(() => import('./pages/TraderDashboard'));
 const TraderSubscription = lazy(() => import('./pages/TraderSubscription'));
@@ -31,6 +32,7 @@ const ComplaintDetail = lazy(() => import('./components/ComplaintDetail'));
 const Profile = lazy(() => import('./pages/Profile'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword'));
 const UserSettings = lazy(() => import('./pages/UserSettings'));
+const MerchantApprovals = lazy(() => import('./pages/MerchantApprovals'));
 
 function PrivateRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -106,6 +108,7 @@ function AppRoutes() {
         <Route path="/setup" element={<Navigate to="/login" />} />
         <Route path="/login" element={user ? <Navigate to="/" /> : <PageTransition><Login /></PageTransition>} />
         <Route path="/register" element={user ? <Navigate to="/" /> : <PageTransition><Register /></PageTransition>} />
+        <Route path="/register-merchant" element={user ? <Navigate to="/" /> : <PageTransition><MerchantRegister /></PageTransition>} />
         
         <Route
           path="/"
@@ -197,6 +200,14 @@ function AppRoutes() {
           element={
             <PrivateRoute allowedRoles={['higher_committee']}>
               <ApprovalManagement />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/merchant-approvals"
+          element={
+            <PrivateRoute allowedRoles={['higher_committee']}>
+              <MerchantApprovals />
             </PrivateRoute>
           }
         />

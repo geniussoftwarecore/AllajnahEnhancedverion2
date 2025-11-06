@@ -47,6 +47,11 @@ class PaymentStatus(str, enum.Enum):
     APPROVED = "approved"
     REJECTED = "rejected"
 
+class AccountStatus(str, enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
 class User(Base):
     __tablename__ = "users"
     
@@ -62,6 +67,10 @@ class User(Base):
     address = Column(String)
     profile_picture = Column(String)
     is_active = Column(Boolean, default=True, nullable=False)
+    account_status = Column(SQLEnum(AccountStatus), default=AccountStatus.PENDING, nullable=False)
+    approved_at = Column(DateTime, nullable=True)
+    approved_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    rejection_reason = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -72,6 +81,7 @@ class User(Base):
     payments = relationship("Payment", back_populates="user", foreign_keys="Payment.user_id")
     feedbacks = relationship("ComplaintFeedback", back_populates="user")
     audit_logs = relationship("AuditLog", back_populates="actor")
+    approved_by = relationship("User", remote_side=[id], foreign_keys=[approved_by_id])
 
 class Category(Base):
     __tablename__ = "categories"

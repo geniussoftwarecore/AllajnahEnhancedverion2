@@ -15,7 +15,7 @@ from models import (
     User, Complaint, Comment, Attachment, Category, 
     Subscription, Payment, ComplaintFeedback, AuditLog,
     PaymentMethod, SLAConfig, SystemSettings, TaskQueue, ComplaintApproval, QuickReply, NotificationPreference,
-    UserRole, ComplaintStatus, SubscriptionStatus, PaymentStatus, Priority, TaskStatus, ApprovalStatus
+    UserRole, ComplaintStatus, SubscriptionStatus, PaymentStatus, Priority, TaskStatus, ApprovalStatus, AccountStatus
 )
 from schemas import (
     UserCreate, UserLogin, UserResponse, Token, UserUpdate, PasswordReset, ProfileUpdate, ChangePasswordRequest, EmailUpdateRequest,
@@ -31,7 +31,8 @@ from schemas import (
     TaskQueueResponse, ComplaintApprovalCreate, ComplaintApprovalUpdate, ComplaintApprovalResponse,
     QuickReplyCreate, QuickReplyUpdate, QuickReplyResponse,
     BulkAssignRequest, BulkStatusRequest, BulkActionResponse,
-    NotificationPreferenceCreate, NotificationPreferenceUpdate, NotificationPreferenceResponse
+    NotificationPreferenceCreate, NotificationPreferenceUpdate, NotificationPreferenceResponse,
+    MerchantRegisterRequest, MerchantApprovalRequest
 )
 from auth import (
     get_password_hash, verify_password, create_access_token,
@@ -254,7 +255,9 @@ def initialize_setup(user_data: UserCreate, db: Session = Depends(get_db)):
         phone=user_data.phone,
         whatsapp=user_data.whatsapp,
         telegram=user_data.telegram,
-        address=user_data.address
+        address=user_data.address,
+        account_status=AccountStatus.APPROVED,
+        approved_at=datetime.utcnow()
     )
     
     db.add(new_user)
@@ -272,6 +275,49 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Public registration is disabled. Please contact the administrator to create an account."
     )
+
+@app.post("/api/auth/register-merchant", response_model=dict)
+@limiter.limit(LOGIN_RATE_LIMIT)
+def register_merchant(
+    request: Request,
+    merchant_data: MerchantRegisterRequest,
+    db: Session = Depends(get_db)
+):
+    existing_user = db.query(User).filter(User.email == merchant_data.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    hashed_password = get_password_hash(merchant_data.password)
+    new_user = User(
+        email=merchant_data.email,
+        hashed_password=hashed_password,
+        first_name=merchant_data.first_name,
+        last_name=merchant_data.last_name,
+        role=UserRole.TRADER,
+        phone=merchant_data.phone,
+        whatsapp=merchant_data.whatsapp,
+        telegram=merchant_data.telegram,
+        address=merchant_data.address,
+        is_active=True,
+        account_status=AccountStatus.PENDING
+    )
+    
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    create_audit_log(db, None, "MERCHANT_REGISTRATION", "user", new_user.id, 
+                     f"Merchant registration request submitted for {new_user.email}")
+    db.commit()
+    
+    return {
+        "success": True,
+        "message": "تم تقديم طلبك بنجاح. سيتم مراجعته من قبل اللجنة العليا وسيتم إعلامك بالقرار.",
+        "message_en": "Your request has been submitted successfully. It will be reviewed by the Higher Committee and you will be notified of the decision."
+    }
 
 @app.post("/api/admin/users", response_model=UserResponse)
 def create_user(
@@ -296,7 +342,10 @@ def create_user(
         phone=user_data.phone,
         whatsapp=user_data.whatsapp,
         telegram=user_data.telegram,
-        address=user_data.address
+        address=user_data.address,
+        account_status=AccountStatus.APPROVED,
+        approved_at=datetime.utcnow(),
+        approved_by_id=current_user.id
     )
     
     db.add(new_user)
@@ -304,6 +353,81 @@ def create_user(
     db.refresh(new_user)
     
     return UserResponse.model_validate(new_user)
+
+@app.get("/api/admin/merchant-requests", response_model=List[UserResponse])
+def get_merchant_requests(
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db),
+    status_filter: Optional[str] = Query(None, description="Filter by status: pending, approved, rejected")
+):
+    query = db.query(User).filter(User.role == UserRole.TRADER)
+    
+    if status_filter:
+        if status_filter.lower() == "pending":
+            query = query.filter(User.account_status == AccountStatus.PENDING)
+        elif status_filter.lower() == "approved":
+            query = query.filter(User.account_status == AccountStatus.APPROVED)
+        elif status_filter.lower() == "rejected":
+            query = query.filter(User.account_status == AccountStatus.REJECTED)
+    else:
+        query = query.filter(User.account_status == AccountStatus.PENDING)
+    
+    requests = query.order_by(User.created_at.desc()).all()
+    return [UserResponse.model_validate(req) for req in requests]
+
+@app.put("/api/admin/merchant-requests/{user_id}", response_model=UserResponse)
+def approve_reject_merchant(
+    user_id: int,
+    approval_data: MerchantApprovalRequest,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    merchant = db.query(User).filter(
+        User.id == user_id,
+        User.role == UserRole.TRADER
+    ).first()
+    
+    if not merchant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Merchant request not found"
+        )
+    
+    if merchant.account_status != AccountStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Merchant request has already been processed"
+        )
+    
+    if approval_data.approved:
+        merchant.account_status = AccountStatus.APPROVED
+        merchant.approved_at = datetime.utcnow()
+        merchant.approved_by_id = current_user.id
+        merchant.rejection_reason = None
+        
+        action = "MERCHANT_APPROVED"
+        message = f"Merchant account approved for {merchant.email}"
+    else:
+        if not approval_data.rejection_reason:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Rejection reason is required"
+            )
+        
+        merchant.account_status = AccountStatus.REJECTED
+        merchant.rejection_reason = approval_data.rejection_reason
+        merchant.is_active = False
+        
+        action = "MERCHANT_REJECTED"
+        message = f"Merchant account rejected for {merchant.email}: {approval_data.rejection_reason}"
+    
+    db.commit()
+    db.refresh(merchant)
+    
+    create_audit_log(db, current_user.id, action, "user", merchant.id, message)
+    db.commit()
+    
+    return UserResponse.model_validate(merchant)
 
 @app.post("/api/auth/login", response_model=Token)
 @limiter.limit(LOGIN_RATE_LIMIT)
@@ -313,6 +437,27 @@ def login(request: Request, credentials: UserLogin, db: Session = Depends(get_db
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
+        )
+    
+    if user.account_status == AccountStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account is pending approval. Please wait for the Higher Committee to review your request."
+        )
+    
+    if user.account_status == AccountStatus.REJECTED:
+        rejection_msg = f"Your account has been rejected."
+        if user.rejection_reason:
+            rejection_msg += f" Reason: {user.rejection_reason}"
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=rejection_msg
+        )
+    
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been deactivated. Please contact the administrator."
         )
     
     access_token = create_access_token(data={"sub": str(user.id)})

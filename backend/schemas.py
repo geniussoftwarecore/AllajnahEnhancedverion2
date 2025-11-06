@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
-from models import UserRole, ComplaintStatus, Priority, SubscriptionStatus, PaymentStatus, TaskStatus, ApprovalStatus
+from models import UserRole, ComplaintStatus, Priority, SubscriptionStatus, PaymentStatus, TaskStatus, ApprovalStatus, AccountStatus
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -31,6 +31,10 @@ class UserResponse(BaseModel):
     address: Optional[str] = None
     profile_picture: Optional[str] = None
     is_active: bool = True
+    account_status: AccountStatus
+    approved_at: Optional[datetime] = None
+    approved_by_id: Optional[int] = None
+    rejection_reason: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     
@@ -41,6 +45,20 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     user: UserResponse
+
+class MerchantRegisterRequest(BaseModel):
+    email: EmailStr
+    password: str
+    first_name: str
+    last_name: str
+    phone: Optional[str] = None
+    whatsapp: Optional[str] = None
+    telegram: Optional[str] = None
+    address: Optional[str] = None
+
+class MerchantApprovalRequest(BaseModel):
+    approved: bool
+    rejection_reason: Optional[str] = None
 
 class CategoryResponse(BaseModel):
     id: int

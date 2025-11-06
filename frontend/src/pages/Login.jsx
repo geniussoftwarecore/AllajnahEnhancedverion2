@@ -210,13 +210,22 @@ function Login() {
          translations.login.submit}
       </CTAButton>
 
-      <div className="text-center pt-2">
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-4 bg-white text-gray-500">أو</span>
+        </div>
+      </div>
+
+      <div className="text-center">
         <Link 
-          to="/register" 
+          to="/register-merchant" 
           className="text-primary-600 hover:text-primary-700 font-medium transition-all duration-200 inline-flex items-center gap-2 hover:gap-3 group"
         >
-          <span className="text-gray-600">{translations.login.noAccount}</span>
-          <span className="font-bold group-hover:underline decoration-2 underline-offset-4">{translations.login.signUp}</span>
+          <span className="text-gray-600">تاجر جديد؟</span>
+          <span className="font-bold group-hover:underline decoration-2 underline-offset-4">سجل هنا</span>
         </Link>
       </div>
     </FormWrapper>
