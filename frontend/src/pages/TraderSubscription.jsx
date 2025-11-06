@@ -26,6 +26,7 @@ function TraderSubscription() {
       setPayments(payRes.data);
     } catch (error) {
       console.error('Error loading data:', error);
+      toast.error('حدث خطأ أثناء تحميل بيانات الاشتراك. يرجى المحاولة مرة أخرى.');
     } finally {
       setLoading(false);
     }
