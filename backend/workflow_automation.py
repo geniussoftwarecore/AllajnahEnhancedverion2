@@ -131,9 +131,30 @@ def check_sla_violations(db: Session, actor_id: Optional[int] = None) -> int:
                             )
                             loop.close()
                         except Exception as notif_error:
-                            print(f"Error sending escalation notification: {notif_error}")
+                            print(f"Error sending assignment notification: {notif_error}")
                 else:
                     complaint.task_status = TaskStatus.IN_QUEUE
+                
+                # Send escalation notification to complaint owner (trader)
+                complaint_owner = db.query(User).filter(User.id == complaint.user_id).first()
+                if complaint_owner:
+                    try:
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        loop.run_until_complete(
+                            notification_service.send_escalation_notification(
+                                db,
+                                complaint_owner.id,
+                                complaint_owner.email,
+                                complaint_owner.phone,
+                                complaint.id,
+                                f"تجاوز الوقت المحدد ({escalation_threshold})",
+                                language="ar"
+                            )
+                        )
+                        loop.close()
+                    except Exception as notif_error:
+                        print(f"Error sending escalation notification: {notif_error}")
                 
                 create_audit_log(
                     db,
@@ -156,6 +177,128 @@ def check_sla_violations(db: Session, actor_id: Optional[int] = None) -> int:
         db.rollback()
     
     return escalation_count
+
+
+def check_sla_warnings(db: Session, actor_id: Optional[int] = None) -> int:
+    """Check for complaints approaching SLA deadline and send warnings."""
+    warning_count = 0
+    
+    try:
+        default_escalation_hours = int(get_setting(db, "default_escalation_hours", "72"))
+        warning_threshold_percent = 0.8  # Warn at 80% of deadline
+        
+        complaints = db.query(Complaint).filter(
+            Complaint.status == ComplaintStatus.UNDER_REVIEW
+        ).all()
+        
+        for complaint in complaints:
+            sla_config = db.query(SLAConfig).filter(
+                (SLAConfig.category_id == complaint.category_id) |
+                (SLAConfig.priority == complaint.priority)
+            ).first()
+            
+            if sla_config:
+                escalation_threshold = timedelta(hours=sla_config.escalation_time_hours)
+            else:
+                escalation_threshold = timedelta(hours=default_escalation_hours)
+            
+            time_since_creation = datetime.utcnow() - complaint.created_at
+            warning_threshold = escalation_threshold * warning_threshold_percent
+            
+            # Check if complaint is approaching deadline but not yet past it
+            if time_since_creation > warning_threshold and time_since_creation < escalation_threshold:
+                # Check if we already sent a warning (using audit log)
+                from models import AuditLog
+                existing_warning = db.query(AuditLog).filter(
+                    AuditLog.action == "SLA_WARNING",
+                    AuditLog.target_type == "complaint",
+                    AuditLog.target_id == complaint.id
+                ).first()
+                
+                if existing_warning:
+                    continue  # Already sent warning for this complaint
+                
+                # Calculate time remaining
+                time_remaining = escalation_threshold - time_since_creation
+                hours_remaining = int(time_remaining.total_seconds() / 3600)
+                minutes_remaining = int((time_remaining.total_seconds() % 3600) / 60)
+                
+                time_remaining_str = f"{hours_remaining} ساعة و {minutes_remaining} دقيقة"
+                sla_deadline = (complaint.created_at + escalation_threshold).strftime("%Y-%m-%d %H:%M")
+                
+                # Send warning to complaint owner
+                complaint_owner = db.query(User).filter(User.id == complaint.user_id).first()
+                if complaint_owner:
+                    try:
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        loop.run_until_complete(
+                            notification_service.send_sla_warning_notification(
+                                db,
+                                complaint_owner.id,
+                                complaint_owner.email,
+                                complaint_owner.phone,
+                                complaint.id,
+                                time_remaining_str,
+                                sla_deadline,
+                                language="ar"
+                            )
+                        )
+                        loop.close()
+                    except Exception as notif_error:
+                        print(f"Error sending SLA warning to owner: {notif_error}")
+                
+                # Send warning to assigned user if exists
+                if complaint.assigned_to_id:
+                    assigned_user = db.query(User).filter(User.id == complaint.assigned_to_id).first()
+                    if assigned_user:
+                        try:
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            loop.run_until_complete(
+                                notification_service.send_sla_warning_notification(
+                                    db,
+                                    assigned_user.id,
+                                    assigned_user.email,
+                                    assigned_user.phone,
+                                    complaint.id,
+                                    time_remaining_str,
+                                    sla_deadline,
+                                    language="ar"
+                                )
+                            )
+                            loop.close()
+                        except Exception as notif_error:
+                            print(f"Error sending SLA warning to assigned user: {notif_error}")
+                
+                # Create audit log to track that warning was sent
+                if actor_id is None:
+                    system_user = db.query(User).filter(User.role == UserRole.HIGHER_COMMITTEE).first()
+                    if system_user:
+                        actor_id = system_user.id
+                
+                if actor_id:
+                    create_audit_log(
+                        db,
+                        actor_id,
+                        "SLA_WARNING",
+                        "complaint",
+                        complaint.id,
+                        f"SLA warning sent for complaint #{complaint.id} - {time_remaining_str} remaining"
+                    )
+                
+                warning_count += 1
+                print(f"SLA warning sent for complaint #{complaint.id} - {time_remaining_str} remaining")
+        
+        if warning_count > 0:
+            db.commit()
+            print(f"Total SLA warnings sent: {warning_count}")
+    
+    except Exception as e:
+        print(f"Error in check_sla_warnings: {e}")
+        db.rollback()
+    
+    return warning_count
 
 
 def auto_close_resolved_complaints(db: Session, actor_id: Optional[int] = None) -> int:

@@ -26,6 +26,22 @@ async def check_sla_violations_task():
         logger.error(f"Error in SLA check task: {e}")
 
 
+async def check_sla_warnings_task():
+    logger.info("Running SLA warnings check...")
+    try:
+        from database import SessionLocal
+        from workflow_automation import check_sla_warnings
+        
+        db = SessionLocal()
+        try:
+            warnings = check_sla_warnings(db)
+            logger.info(f"SLA warnings check completed. Warnings sent: {warnings}")
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Error in SLA warnings task: {e}")
+
+
 async def auto_close_resolved_task():
     logger.info("Running auto-close resolved complaints task...")
     try:
@@ -43,6 +59,14 @@ async def auto_close_resolved_task():
 
 
 def start_scheduler():
+    scheduler.add_job(
+        check_sla_warnings_task,
+        trigger=IntervalTrigger(hours=1),
+        id='sla_warnings',
+        name='Check SLA Warnings',
+        replace_existing=True
+    )
+    
     scheduler.add_job(
         check_sla_violations_task,
         trigger=IntervalTrigger(hours=1),

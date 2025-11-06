@@ -388,6 +388,179 @@ class NotificationService:
             sms_sent = await self.send_sms(user_phone, sms)
         
         return email_sent or sms_sent
+    
+    async def send_comment_notification(
+        self,
+        db: Session,
+        user_id: int,
+        user_email: str,
+        user_phone: Optional[str],
+        complaint_id: int,
+        commenter_name: str,
+        comment_preview: str,
+        language: str = "ar"
+    ):
+        """Send notification when a new comment is added to a complaint."""
+        prefs = self._get_user_preferences(db, user_id)
+        
+        if not prefs.notify_comment:
+            return False
+        
+        # Truncate comment preview to 100 characters
+        preview = comment_preview[:100] + "..." if len(comment_preview) > 100 else comment_preview
+        
+        if language == "ar":
+            subject = f"تعليق جديد على الشكوى #{complaint_id}"
+            body = f"""
+            <html dir="rtl">
+                <body>
+                    <h2>تعليق جديد</h2>
+                    <p>تم إضافة تعليق جديد على الشكوى رقم <strong>#{complaint_id}</strong></p>
+                    <p>من: <strong>{commenter_name}</strong></p>
+                    <p>التعليق: <em>{preview}</em></p>
+                    <p>يمكنك مراجعة التعليق الكامل من خلال لوحة التحكم.</p>
+                </body>
+            </html>
+            """
+            sms = f"تعليق جديد على الشكوى #{complaint_id} من {commenter_name}"
+        else:
+            subject = f"New Comment on Complaint #{complaint_id}"
+            body = f"""
+            <html>
+                <body>
+                    <h2>New Comment</h2>
+                    <p>A new comment has been added to complaint <strong>#{complaint_id}</strong></p>
+                    <p>From: <strong>{commenter_name}</strong></p>
+                    <p>Comment: <em>{preview}</em></p>
+                    <p>You can view the full comment from the dashboard.</p>
+                </body>
+            </html>
+            """
+            sms = f"New comment on complaint #{complaint_id} from {commenter_name}"
+        
+        email_sent = False
+        sms_sent = False
+        
+        if prefs.email_enabled:
+            email_sent = await self.send_email(user_email, subject, body)
+        
+        if prefs.sms_enabled and user_phone:
+            sms_sent = await self.send_sms(user_phone, sms)
+        
+        return email_sent or sms_sent
+    
+    async def send_escalation_notification(
+        self,
+        db: Session,
+        user_id: int,
+        user_email: str,
+        user_phone: Optional[str],
+        complaint_id: int,
+        escalation_reason: str,
+        language: str = "ar"
+    ):
+        """Send notification when a complaint is escalated to Higher Committee."""
+        prefs = self._get_user_preferences(db, user_id)
+        
+        if not prefs.notify_escalation:
+            return False
+        
+        if language == "ar":
+            subject = f"تم تصعيد الشكوى #{complaint_id} للجنة العليا"
+            body = f"""
+            <html dir="rtl">
+                <body>
+                    <h2>تصعيد الشكوى</h2>
+                    <p>تم تصعيد الشكوى رقم <strong>#{complaint_id}</strong> إلى اللجنة العليا</p>
+                    <p>سبب التصعيد: <strong>{escalation_reason}</strong></p>
+                    <p>سيتم مراجعة الشكوى من قبل اللجنة العليا واتخاذ القرار المناسب.</p>
+                    <p>يمكنك متابعة حالة الشكوى من خلال لوحة التحكم.</p>
+                </body>
+            </html>
+            """
+            sms = f"تم تصعيد الشكوى #{complaint_id} للجنة العليا"
+        else:
+            subject = f"Complaint #{complaint_id} Escalated to Higher Committee"
+            body = f"""
+            <html>
+                <body>
+                    <h2>Complaint Escalated</h2>
+                    <p>Complaint <strong>#{complaint_id}</strong> has been escalated to the Higher Committee</p>
+                    <p>Escalation reason: <strong>{escalation_reason}</strong></p>
+                    <p>The complaint will be reviewed by the Higher Committee and appropriate action will be taken.</p>
+                    <p>You can track the complaint status from the dashboard.</p>
+                </body>
+            </html>
+            """
+            sms = f"Complaint #{complaint_id} escalated to Higher Committee"
+        
+        email_sent = False
+        sms_sent = False
+        
+        if prefs.email_enabled:
+            email_sent = await self.send_email(user_email, subject, body)
+        
+        if prefs.sms_enabled and user_phone:
+            sms_sent = await self.send_sms(user_phone, sms)
+        
+        return email_sent or sms_sent
+    
+    async def send_sla_warning_notification(
+        self,
+        db: Session,
+        user_id: int,
+        user_email: str,
+        user_phone: Optional[str],
+        complaint_id: int,
+        time_remaining: str,
+        sla_deadline: str,
+        language: str = "ar"
+    ):
+        """Send notification when a complaint is approaching its SLA deadline."""
+        prefs = self._get_user_preferences(db, user_id)
+        
+        if not prefs.notify_sla_warning:
+            return False
+        
+        if language == "ar":
+            subject = f"تحذير: الشكوى #{complaint_id} تقترب من الموعد النهائي"
+            body = f"""
+            <html dir="rtl">
+                <body>
+                    <h2>تحذير الموعد النهائي (SLA)</h2>
+                    <p>الشكوى رقم <strong>#{complaint_id}</strong> تقترب من الموعد النهائي المحدد</p>
+                    <p>الوقت المتبقي: <strong style="color: #dc2626;">{time_remaining}</strong></p>
+                    <p>الموعد النهائي: <strong>{sla_deadline}</strong></p>
+                    <p>يرجى اتخاذ الإجراءات اللازمة في أقرب وقت ممكن.</p>
+                </body>
+            </html>
+            """
+            sms = f"تحذير: الشكوى #{complaint_id} تقترب من الموعد النهائي. الوقت المتبقي: {time_remaining}"
+        else:
+            subject = f"Warning: Complaint #{complaint_id} Approaching Deadline"
+            body = f"""
+            <html>
+                <body>
+                    <h2>SLA Deadline Warning</h2>
+                    <p>Complaint <strong>#{complaint_id}</strong> is approaching its deadline</p>
+                    <p>Time remaining: <strong style="color: #dc2626;">{time_remaining}</strong></p>
+                    <p>Deadline: <strong>{sla_deadline}</strong></p>
+                    <p>Please take necessary action as soon as possible.</p>
+                </body>
+            </html>
+            """
+            sms = f"Warning: Complaint #{complaint_id} approaching deadline. Time remaining: {time_remaining}"
+        
+        email_sent = False
+        sms_sent = False
+        
+        if prefs.email_enabled:
+            email_sent = await self.send_email(user_email, subject, body)
+        
+        if prefs.sms_enabled and user_phone:
+            sms_sent = await self.send_sms(user_phone, sms)
+        
+        return email_sent or sms_sent
 
 
 notification_service = NotificationService()

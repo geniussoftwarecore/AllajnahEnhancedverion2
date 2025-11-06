@@ -845,6 +845,46 @@ def create_comment(
         metadata={"complaint_id": complaint_id, "is_internal": comment_data.is_internal}
     )
     
+    # Send comment notifications to relevant users
+    try:
+        users_to_notify = []
+        
+        # Notify complaint owner (trader) if comment is public
+        if not comment_data.is_internal and complaint.user_id != current_user.id:
+            complaint_owner = db.query(User).filter(User.id == complaint.user_id).first()
+            if complaint_owner:
+                users_to_notify.append(complaint_owner)
+        
+        # Notify assigned user if different from commenter
+        if complaint.assigned_to_id and complaint.assigned_to_id != current_user.id:
+            assigned_user = db.query(User).filter(User.id == complaint.assigned_to_id).first()
+            if assigned_user:
+                users_to_notify.append(assigned_user)
+        
+        # Send notifications asynchronously
+        import asyncio
+        for user in users_to_notify:
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(
+                    notification_service.send_comment_notification(
+                        db,
+                        user.id,
+                        user.email,
+                        user.phone,
+                        complaint_id,
+                        f"{current_user.first_name} {current_user.last_name}",
+                        comment_data.content,
+                        language="ar"
+                    )
+                )
+                loop.close()
+            except Exception as notif_error:
+                print(f"Error sending comment notification to user {user.id}: {notif_error}")
+    except Exception as e:
+        print(f"Error processing comment notifications: {e}")
+    
     return CommentResponse.model_validate(new_comment)
 
 @app.get("/api/complaints/{complaint_id}/comments", response_model=List[CommentResponse])
