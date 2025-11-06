@@ -12,7 +12,9 @@ import {
   ExclamationTriangleIcon,
   SparklesIcon,
   ArrowRightIcon,
-  ArrowLeftIcon
+  ArrowLeftIcon,
+  PaperClipIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { ResponsivePageShell } from './ui';
 import api from '../api/axios';
@@ -30,6 +32,8 @@ function ComplaintForm({ onSuccess }) {
   const [duplicateWarning, setDuplicateWarning] = useState(null);
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   const title = watch('title');
   const categoryId = watch('category_id');
@@ -154,12 +158,48 @@ function ComplaintForm({ onSuccess }) {
     }
   };
 
+  const handleFileSelect = (event) => {
+    const files = Array.from(event.target.files);
+    setSelectedFiles(prevFiles => [...prevFiles, ...files]);
+  };
+
+  const handleFileRemove = (index) => {
+    setSelectedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+  };
+
+  const uploadFiles = async (complaintId) => {
+    if (selectedFiles.length === 0) return;
+
+    setUploadingFiles(true);
+    try {
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+        await api.post(`/complaints/${complaintId}/attachments`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+      }
+    } catch (err) {
+      console.error('Error uploading files:', err);
+    } finally {
+      setUploadingFiles(false);
+    }
+  };
+
   const onSubmit = async (data) => {
     setLoading(true);
     setError('');
 
     try {
-      await api.post('/complaints', data);
+      const response = await api.post('/complaints', data);
+      const complaintId = response.data.id;
+      
+      if (selectedFiles.length > 0) {
+        await uploadFiles(complaintId);
+      }
+      
       if (onSuccess) {
         onSuccess();
       } else {
@@ -564,6 +604,68 @@ function ComplaintForm({ onSuccess }) {
             <option value="لا">لا</option>
           </select>
         </div>
+      </div>
+
+      <div className="mt-8">
+        <label className="block text-sm font-bold text-gray-700 mb-3">
+          <PaperClipIcon className="w-4 h-4 inline-block mr-1.5 text-gray-600" />
+          إرفاق ملفات (اختياري)
+        </label>
+        <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-primary-500 transition-all duration-300">
+          <input
+            type="file"
+            id="file-upload"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+          />
+          <label
+            htmlFor="file-upload"
+            className="flex flex-col items-center justify-center cursor-pointer"
+          >
+            <PaperClipIcon className="w-12 h-12 text-gray-400 mb-3" />
+            <span className="text-sm font-medium text-gray-700 mb-1">
+              اضغط لاختيار الملفات أو اسحبها هنا
+            </span>
+            <span className="text-xs text-gray-500">
+              PDF, DOC, DOCX, JPG, PNG, GIF (حتى 10 MB لكل ملف)
+            </span>
+          </label>
+        </div>
+
+        {selectedFiles.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <p className="text-sm font-medium text-gray-700 mb-2">
+              الملفات المختارة ({selectedFiles.length}):
+            </p>
+            {selectedFiles.map((file, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+              >
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <PaperClipIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <span className="text-sm text-gray-700 truncate">
+                    {file.name}
+                  </span>
+                  <span className="text-xs text-gray-500 flex-shrink-0">
+                    ({(file.size / 1024).toFixed(1)} KB)
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleFileRemove(index)}
+                  className="p-1 hover:bg-red-100 rounded-full transition-colors ml-2"
+                >
+                  <XMarkIcon className="w-5 h-5 text-red-500" />
+                </button>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </motion.div>
   );

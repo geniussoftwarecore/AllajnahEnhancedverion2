@@ -1125,6 +1125,43 @@ def get_attachments(
     attachments = db.query(Attachment).filter(Attachment.complaint_id == complaint_id).all()
     return attachments
 
+@app.get("/api/attachments/{attachment_id}/download")
+async def download_attachment(
+    attachment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from fastapi.responses import FileResponse
+    
+    attachment = db.query(Attachment).filter(Attachment.id == attachment_id).first()
+    if not attachment:
+        raise HTTPException(status_code=404, detail="Attachment not found")
+    
+    complaint = db.query(Complaint).filter(Complaint.id == attachment.complaint_id).first()
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    if current_user.role == UserRole.TRADER and complaint.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to download this attachment")
+    
+    if not os.path.exists(attachment.filepath):
+        raise HTTPException(status_code=404, detail="File not found on server")
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "DOWNLOAD_ATTACHMENT",
+        "attachment",
+        attachment.id,
+        f"Downloaded file '{attachment.filename}' from complaint #{complaint.id}"
+    )
+    
+    return FileResponse(
+        path=attachment.filepath,
+        filename=attachment.filename,
+        media_type=attachment.file_type or "application/octet-stream"
+    )
+
 
 @app.post("/api/complaints/{complaint_id}/accept-task", response_model=ComplaintResponse)
 async def accept_complaint_task(
