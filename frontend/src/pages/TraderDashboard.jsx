@@ -58,7 +58,7 @@ function TraderDashboard() {
       setRecentComplaints(complaintsRes.data.complaints || []);
       
       try {
-        const subRes = await api.get('/subscription');
+        const subRes = await api.get('/subscriptions/me');
         setSubscription(subRes.data);
       } catch (error) {
         console.log('No subscription found');
