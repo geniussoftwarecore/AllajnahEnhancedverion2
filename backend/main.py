@@ -1,9 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, Form, Query, WebSocket, WebSocketDisconnect, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import func, or_, and_
+from sqlalchemy import func, or_, and_, text
 from typing import List, Optional
 import os
 import shutil
@@ -219,6 +219,35 @@ async def shutdown_event():
 
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+@app.get("/health")
+@app.get("/api/health")
+def health_check(db: Session = Depends(get_db)):
+    """
+    Health check endpoint for monitoring and load balancers.
+    Returns 200 OK if all systems are operational, 503 if unhealthy.
+    """
+    try:
+        # Check database connectivity with a simple query
+        db.execute(text("SELECT 1"))
+        
+        return {
+            "status": "healthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "database": "connected",
+            "version": "1.0.0"
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "timestamp": datetime.utcnow().isoformat(),
+                "database": "disconnected",
+                "error": str(e),
+                "version": "1.0.0"
+            }
+        )
 
 @app.get("/api/setup/status")
 def get_setup_status(db: Session = Depends(get_db)):
