@@ -181,17 +181,25 @@ class Payment(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     subscription_id = Column(Integer, ForeignKey("subscriptions.id"), nullable=True)
+    payment_method_id = Column(Integer, ForeignKey("payment_methods.id"), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
     method = Column(String, nullable=False)
     proof_path = Column(String)
+    reference_number = Column(String)
+    account_details = Column(Text)
     approved_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    reviewed_by_technical_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     status = Column(SQLEnum(PaymentStatus), default=PaymentStatus.PENDING)
     approval_notes = Column(Text)
+    technical_review_notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     approved_at = Column(DateTime)
+    technical_reviewed_at = Column(DateTime)
     
     user = relationship("User", foreign_keys=[user_id], back_populates="payments")
     approved_by = relationship("User", foreign_keys=[approved_by_id])
+    reviewed_by_technical = relationship("User", foreign_keys=[reviewed_by_technical_id])
+    payment_method = relationship("PaymentMethod")
 
 class ComplaintFeedback(Base):
     __tablename__ = "complaint_feedbacks"

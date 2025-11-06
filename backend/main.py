@@ -1596,6 +1596,77 @@ def delete_category(
     db.commit()
     return {"message": "Category deleted successfully"}
 
+@app.get("/api/payment-methods", response_model=List[PaymentMethodResponse])
+def get_payment_methods(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    payment_methods = db.query(PaymentMethod).filter(PaymentMethod.is_active == True).order_by(PaymentMethod.created_at).all()
+    return payment_methods
+
+@app.post("/api/payment-methods", response_model=PaymentMethodResponse)
+def create_payment_method(
+    payment_method_data: PaymentMethodCreate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    new_payment_method = PaymentMethod(
+        name_ar=payment_method_data.name_ar,
+        name_en=payment_method_data.name_en,
+        instructions_ar=payment_method_data.instructions_ar,
+        instructions_en=payment_method_data.instructions_en,
+        is_active=payment_method_data.is_active
+    )
+    
+    db.add(new_payment_method)
+    db.commit()
+    db.refresh(new_payment_method)
+    
+    create_audit_log(db, current_user.id, "CREATE_PAYMENT_METHOD", "payment_method", new_payment_method.id,
+                     f"Created payment method: {payment_method_data.name_en}")
+    
+    return PaymentMethodResponse.model_validate(new_payment_method)
+
+@app.patch("/api/payment-methods/{method_id}", response_model=PaymentMethodResponse)
+def update_payment_method(
+    method_id: int,
+    update_data: PaymentMethodUpdate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    payment_method = db.query(PaymentMethod).filter(PaymentMethod.id == method_id).first()
+    if not payment_method:
+        raise HTTPException(status_code=404, detail="Payment method not found")
+    
+    for key, value in update_data.dict(exclude_unset=True).items():
+        setattr(payment_method, key, value)
+    
+    db.commit()
+    db.refresh(payment_method)
+    
+    create_audit_log(db, current_user.id, "UPDATE_PAYMENT_METHOD", "payment_method", method_id,
+                     f"Updated payment method: {payment_method.name_en}")
+    
+    return PaymentMethodResponse.model_validate(payment_method)
+
+@app.delete("/api/payment-methods/{method_id}")
+def delete_payment_method(
+    method_id: int,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    payment_method = db.query(PaymentMethod).filter(PaymentMethod.id == method_id).first()
+    if not payment_method:
+        raise HTTPException(status_code=404, detail="Payment method not found")
+    
+    db.delete(payment_method)
+    db.commit()
+    
+    create_audit_log(db, current_user.id, "DELETE_PAYMENT_METHOD", "payment_method", method_id,
+                     f"Deleted payment method: {payment_method.name_en}")
+    
+    return {"message": "Payment method deleted successfully"}
+
 @app.get("/api/subscriptions/me", response_model=Optional[SubscriptionResponse])
 def get_my_subscription(
     current_user: User = Depends(require_role(UserRole.TRADER)),
@@ -1627,12 +1698,25 @@ def get_all_subscriptions(
 
 @app.post("/api/payments", response_model=PaymentResponse)
 async def submit_payment(
+    payment_method_id: int = Form(...),
     amount: float = Form(...),
     method: str = Form(...),
+    reference_number: Optional[str] = Form(None),
+    account_details: Optional[str] = Form(None),
     file: UploadFile = File(...),
     current_user: User = Depends(require_role(UserRole.TRADER)),
     db: Session = Depends(get_db)
 ):
+    payment_method = db.query(PaymentMethod).filter(
+        PaymentMethod.id == payment_method_id,
+        PaymentMethod.is_active == True
+    ).first()
+    
+    if not payment_method:
+        raise HTTPException(status_code=404, detail="Payment method not found or inactive")
+    
+    validate_upload_file(file)
+    
     file_extension = os.path.splitext(file.filename)[1]
     filename = f"payment_{current_user.id}_{datetime.utcnow().timestamp()}{file_extension}"
     filepath = os.path.join("uploads", filename)
@@ -1642,8 +1726,11 @@ async def submit_payment(
     
     new_payment = Payment(
         user_id=current_user.id,
+        payment_method_id=payment_method_id,
         amount=amount,
         method=method,
+        reference_number=reference_number,
+        account_details=account_details,
         proof_path=filepath,
         status=PaymentStatus.PENDING
     )
@@ -1651,6 +1738,11 @@ async def submit_payment(
     db.add(new_payment)
     db.commit()
     db.refresh(new_payment)
+    
+    await notification_service.notify_committees_new_payment(db, new_payment.id, current_user)
+    
+    create_audit_log(db, current_user.id, "SUBMIT_PAYMENT", "payment", new_payment.id,
+                     f"Submitted payment request with amount {amount}")
     
     return PaymentResponse.model_validate(new_payment)
 
@@ -1671,35 +1763,58 @@ def get_payments(
     return payments
 
 @app.patch("/api/payments/{payment_id}", response_model=PaymentResponse)
-def update_payment(
+async def update_payment(
     payment_id: int,
     update_data: PaymentUpdate,
-    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if current_user.role not in [UserRole.TECHNICAL_COMMITTEE, UserRole.HIGHER_COMMITTEE]:
+        raise HTTPException(status_code=403, detail="Not authorized to review payments")
+    
     payment = db.query(Payment).filter(Payment.id == payment_id).first()
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
     
-    payment.status = update_data.status
-    payment.approved_by_id = current_user.id
-    payment.approved_at = datetime.utcnow()
-    if update_data.approval_notes:
-        payment.approval_notes = update_data.approval_notes
+    if current_user.role == UserRole.TECHNICAL_COMMITTEE:
+        payment.reviewed_by_technical_id = current_user.id
+        payment.technical_reviewed_at = datetime.utcnow()
+        if update_data.technical_review_notes:
+            payment.technical_review_notes = update_data.technical_review_notes
+        
+        create_audit_log(db, current_user.id, "TECHNICAL_REVIEW_PAYMENT", "payment", payment.id,
+                         f"Technical committee reviewed payment for user ID {payment.user_id}")
     
-    if update_data.status == PaymentStatus.APPROVED:
-        from dateutil.relativedelta import relativedelta
-        subscription = Subscription(
-            user_id=payment.user_id,
-            start_date=datetime.utcnow(),
-            end_date=datetime.utcnow() + relativedelta(years=1),
-            status=SubscriptionStatus.ACTIVE
-        )
-        db.add(subscription)
-        payment.subscription_id = subscription.id
+    elif current_user.role == UserRole.HIGHER_COMMITTEE:
+        payment.status = update_data.status
+        payment.approved_by_id = current_user.id
+        payment.approved_at = datetime.utcnow()
+        if update_data.approval_notes:
+            payment.approval_notes = update_data.approval_notes
+        
+        if update_data.status == PaymentStatus.APPROVED:
+            from dateutil.relativedelta import relativedelta
+            subscription = Subscription(
+                user_id=payment.user_id,
+                start_date=datetime.utcnow(),
+                end_date=datetime.utcnow() + relativedelta(years=1),
+                status=SubscriptionStatus.ACTIVE
+            )
+            db.add(subscription)
+            db.commit()
+            payment.subscription_id = subscription.id
+        
+        trader = db.query(User).filter(User.id == payment.user_id).first()
+        if trader:
+            await notification_service.send_payment_decision_notification(
+                db, trader.id, trader.email, trader.phone, payment.id,
+                "approved" if payment.status == PaymentStatus.APPROVED else "rejected",
+                update_data.approval_notes, "ar"
+            )
+        
+        create_audit_log(db, current_user.id, "APPROVE_PAYMENT", "payment", payment.id,
+                         f"Payment {payment.status} for user ID {payment.user_id}, amount {payment.amount}")
     
-    create_audit_log(db, current_user.id, "APPROVE_PAYMENT", "payment", payment.id, 
-                     f"Payment {payment.status} for user ID {payment.user_id}, amount {payment.amount}")
     db.commit()
     db.refresh(payment)
     

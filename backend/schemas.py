@@ -209,27 +209,38 @@ class SubscriptionResponse(BaseModel):
         from_attributes = True
 
 class PaymentCreate(BaseModel):
+    payment_method_id: int
     amount: Decimal
     method: str
+    reference_number: Optional[str] = None
+    account_details: Optional[str] = None
     subscription_id: Optional[int] = None
 
 class PaymentUpdate(BaseModel):
     status: PaymentStatus
     approval_notes: Optional[str] = None
+    technical_review_notes: Optional[str] = None
     
 class PaymentResponse(BaseModel):
     id: int
     user_id: int
     subscription_id: Optional[int] = None
+    payment_method_id: int
     amount: Decimal
     method: str
     proof_path: Optional[str] = None
+    reference_number: Optional[str] = None
+    account_details: Optional[str] = None
     approved_by_id: Optional[int] = None
+    reviewed_by_technical_id: Optional[int] = None
     status: PaymentStatus
     approval_notes: Optional[str] = None
+    technical_review_notes: Optional[str] = None
     created_at: datetime
     approved_at: Optional[datetime] = None
+    technical_reviewed_at: Optional[datetime] = None
     user: Optional[UserResponse] = None
+    payment_method: Optional['PaymentMethodResponse'] = None
     
     class Config:
         from_attributes = True

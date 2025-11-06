@@ -561,6 +561,112 @@ class NotificationService:
             sms_sent = await self.send_sms(user_phone, sms)
         
         return email_sent or sms_sent
+    
+    async def notify_committees_new_payment(self, db, payment_id: int, trader):
+        from models import User, UserRole
+        
+        committees = db.query(User).filter(
+            or_(User.role == UserRole.TECHNICAL_COMMITTEE, User.role == UserRole.HIGHER_COMMITTEE),
+            User.is_active == True
+        ).all()
+        
+        for committee_user in committees:
+            subject_ar = f"طلب اشتراك جديد #{payment_id}"
+            subject_en = f"New Subscription Request #{payment_id}"
+            
+            body_ar = f"""
+            <html>
+                <body style="direction: rtl; text-align: right;">
+                    <h2>طلب اشتراك جديد</h2>
+                    <p>تم تقديم طلب اشتراك جديد من قبل التاجر: <strong>{trader.first_name} {trader.last_name}</strong></p>
+                    <p>رقم الطلب: <strong>#{payment_id}</strong></p>
+                    <p>يرجى مراجعة الطلب في لوحة التحكم.</p>
+                </body>
+            </html>
+            """
+            
+            body_en = f"""
+            <html>
+                <body>
+                    <h2>New Subscription Request</h2>
+                    <p>A new subscription request has been submitted by trader: <strong>{trader.first_name} {trader.last_name}</strong></p>
+                    <p>Request ID: <strong>#{payment_id}</strong></p>
+                    <p>Please review the request in your dashboard.</p>
+                </body>
+            </html>
+            """
+            
+            sms_ar = f"طلب اشتراك جديد #{payment_id} من {trader.first_name} {trader.last_name}"
+            sms_en = f"New subscription request #{payment_id} from {trader.first_name} {trader.last_name}"
+            
+            prefs = db.query(NotificationPreference).filter(
+                NotificationPreference.user_id == committee_user.id
+            ).first()
+            
+            if not prefs:
+                continue
+            
+            if prefs.email_enabled:
+                await self.send_email(committee_user.email, subject_ar, body_ar)
+            
+            if prefs.sms_enabled and committee_user.phone:
+                await self.send_sms(committee_user.phone, sms_ar)
+    
+    async def send_payment_decision_notification(
+        self, db, user_id: int, user_email: str, user_phone: str,
+        payment_id: int, decision: str, notes: str = None, language: str = "ar"
+    ) -> bool:
+        from models import NotificationPreference
+        
+        prefs = db.query(NotificationPreference).filter(
+            NotificationPreference.user_id == user_id
+        ).first()
+        
+        if not prefs:
+            return False
+        
+        decision_ar = "تمت الموافقة" if decision == "approved" else "تم الرفض"
+        decision_en = "Approved" if decision == "approved" else "Rejected"
+        
+        if language == "ar":
+            subject = f"قرار طلب الاشتراك #{payment_id}: {decision_ar}"
+            body = f"""
+            <html>
+                <body style="direction: rtl; text-align: right;">
+                    <h2>قرار طلب الاشتراك</h2>
+                    <p>تم اتخاذ قرار بشأن طلب الاشتراك <strong>#{payment_id}</strong></p>
+                    <p>القرار: <strong style="color: {'#16a34a' if decision == 'approved' else '#dc2626'};">{decision_ar}</strong></p>
+                    {f'<p>ملاحظات: {notes}</p>' if notes else ''}
+                    <p>يمكنك متابعة حالة الاشتراك من لوحة التحكم.</p>
+                </body>
+            </html>
+            """
+            sms = f"طلب الاشتراك #{payment_id}: {decision_ar}"
+        else:
+            subject = f"Subscription Request #{payment_id}: {decision_en}"
+            body = f"""
+            <html>
+                <body>
+                    <h2>Subscription Request Decision</h2>
+                    <p>A decision has been made for subscription request <strong>#{payment_id}</strong></p>
+                    <p>Decision: <strong style="color: {'#16a34a' if decision == 'approved' else '#dc2626'};">{decision_en}</strong></p>
+                    {f'<p>Notes: {notes}</p>' if notes else ''}
+                    <p>You can track your subscription status from the dashboard.</p>
+                </body>
+            </html>
+            """
+            sms = f"Subscription request #{payment_id}: {decision_en}"
+        
+        email_sent = False
+        sms_sent = False
+        
+        if prefs.email_enabled:
+            email_sent = await self.send_email(user_email, subject, body)
+        
+        if prefs.sms_enabled and user_phone:
+            sms_sent = await self.send_sms(user_phone, sms)
+        
+        return email_sent or sms_sent
 
 
 notification_service = NotificationService()
