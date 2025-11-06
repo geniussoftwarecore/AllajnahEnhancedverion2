@@ -139,8 +139,6 @@ function HigherCommitteeDashboard() {
       notificationCount={notification ? 1 : 0}
     >
       <div className="space-y-6">
-        <AdminNavMenu />
-        
         {notification && (
           <Alert
             type={notification.type}
@@ -149,17 +147,65 @@ function HigherCommitteeDashboard() {
           />
         )}
 
-        <div className="flex items-center justify-between gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between gap-4 mb-2"
+        >
           <div className="flex items-center gap-2 text-sm">
-            <span className={`inline-block w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-success-500' : 'bg-gray-400'} animate-pulse`}></span>
-            <span className="text-gray-600 dark:text-gray-400 font-medium">{isConnected ? 'متصل بالنظام' : 'غير متصل'}</span>
+            <motion.span
+              animate={{ scale: isConnected ? [1, 1.2, 1] : 1 }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className={`inline-block w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-success-500 shadow-lg shadow-success-500/50' : 'bg-gray-400'}`}
+            />
+            <span className="text-gray-600 dark:text-gray-400 font-semibold">{isConnected ? 'متصل بالنظام' : 'غير متصل'}</span>
           </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
             {format(new Date(), 'EEEE، d MMMM yyyy', { locale: ar })}
           </div>
-        </div>
+        </motion.div>
 
-        <div className="card-glass-strong overflow-hidden shadow-lg">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="card-glass-strong relative overflow-hidden rounded-2xl shadow-2xl border-2 border-primary-200/30 dark:border-primary-700/30"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-purple-700"></div>
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30"></div>
+          <div className="relative p-8">
+            <div className="flex items-start justify-between">
+              <div>
+                <motion.h2
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-3xl font-black text-white mb-2 drop-shadow-lg"
+                >
+                  لوحة الإدارة العليا
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-primary-100 font-medium text-lg"
+                >
+                  المراجعة النهائية والإشراف الشامل على النظام
+                </motion.p>
+              </div>
+              <motion.div
+                animate={{ rotate: [0, 10, 0, -10, 0] }}
+                transition={{ repeat: Infinity, duration: 5 }}
+              >
+                <ShieldCheckIcon className="w-16 h-16 text-primary-200 drop-shadow-xl" strokeWidth={2} />
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
+
+        <AdminNavMenu />
+
+        <div className="card-glass-strong overflow-hidden shadow-xl rounded-2xl border-2 border-primary-100/20 dark:border-primary-900/20">
           <div className="flex flex-wrap border-b border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-b from-white/50 to-transparent dark:from-gray-800/50">
             <TabButton
               active={activeTab === 'overview'}
@@ -538,56 +584,56 @@ function QuickActionsTab({ navigate }) {
     }
   ];
 
+  const colorClasses = {
+    primary: 'from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700',
+    success: 'from-success-500 to-success-600 hover:from-success-600 hover:to-success-700',
+    warning: 'from-warning-500 to-warning-600 hover:from-warning-600 hover:to-warning-700',
+    secondary: 'from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700',
+    gray: 'from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700'
+  };
+
   return (
     <div className="space-y-6">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card-premium p-6 sm:p-8 shadow-xl"
+        className="card-premium p-6 sm:p-8 shadow-xl border-2 border-primary-100 dark:border-primary-900/30"
       >
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
-            <ShieldCheckIcon className="w-5 h-5 text-white" />
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg">
+            <ShieldCheckIcon className="w-7 h-7 text-white" strokeWidth={2.5} />
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">إجراءات سريعة</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">الوصول السريع إلى أهم الأقسام</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">الوصول السريع إلى أهم الأقسام الإدارية</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {actions.map((action, index) => (
-            <motion.div
-              key={action.title}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <CTAButton
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {actions.map((action, index) => {
+            const Icon = action.icon;
+            return (
+              <motion.button
+                key={action.title}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.08 }}
+                whileHover={{ scale: 1.03, y: -5 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={action.onClick}
-                variant="secondary"
-                size="lg"
-                fullWidth
-                className="!justify-start !items-start !h-auto !py-6 !px-6"
+                className="card-glass-strong group relative overflow-hidden flex flex-col items-start p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer border-2 border-gray-100/50 dark:border-gray-700/50 hover:border-primary-300 dark:hover:border-primary-700"
               >
-                <div className="flex items-start gap-4 w-full">
-                  <div className={`flex-shrink-0 w-12 h-12 rounded-xl ${
-                    action.color === 'primary' ? 'bg-gradient-to-br from-primary-500 to-primary-600' :
-                    action.color === 'success' ? 'bg-gradient-to-br from-success-500 to-success-600' :
-                    action.color === 'warning' ? 'bg-gradient-to-br from-warning-500 to-warning-600' :
-                    action.color === 'secondary' ? 'bg-gradient-to-br from-secondary-500 to-secondary-600' :
-                    'bg-gradient-to-br from-gray-500 to-gray-600'
-                  } flex items-center justify-center shadow-md`}>
-                    <action.icon className="w-6 h-6 text-white" strokeWidth={2.5} />
-                  </div>
-                  <div className="flex-1 text-right">
-                    <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">{action.title}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 font-normal">{action.description}</p>
-                  </div>
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-50/50 to-transparent dark:from-primary-900/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className={`relative w-14 h-14 rounded-xl bg-gradient-to-br ${colorClasses[action.color]} flex items-center justify-center mb-4 shadow-lg transition-all group-hover:scale-110`}>
+                  <Icon className="w-7 h-7 text-white" strokeWidth={2.5} />
                 </div>
-              </CTAButton>
-            </motion.div>
-          ))}
+                <div className="relative flex-1 text-right">
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">{action.title}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-normal">{action.description}</p>
+                </div>
+              </motion.button>
+            );
+          })}
         </div>
       </motion.div>
     </div>
