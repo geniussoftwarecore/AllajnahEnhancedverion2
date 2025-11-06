@@ -49,6 +49,8 @@ def auto_assign_complaint(db: Session, complaint: Complaint) -> Optional[User]:
                     asyncio.set_event_loop(loop)
                     loop.run_until_complete(
                         notification_service.send_assignment_notification(
+                            db,
+                            assigned_user.id,
                             assigned_user.email,
                             assigned_user.phone,
                             complaint.id,
@@ -119,6 +121,8 @@ def check_sla_violations(db: Session, actor_id: Optional[int] = None) -> int:
                             asyncio.set_event_loop(loop)
                             loop.run_until_complete(
                                 notification_service.send_assignment_notification(
+                                    db,
+                                    assigned_user.id,
                                     assigned_user.email,
                                     assigned_user.phone,
                                     complaint.id,

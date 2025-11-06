@@ -3,23 +3,56 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Email, To, Content
 from twilio.rest import Client
 from config import get_settings
+from replit_connectors import get_twilio_credentials, get_sendgrid_credentials
+from sqlalchemy.orm import Session
 
 settings = get_settings()
 
 
 class NotificationService:
     def __init__(self):
-        self.sendgrid_client = None
-        self.twilio_client = None
-        
-        if settings.ENABLE_EMAIL_NOTIFICATIONS and settings.SENDGRID_API_KEY:
-            self.sendgrid_client = SendGridAPIClient(settings.SENDGRID_API_KEY)
-        
-        if settings.ENABLE_SMS_NOTIFICATIONS and settings.TWILIO_ACCOUNT_SID:
-            self.twilio_client = Client(
-                settings.TWILIO_ACCOUNT_SID,
-                settings.TWILIO_AUTH_TOKEN
+        self.twilio_credentials = None
+        self.sendgrid_credentials = None
+    
+    def _get_user_preferences(self, db: Session, user_id: int):
+        from models import NotificationPreference
+        prefs = db.query(NotificationPreference).filter(
+            NotificationPreference.user_id == user_id
+        ).first()
+        if not prefs:
+            prefs = NotificationPreference(
+                user_id=user_id,
+                email_enabled=True,
+                sms_enabled=False,
+                notify_status_change=True,
+                notify_assignment=True,
+                notify_comment=True,
+                notify_approval_request=True,
+                notify_approval_decision=True,
+                notify_escalation=True,
+                notify_sla_warning=True
             )
+            db.add(prefs)
+            db.commit()
+            db.refresh(prefs)
+        return prefs
+    
+    async def _get_sendgrid_client(self):
+        try:
+            creds = await get_sendgrid_credentials()
+            return SendGridAPIClient(creds["api_key"]), creds["from_email"]
+        except Exception as e:
+            print(f"Failed to get SendGrid credentials: {e}")
+            return None, None
+    
+    async def _get_twilio_client(self):
+        try:
+            creds = await get_twilio_credentials()
+            client = Client(creds["api_key"], creds["api_key_secret"], creds["account_sid"])
+            return client, creds["phone_number"]
+        except Exception as e:
+            print(f"Failed to get Twilio credentials: {e}")
+            return None, None
     
     async def send_email(
         self,
@@ -28,12 +61,14 @@ class NotificationService:
         html_content: str,
         plain_content: Optional[str] = None
     ) -> bool:
-        if not self.sendgrid_client:
+        sendgrid_client, from_email = await self._get_sendgrid_client()
+        if not sendgrid_client:
+            print("SendGrid not configured, skipping email")
             return False
         
         try:
             message = Mail(
-                from_email=Email(settings.EMAIL_FROM),
+                from_email=Email(from_email),
                 to_emails=To(to_email),
                 subject=subject,
                 html_content=Content("text/html", html_content)
@@ -45,20 +80,22 @@ class NotificationService:
                     Content("text/html", html_content)
                 ]
             
-            response = self.sendgrid_client.send(message)
+            response = sendgrid_client.send(message)
             return response.status_code == 202
         except Exception as e:
             print(f"Error sending email: {e}")
             return False
     
     async def send_sms(self, to_phone: str, message: str) -> bool:
-        if not self.twilio_client:
+        twilio_client, from_phone = await self._get_twilio_client()
+        if not twilio_client:
+            print("Twilio not configured, skipping SMS")
             return False
         
         try:
-            result = self.twilio_client.messages.create(
+            result = twilio_client.messages.create(
                 body=message,
-                from_=settings.TWILIO_PHONE_NUMBER,
+                from_=from_phone,
                 to=to_phone
             )
             return result.sid is not None
@@ -68,12 +105,19 @@ class NotificationService:
     
     async def send_complaint_status_update(
         self,
+        db: Session,
+        user_id: int,
         user_email: str,
         user_phone: Optional[str],
         complaint_id: int,
         new_status: str,
         language: str = "ar"
     ):
+        prefs = self._get_user_preferences(db, user_id)
+        
+        if not prefs.notify_status_change:
+            return False
+        
         if language == "ar":
             email_subject = f"تحديث حالة الشكوى #{complaint_id}"
             email_body = f"""
@@ -101,20 +145,31 @@ class NotificationService:
             """
             sms_message = f"Complaint #{complaint_id} update: {new_status}"
         
-        email_sent = await self.send_email(user_email, email_subject, email_body)
+        email_sent = False
         sms_sent = False
-        if user_phone:
+        
+        if prefs.email_enabled:
+            email_sent = await self.send_email(user_email, email_subject, email_body)
+        
+        if prefs.sms_enabled and user_phone:
             sms_sent = await self.send_sms(user_phone, sms_message)
         
         return email_sent or sms_sent
     
     async def send_assignment_notification(
         self,
+        db: Session,
+        user_id: int,
         user_email: str,
         user_phone: Optional[str],
         complaint_id: int,
         language: str = "ar"
     ):
+        prefs = self._get_user_preferences(db, user_id)
+        
+        if not prefs.notify_assignment:
+            return False
+        
         if language == "ar":
             subject = f"تم تكليفك بشكوى جديدة #{complaint_id}"
             body = f"""
@@ -140,21 +195,32 @@ class NotificationService:
             """
             sms = f"New complaint #{complaint_id} assigned to you. Please review."
         
-        email_sent = await self.send_email(user_email, subject, body)
+        email_sent = False
         sms_sent = False
-        if user_phone:
+        
+        if prefs.email_enabled:
+            email_sent = await self.send_email(user_email, subject, body)
+        
+        if prefs.sms_enabled and user_phone:
             sms_sent = await self.send_sms(user_phone, sms)
         
         return email_sent or sms_sent
     
     async def send_approval_request_notification(
         self,
+        db: Session,
+        user_id: int,
         user_email: str,
         user_phone: Optional[str],
         complaint_id: int,
         requester_name: str,
         language: str = "ar"
     ):
+        prefs = self._get_user_preferences(db, user_id)
+        
+        if not prefs.notify_approval_request:
+            return False
+        
         if language == "ar":
             subject = f"طلب موافقة جديد للشكوى #{complaint_id}"
             body = f"""
@@ -182,15 +248,21 @@ class NotificationService:
             """
             sms = f"New approval request for complaint #{complaint_id} from {requester_name}"
         
-        email_sent = await self.send_email(user_email, subject, body)
+        email_sent = False
         sms_sent = False
-        if user_phone:
+        
+        if prefs.email_enabled:
+            email_sent = await self.send_email(user_email, subject, body)
+        
+        if prefs.sms_enabled and user_phone:
             sms_sent = await self.send_sms(user_phone, sms)
         
         return email_sent or sms_sent
     
     async def send_approval_decision_notification(
         self,
+        db: Session,
+        user_id: int,
         user_email: str,
         user_phone: Optional[str],
         complaint_id: int,
@@ -199,6 +271,11 @@ class NotificationService:
         notes: Optional[str] = None,
         language: str = "ar"
     ):
+        prefs = self._get_user_preferences(db, user_id)
+        
+        if not prefs.notify_approval_decision:
+            return False
+        
         decision_ar = "موافق عليها" if decision == "approved" else "مرفوضة"
         decision_en = "Approved" if decision == "approved" else "Rejected"
         
@@ -233,21 +310,32 @@ class NotificationService:
             """
             sms = f"Complaint #{complaint_id}: {decision_en} by {approver_name}"
         
-        email_sent = await self.send_email(user_email, subject, body)
+        email_sent = False
         sms_sent = False
-        if user_phone:
+        
+        if prefs.email_enabled:
+            email_sent = await self.send_email(user_email, subject, body)
+        
+        if prefs.sms_enabled and user_phone:
             sms_sent = await self.send_sms(user_phone, sms)
         
         return email_sent or sms_sent
     
     async def send_task_notification(
         self,
+        db: Session,
+        user_id: int,
         user_email: str,
         user_phone: Optional[str],
         complaint_id: int,
         task_action: str,
         language: str = "ar"
     ):
+        prefs = self._get_user_preferences(db, user_id)
+        
+        if not prefs.notify_assignment:
+            return False
+        
         action_ar_map = {
             "accepted": "تم قبول المهمة",
             "rejected": "تم رفض المهمة",
@@ -290,9 +378,13 @@ class NotificationService:
             """
             sms = f"Complaint #{complaint_id}: {action_text}"
         
-        email_sent = await self.send_email(user_email, subject, body)
+        email_sent = False
         sms_sent = False
-        if user_phone:
+        
+        if prefs.email_enabled:
+            email_sent = await self.send_email(user_email, subject, body)
+        
+        if prefs.sms_enabled and user_phone:
             sms_sent = await self.send_sms(user_phone, sms)
         
         return email_sent or sms_sent

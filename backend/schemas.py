@@ -453,3 +453,43 @@ class BulkActionResponse(BaseModel):
     successful_ids: List[int]
     failed_ids: List[int]
     errors: List[str] = []
+
+class NotificationPreferenceCreate(BaseModel):
+    email_enabled: bool = True
+    sms_enabled: bool = False
+    notify_status_change: bool = True
+    notify_assignment: bool = True
+    notify_comment: bool = True
+    notify_approval_request: bool = True
+    notify_approval_decision: bool = True
+    notify_escalation: bool = True
+    notify_sla_warning: bool = True
+
+class NotificationPreferenceUpdate(BaseModel):
+    email_enabled: Optional[bool] = None
+    sms_enabled: Optional[bool] = None
+    notify_status_change: Optional[bool] = None
+    notify_assignment: Optional[bool] = None
+    notify_comment: Optional[bool] = None
+    notify_approval_request: Optional[bool] = None
+    notify_approval_decision: Optional[bool] = None
+    notify_escalation: Optional[bool] = None
+    notify_sla_warning: Optional[bool] = None
+
+class NotificationPreferenceResponse(BaseModel):
+    id: int
+    user_id: int
+    email_enabled: bool
+    sms_enabled: bool
+    notify_status_change: bool
+    notify_assignment: bool
+    notify_comment: bool
+    notify_approval_request: bool
+    notify_approval_decision: bool
+    notify_escalation: bool
+    notify_sla_warning: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True

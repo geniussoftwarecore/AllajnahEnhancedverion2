@@ -299,3 +299,25 @@ class QuickReply(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     created_by = relationship("User")
+
+class NotificationPreference(Base):
+    __tablename__ = "notification_preferences"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    
+    email_enabled = Column(Boolean, default=True, nullable=False)
+    sms_enabled = Column(Boolean, default=False, nullable=False)
+    
+    notify_status_change = Column(Boolean, default=True, nullable=False)
+    notify_assignment = Column(Boolean, default=True, nullable=False)
+    notify_comment = Column(Boolean, default=True, nullable=False)
+    notify_approval_request = Column(Boolean, default=True, nullable=False)
+    notify_approval_decision = Column(Boolean, default=True, nullable=False)
+    notify_escalation = Column(Boolean, default=True, nullable=False)
+    notify_sla_warning = Column(Boolean, default=True, nullable=False)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User", backref="notification_preference")

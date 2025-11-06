@@ -27,4 +27,5 @@ dependencies = [
     "reportlab>=4.4.4",
     "sendgrid>=6.12.5",
     "python-docx>=1.2.0",
+    "httpx>=0.28.1",
 ]

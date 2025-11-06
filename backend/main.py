@@ -14,7 +14,7 @@ from database import get_db
 from models import (
     User, Complaint, Comment, Attachment, Category, 
     Subscription, Payment, ComplaintFeedback, AuditLog,
-    PaymentMethod, SLAConfig, SystemSettings, TaskQueue, ComplaintApproval, QuickReply,
+    PaymentMethod, SLAConfig, SystemSettings, TaskQueue, ComplaintApproval, QuickReply, NotificationPreference,
     UserRole, ComplaintStatus, SubscriptionStatus, PaymentStatus, Priority, TaskStatus, ApprovalStatus
 )
 from schemas import (
@@ -30,7 +30,8 @@ from schemas import (
     SystemSettingsCreate, SystemSettingsUpdate, SystemSettingsResponse,
     TaskQueueResponse, ComplaintApprovalCreate, ComplaintApprovalUpdate, ComplaintApprovalResponse,
     QuickReplyCreate, QuickReplyUpdate, QuickReplyResponse,
-    BulkAssignRequest, BulkStatusRequest, BulkActionResponse
+    BulkAssignRequest, BulkStatusRequest, BulkActionResponse,
+    NotificationPreferenceCreate, NotificationPreferenceUpdate, NotificationPreferenceResponse
 )
 from auth import (
     get_password_hash, verify_password, create_access_token,
@@ -424,6 +425,67 @@ def update_user_email(
     )
     
     return {"message": "Email updated successfully", "new_email": current_user.email}
+
+@app.get("/api/users/notification-preferences", response_model=NotificationPreferenceResponse)
+def get_notification_preferences(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    preferences = db.query(NotificationPreference).filter(
+        NotificationPreference.user_id == current_user.id
+    ).first()
+    
+    if not preferences:
+        preferences = NotificationPreference(
+            user_id=current_user.id,
+            email_enabled=True,
+            sms_enabled=False,
+            notify_status_change=True,
+            notify_assignment=True,
+            notify_comment=True,
+            notify_approval_request=True,
+            notify_approval_decision=True,
+            notify_escalation=True,
+            notify_sla_warning=True
+        )
+        db.add(preferences)
+        db.commit()
+        db.refresh(preferences)
+    
+    return NotificationPreferenceResponse.model_validate(preferences)
+
+@app.put("/api/users/notification-preferences", response_model=NotificationPreferenceResponse)
+def update_notification_preferences(
+    preference_data: NotificationPreferenceUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    preferences = db.query(NotificationPreference).filter(
+        NotificationPreference.user_id == current_user.id
+    ).first()
+    
+    if not preferences:
+        preferences = NotificationPreference(user_id=current_user.id)
+        db.add(preferences)
+    
+    update_fields = preference_data.model_dump(exclude_unset=True)
+    for field, value in update_fields.items():
+        setattr(preferences, field, value)
+    
+    preferences.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(preferences)
+    
+    create_audit_log(
+        db,
+        actor_user_id=current_user.id,
+        action="update_notification_preferences",
+        target_type="notification_preference",
+        target_id=preferences.id,
+        details=f"Updated notification preferences"
+    )
+    
+    return NotificationPreferenceResponse.model_validate(preferences)
 
 @app.get("/api/categories", response_model=List[CategoryResponse])
 def get_categories(government_entity: str = None, db: Session = Depends(get_db)):
@@ -889,6 +951,8 @@ async def accept_complaint_task(
     complaint = complaint_task_service.accept_task(complaint_id, current_user, db)
     
     await notification_service.send_task_notification(
+        db,
+        current_user.id,
         current_user.email,
         current_user.phone,
         complaint.id,
@@ -921,6 +985,8 @@ async def start_working_on_complaint(
     complaint = complaint_task_service.start_working(complaint_id, current_user, db)
     
     await notification_service.send_task_notification(
+        db,
+        current_user.id,
         current_user.email,
         current_user.phone,
         complaint.id,
@@ -989,6 +1055,8 @@ async def create_approval_request(
     approver = higher_committee_users[0]
     requester_name = f"{current_user.first_name} {current_user.last_name}"
     await notification_service.send_approval_request_notification(
+        db,
+        approver.id,
         approver.email,
         approver.phone,
         complaint.id,
@@ -1056,6 +1124,8 @@ async def update_approval(
     
     if assigned_user:
         await notification_service.send_approval_decision_notification(
+            db,
+            assigned_user.id,
             assigned_user.email,
             assigned_user.phone,
             complaint.id,
@@ -1067,6 +1137,8 @@ async def update_approval(
     
     if complainant:
         await notification_service.send_complaint_status_update(
+            db,
+            complainant.id,
             complainant.email,
             complainant.phone,
             complaint.id,
