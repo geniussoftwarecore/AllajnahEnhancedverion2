@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ResponsivePageShell } from '../components/ui';
+import { ResponsivePageShell, StatCard, CTAButton } from '../components/ui';
+import { CreditCard, Calendar, CheckCircle2, AlertCircle, FileText, Plus, X } from 'lucide-react';
+import { toast } from 'react-toastify';
 import api from '../api/axios';
 
 function TraderSubscription() {
@@ -82,8 +84,11 @@ function TraderSubscription() {
         subtitle="إدارة اشتراكك وتتبع المدفوعات"
       >
         <div className="p-12 text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">جاري التحميل...</p>
+          <div className="relative inline-flex">
+            <div className="w-16 h-16 border-4 border-primary-200 dark:border-primary-900 border-t-primary-600 dark:border-t-primary-400 rounded-full animate-spin"></div>
+            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-primary-400 dark:border-t-primary-500 rounded-full animate-spin" style={{ animationDuration: '1.5s' }}></div>
+          </div>
+          <p className="mt-6 text-gray-600 dark:text-gray-400 font-semibold text-lg">جاري تحميل بيانات الاشتراك...</p>
         </div>
       </ResponsivePageShell>
     );
@@ -96,108 +101,156 @@ function TraderSubscription() {
         subtitle="إدارة اشتراكك وتتبع المدفوعات"
       >
         <div className="space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6 border-2 border-primary-100 dark:border-primary-900/30"
-        >
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
-            حالة الاشتراك
-          </h2>
-          
-          {subscription ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-700 dark:to-blue-900 rounded-xl">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">الحالة</p>
-                  <span className={`inline-block px-3 py-1.5 rounded-full text-xs font-bold shadow-md ${getStatusColor(subscription.status)}`}>
-                    {getStatusText(subscription.status)}
-                  </span>
-                </div>
-                <div className="p-4 bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-700 dark:to-purple-900 rounded-xl">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">تاريخ البداية</p>
-                  <p className="font-bold text-gray-900 dark:text-white">{new Date(subscription.start_date).toLocaleDateString('ar')}</p>
-                </div>
-                <div className="p-4 bg-gradient-to-br from-gray-50 to-indigo-50 dark:from-gray-700 dark:to-indigo-900 rounded-xl">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">تاريخ الانتهاء</p>
-                  <p className="font-bold text-gray-900 dark:text-white">{new Date(subscription.end_date).toLocaleDateString('ar')}</p>
-                </div>
-              </div>
-
-              {isExpiredOrExpiring() && (
-                <div className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900 dark:to-amber-900 border-2 border-yellow-400 dark:border-yellow-600 rounded-xl p-6">
-                  <p className="text-yellow-800 dark:text-yellow-200 font-semibold mb-3">
-                    {subscription.status === 'expired' 
-                      ? 'اشتراكك منتهي. يرجى تجديد الاشتراك للاستمرار في تقديم الشكاوى.' 
-                      : 'اشتراكك سينتهي قريباً. يرجى تجديده في أقرب وقت ممكن.'}
-                  </p>
-                  <button
-                    onClick={() => setShowPaymentModal(true)}
-                    className="px-6 py-2.5 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
-                  >
-                    تجديد الاشتراك الآن
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-600 dark:text-gray-400 mb-4 text-lg">لا يوجد اشتراك نشط</p>
-              <button
-                onClick={() => setShowPaymentModal(true)}
-                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
-              >
-                اشترك الآن
-              </button>
-            </div>
-          )}
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border-2 border-primary-100 dark:border-primary-900/30"
-        >
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              سجل الدفعات
-            </h2>
-            <button
-              onClick={() => setShowPaymentModal(true)}
-              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+        {subscription && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0 }}
             >
-              + دفعة جديدة
-            </button>
+              <StatCard
+                title="حالة الاشتراك"
+                value={getStatusText(subscription.status)}
+                icon={subscription.status === 'active' ? CheckCircle2 : AlertCircle}
+                color={subscription.status === 'active' ? 'success' : subscription.status === 'expired' ? 'danger' : 'warning'}
+                description={subscription.status === 'active' ? 'الاشتراك نشط' : 'يحتاج للتجديد'}
+              />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <StatCard
+                title="تاريخ البداية"
+                value={new Date(subscription.start_date).toLocaleDateString('ar')}
+                icon={Calendar}
+                color="primary"
+              />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <StatCard
+                title="تاريخ الانتهاء"
+                value={new Date(subscription.end_date).toLocaleDateString('ar')}
+                icon={Calendar}
+                color="secondary"
+                description={`${Math.ceil((new Date(subscription.end_date) - new Date()) / (1000 * 60 * 60 * 24))} يوم متبقي`}
+              />
+            </motion.div>
+          </div>
+        )}
+
+        {isExpiredOrExpiring() && subscription && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="card-glass-strong p-6 border-2 border-warning-400 dark:border-warning-600"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-warning-100 dark:bg-warning-900 flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-warning-600 dark:text-warning-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 dark:text-white mb-2">
+                  {subscription.status === 'expired' ? 'اشتراك منتهي' : 'تنبيه تجديد الاشتراك'}
+                </h3>
+                <p className="text-gray-700 dark:text-gray-300 mb-4">
+                  {subscription.status === 'expired' 
+                    ? 'اشتراكك منتهي. يرجى تجديد الاشتراك للاستمرار في تقديم الشكاوى.' 
+                    : 'اشتراكك سينتهي قريباً. يرجى تجديده في أقرب وقت ممكن.'}
+                </p>
+                <CTAButton
+                  onClick={() => setShowPaymentModal(true)}
+                  variant="warning"
+                  size="md"
+                  leftIcon={<CreditCard className="w-5 h-5" />}
+                >
+                  تجديد الاشتراك الآن
+                </CTAButton>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {!subscription && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="card-glass-strong p-12 text-center"
+          >
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+              <CreditCard className="w-10 h-10 text-primary-600 dark:text-primary-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">لا يوجد اشتراك نشط</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">ابدأ اشتراكك الآن للاستفادة من جميع مميزات النظام</p>
+            <CTAButton
+              onClick={() => setShowPaymentModal(true)}
+              variant="primary"
+              size="lg"
+              leftIcon={<Plus className="w-5 h-5" />}
+            >
+              اشترك الآن
+            </CTAButton>
+          </motion.div>
+        )}
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="card-glass-strong p-6 border border-primary-100 dark:border-primary-900/30"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-md">
+                <FileText className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">سجل الدفعات</h3>
+            </div>
+            <CTAButton
+              onClick={() => setShowPaymentModal(true)}
+              variant="primary"
+              size="md"
+              leftIcon={<Plus className="w-5 h-5" />}
+            >
+              دفعة جديدة
+            </CTAButton>
           </div>
 
           {payments.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400 text-lg">لا توجد دفعات</p>
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <FileText className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">لا توجد دفعات</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto -mx-6 px-6">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gradient-to-r from-blue-600 to-purple-600">
+                <thead className="bg-gray-50 dark:bg-gray-800/50">
                   <tr>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">ID</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">المبلغ</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">طريقة الدفع</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الحالة</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">التاريخ</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">الملاحظات</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">ID</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">المبلغ</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">طريقة الدفع</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">الحالة</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">التاريخ</th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">الملاحظات</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {payments.map((payment) => (
-                    <tr key={payment.id} className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all transform hover:scale-[1.01]">
+                    <tr key={payment.id} className="hover:bg-primary-50 dark:hover:bg-gray-700/50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">{payment.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600 dark:text-green-400">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-success-600 dark:text-success-400">
                         {Number(payment.amount).toFixed(2)} ريال
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{payment.method}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-md ${getPaymentStatusColor(payment.status)}`}>
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-sm ${getPaymentStatusColor(payment.status)}`}>
                           {getPaymentStatusText(payment.status)}
                         </span>
                       </td>
@@ -233,12 +286,10 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
     proof: null
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
 
     try {
       const formDataToSend = new FormData();
@@ -251,40 +302,54 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
+      toast.success('تم تقديم طلب الدفع بنجاح! سيتم مراجعته من قبل الإدارة');
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err.response?.data?.detail || 'حدث خطأ أثناء تقديم الدفع');
+      toast.error(err.response?.data?.detail || 'حدث خطأ أثناء تقديم الدفع');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-lg w-full border-2 border-gray-200 dark:border-gray-700">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
-          دفعة جديدة
-        </h2>
-        
-        {error && (
-          <div className="mb-4 p-4 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900 dark:to-pink-900 border-2 border-red-400 dark:border-red-600 rounded-xl text-red-800 dark:text-red-200">
-            {error}
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        onClick={(e) => e.stopPropagation()}
+        className="card-glass-strong p-8 max-w-lg w-full border-2 border-primary-200 dark:border-primary-700"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-md">
+              <CreditCard className="w-6 h-6 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              دفعة جديدة
+            </h2>
           </div>
-        )}
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          </button>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 rounded-xl">
-            <p className="text-sm text-blue-700 dark:text-blue-300 mb-1">المبلغ المطلوب</p>
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">200.00 ريال</p>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="p-5 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 rounded-xl border border-primary-200 dark:border-primary-700">
+            <p className="text-sm text-primary-700 dark:text-primary-300 mb-1 font-semibold">المبلغ المطلوب</p>
+            <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">200.00 ريال</p>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">طريقة الدفع</label>
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">طريقة الدفع</label>
             <select
               value={formData.method}
               onChange={(e) => setFormData({ ...formData, method: e.target.value })}
-              className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+              className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all font-medium"
             >
               <option value="bank_transfer">تحويل بنكي</option>
               <option value="credit_card">بطاقة ائتمان</option>
@@ -293,32 +358,37 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">إثبات الدفع (اختياري)</label>
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">إثبات الدفع (اختياري)</label>
             <input
               type="file"
               onChange={(e) => setFormData({ ...formData, proof: e.target.files[0] })}
-              className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900 dark:file:text-primary-300"
             />
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button
+            <CTAButton
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 font-semibold text-gray-700 dark:text-gray-300 transition-all"
+              variant="secondary"
+              size="md"
+              fullWidth
             >
               إلغاء
-            </button>
-            <button
+            </CTAButton>
+            <CTAButton
               type="submit"
+              variant="primary"
+              size="md"
+              fullWidth
+              loading={loading}
               disabled={loading}
-              className="flex-1 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'جاري الإرسال...' : 'تقديم الدفع'}
-            </button>
+            </CTAButton>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }
