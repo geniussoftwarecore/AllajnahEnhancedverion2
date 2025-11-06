@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon, ChatBubbleBottomCenterTextIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ChatBubbleBottomCenterTextIcon, PaperClipIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { ConfirmDialog, ResponsivePageShell } from './ui';
@@ -22,6 +22,7 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
   const [feedback, setFeedback] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, isLoading: false });
   const [showQuickReplySelector, setShowQuickReplySelector] = useState(false);
+  const [attachments, setAttachments] = useState([]);
 
   useEffect(() => {
     if (!propComplaint && id) {
@@ -35,6 +36,7 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
       setSelectedStatus(complaint.status || '');
       loadComments();
       loadFeedback();
+      loadAttachments();
       if (user.role !== 'trader') {
         loadCommitteeUsers();
       }
@@ -68,6 +70,34 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
       setComments(response.data);
     } catch (error) {
       console.error('Error loading comments:', error);
+    }
+  };
+
+  const loadAttachments = async () => {
+    try {
+      const response = await api.get(`/complaints/${complaint.id}/attachments`);
+      setAttachments(response.data);
+    } catch (error) {
+      console.error('Error loading attachments:', error);
+    }
+  };
+
+  const handleDownloadAttachment = async (attachmentId, filename) => {
+    try {
+      const response = await api.get(`/attachments/${attachmentId}/download`, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading attachment:', error);
+      alert('فشل تحميل الملف');
     }
   };
 
@@ -378,6 +408,44 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {attachments.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <PaperClipIcon className="w-5 h-5 text-gray-600" />
+            <h3 className="text-lg font-semibold">المرفقات ({attachments.length})</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {attachments.map((attachment) => (
+              <div
+                key={attachment.id}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-primary-500 transition-colors"
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <PaperClipIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {attachment.filename}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {attachment.file_size ? `${(attachment.file_size / 1024).toFixed(1)} KB` : 'حجم غير معروف'} • 
+                      {' '}{new Date(attachment.uploaded_at).toLocaleDateString('ar-EG')}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleDownloadAttachment(attachment.id, attachment.filename)}
+                  className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-lg transition-colors flex-shrink-0"
+                >
+                  <ArrowDownTrayIcon className="w-4 h-4" />
+                  <span className="hidden sm:inline">تحميل</span>
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
