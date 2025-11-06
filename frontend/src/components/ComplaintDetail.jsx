@@ -16,8 +16,8 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
   const [newComment, setNewComment] = useState('');
   const [isInternal, setIsInternal] = useState(false);
   const [committeeUsers, setCommitteeUsers] = useState([]);
-  const [selectedAssignee, setSelectedAssignee] = useState(complaint.assigned_to_id || '');
-  const [selectedStatus, setSelectedStatus] = useState(complaint.status);
+  const [selectedAssignee, setSelectedAssignee] = useState(propComplaint?.assigned_to_id || '');
+  const [selectedStatus, setSelectedStatus] = useState(propComplaint?.status || '');
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, isLoading: false });
@@ -31,6 +31,8 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
 
   useEffect(() => {
     if (complaint) {
+      setSelectedAssignee(complaint.assigned_to_id || '');
+      setSelectedStatus(complaint.status || '');
       loadComments();
       loadFeedback();
       if (user.role !== 'trader') {
