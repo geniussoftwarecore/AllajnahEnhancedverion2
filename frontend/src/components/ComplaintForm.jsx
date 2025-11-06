@@ -34,6 +34,9 @@ function ComplaintForm({ onSuccess }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [createdComplaintId, setCreatedComplaintId] = useState(null);
+  const [uploadErrors, setUploadErrors] = useState([]);
+  const [failedFiles, setFailedFiles] = useState([]);
 
   const title = watch('title');
   const categoryId = watch('category_id');
@@ -164,40 +167,108 @@ function ComplaintForm({ onSuccess }) {
   };
 
   const handleFileRemove = (index) => {
+    const fileToRemove = selectedFiles[index];
     setSelectedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+    setFailedFiles(prevFailed => prevFailed.filter(f => f !== fileToRemove));
+    setUploadErrors(prevErrors => prevErrors.filter(err => err.name !== fileToRemove.name));
   };
 
-  const uploadFiles = async (complaintId) => {
-    if (selectedFiles.length === 0) return;
+  const uploadFiles = async (complaintId, filesToUpload) => {
+    if (filesToUpload.length === 0) return { success: true, failedFiles: [], failedFileObjects: [] };
 
     setUploadingFiles(true);
+    const failedFilesList = [];
+    const failedFileObjects = [];
+    
     try {
-      for (const file of selectedFiles) {
-        const formData = new FormData();
-        formData.append('file', file);
-        await api.post(`/complaints/${complaintId}/attachments`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+      for (const file of filesToUpload) {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          await api.post(`/complaints/${complaintId}/attachments`, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+        } catch (fileErr) {
+          console.error(`Error uploading file ${file.name}:`, fileErr);
+          failedFilesList.push({ name: file.name, error: fileErr.response?.data?.detail || 'فشل الرفع' });
+          failedFileObjects.push(file);
+        }
       }
-    } catch (err) {
-      console.error('Error uploading files:', err);
     } finally {
       setUploadingFiles(false);
+    }
+
+    return {
+      success: failedFilesList.length === 0,
+      failedFiles: failedFilesList,
+      failedFileObjects,
+      uploadedCount: filesToUpload.length - failedFilesList.length
+    };
+  };
+
+  const retryFailedUploads = async () => {
+    if (!createdComplaintId || failedFiles.length === 0) return;
+    
+    setLoading(true);
+    setUploadErrors([]);
+    
+    const uploadResult = await uploadFiles(createdComplaintId, failedFiles);
+    
+    if (uploadResult.success) {
+      setFailedFiles([]);
+      setUploadErrors([]);
+      setError('');
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate('/complaints');
+      }
+    } else {
+      setFailedFiles(uploadResult.failedFileObjects);
+      setUploadErrors(uploadResult.failedFiles);
+      setError(
+        `لا تزال هناك ${uploadResult.failedFiles.length} ملف(ات) فشل رفعها من أصل ${failedFiles.length}.`
+      );
+    }
+    
+    setLoading(false);
+  };
+
+  const proceedWithoutFiles = () => {
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      navigate('/complaints');
     }
   };
 
   const onSubmit = async (data) => {
     setLoading(true);
     setError('');
+    setUploadErrors([]);
+    setCreatedComplaintId(null);
+    setFailedFiles([]);
 
     try {
       const response = await api.post('/complaints', data);
       const complaintId = response.data.id;
+      setCreatedComplaintId(complaintId);
       
       if (selectedFiles.length > 0) {
-        await uploadFiles(complaintId);
+        const uploadResult = await uploadFiles(complaintId, selectedFiles);
+        
+        if (!uploadResult.success) {
+          setFailedFiles(uploadResult.failedFileObjects);
+          setUploadErrors(uploadResult.failedFiles);
+          setError(
+            `تم تقديم الشكوى بنجاح (رقم ${complaintId}) ولكن فشل رفع ${uploadResult.failedFiles.length} من ${selectedFiles.length} ملف(ات).`
+          );
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setLoading(false);
+          return;
+        }
       }
       
       if (onSuccess) {
@@ -759,6 +830,38 @@ function ComplaintForm({ onSuccess }) {
               <ExclamationTriangleIcon className="w-6 h-6 text-red-600" />
               <p className="font-bold">{error}</p>
             </div>
+            
+            {uploadErrors.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-red-200">
+                <p className="text-sm font-semibold mb-2">الملفات التي فشل رفعها:</p>
+                <ul className="text-sm space-y-1 mb-4">
+                  {uploadErrors.map((fileError, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="text-red-600">•</span>
+                      <span>{fileError.name} - {fileError.error}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex gap-3 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={retryFailedUploads}
+                    disabled={uploadingFiles}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ArrowRightIcon className="w-4 h-4" />
+                    {uploadingFiles ? 'جارِ المحاولة...' : 'إعادة المحاولة'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={proceedWithoutFiles}
+                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    المتابعة بدون الملفات
+                  </button>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 
