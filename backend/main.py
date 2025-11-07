@@ -15,7 +15,9 @@ from models import (
     User, Complaint, Comment, Attachment, Category, 
     Subscription, Payment, ComplaintFeedback, AuditLog,
     PaymentMethod, SLAConfig, SystemSettings, TaskQueue, ComplaintApproval, QuickReply, NotificationPreference,
-    UserRole, ComplaintStatus, SubscriptionStatus, PaymentStatus, Priority, TaskStatus, ApprovalStatus, AccountStatus
+    ComplaintEscalation, ComplaintAppeal, ComplaintMediationRequest,
+    UserRole, ComplaintStatus, SubscriptionStatus, PaymentStatus, Priority, TaskStatus, ApprovalStatus, AccountStatus,
+    EscalationType, AppealStatus, MediationStatus, EscalationState
 )
 from schemas import (
     UserCreate, UserLogin, UserResponse, Token, UserUpdate, PasswordReset, ProfileUpdate, ChangePasswordRequest, EmailUpdateRequest,
@@ -32,7 +34,11 @@ from schemas import (
     QuickReplyCreate, QuickReplyUpdate, QuickReplyResponse,
     BulkAssignRequest, BulkStatusRequest, BulkActionResponse,
     NotificationPreferenceCreate, NotificationPreferenceUpdate, NotificationPreferenceResponse,
-    MerchantRegisterRequest, MerchantApprovalRequest
+    MerchantRegisterRequest, MerchantApprovalRequest,
+    ComplaintEscalationCreate, ComplaintEscalationResponse,
+    ComplaintAppealCreate, ComplaintAppealUpdate, ComplaintAppealResponse,
+    ComplaintMediationRequestCreate, ComplaintMediationRequestUpdate, ComplaintMediationRequestResponse,
+    ManualEscalationRequest, ReassignmentRequest
 )
 from auth import (
     get_password_hash, verify_password, create_access_token,
@@ -808,7 +814,7 @@ def update_complaint(
     return ComplaintResponse.model_validate(complaint)
 
 @app.post("/api/complaints/{complaint_id}/reopen", response_model=ComplaintResponse)
-def reopen_complaint(
+async def reopen_complaint(
     complaint_id: int,
     current_user: User = Depends(require_role(UserRole.TRADER)),
     db: Session = Depends(get_db)
@@ -827,19 +833,104 @@ def reopen_complaint(
         raise HTTPException(status_code=400, detail="Reopen window has expired")
     
     old_status = complaint.status
+    old_assigned_to_id = complaint.assigned_to_id
+    
+    complaint.reopened_count += 1
+    
+    if complaint.assigned_to_id and old_status == ComplaintStatus.RESOLVED:
+        complaint.last_assigned_tc_id = complaint.assigned_to_id
+    
     complaint.status = ComplaintStatus.SUBMITTED
     complaint.resolved_at = None
     complaint.can_reopen_until = None
     complaint.updated_at = datetime.utcnow()
+    complaint.task_status = TaskStatus.IN_QUEUE
     
-    create_audit_log(
-        db,
-        current_user.id,
-        "REOPEN_COMPLAINT",
-        "complaint",
-        complaint.id,
-        f"Reopened complaint #{complaint.id} from status {old_status.value}"
-    )
+    from task_queue_service import task_queue_service
+    
+    if complaint.last_assigned_tc_id:
+        new_assignee = task_queue_service.reassign_task(
+            complaint_id=complaint_id,
+            excluding_user_id=complaint.last_assigned_tc_id,
+            db=db
+        )
+        
+        if new_assignee:
+            complaint.assigned_to_id = new_assignee.id
+            complaint.task_status = TaskStatus.ASSIGNED
+            
+            create_audit_log(
+                db,
+                current_user.id,
+                "REOPEN_COMPLAINT",
+                "complaint",
+                complaint.id,
+                f"Reopened complaint #{complaint.id} from status {old_status.value}. Reassigned to different TC member: {new_assignee.email}"
+            )
+            
+            await notification_service.send_assignment_notification(
+                db,
+                new_assignee.id,
+                new_assignee.email,
+                new_assignee.phone,
+                complaint.id,
+                language="ar"
+            )
+        else:
+            complaint.assigned_to_id = complaint.last_assigned_tc_id
+            complaint.task_status = TaskStatus.ASSIGNED
+            
+            create_audit_log(
+                db,
+                current_user.id,
+                "REOPEN_COMPLAINT_WARNING",
+                "complaint",
+                complaint.id,
+                f"Reopened complaint #{complaint.id} from status {old_status.value}. WARNING: No different TC member available, reassigned to same user"
+            )
+            
+            if complaint.assigned_to_id:
+                assigned_user = db.query(User).filter(User.id == complaint.assigned_to_id).first()
+                if assigned_user:
+                    await notification_service.send_assignment_notification(
+                        db,
+                        assigned_user.id,
+                        assigned_user.email,
+                        assigned_user.phone,
+                        complaint.id,
+                        language="ar"
+                    )
+    else:
+        queue_entry = task_queue_service.add_to_queue(
+            complaint_id=complaint_id,
+            assigned_role=UserRole.TECHNICAL_COMMITTEE,
+            db=db
+        )
+        
+        if queue_entry and queue_entry.assigned_user_id:
+            complaint.assigned_to_id = queue_entry.assigned_user_id
+            complaint.task_status = TaskStatus.ASSIGNED
+        
+        create_audit_log(
+            db,
+            current_user.id,
+            "REOPEN_COMPLAINT",
+            "complaint",
+            complaint.id,
+            f"Reopened complaint #{complaint.id} from status {old_status.value}"
+        )
+        
+        if queue_entry and queue_entry.assigned_user_id:
+            assigned_user = db.query(User).filter(User.id == queue_entry.assigned_user_id).first()
+            if assigned_user:
+                await notification_service.send_assignment_notification(
+                    db,
+                    assigned_user.id,
+                    assigned_user.email,
+                    assigned_user.phone,
+                    complaint.id,
+                    language="ar"
+                )
     
     db.commit()
     db.refresh(complaint)
@@ -1424,6 +1515,571 @@ async def get_pending_approvals(
     ).all()
     
     return approvals
+
+
+@app.post("/api/complaints/{complaint_id}/manual-escalate", response_model=ComplaintResponse)
+async def manual_escalate_complaint(
+    complaint_id: int,
+    escalation_request: ManualEscalationRequest,
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    if complaint.status == ComplaintStatus.ESCALATED:
+        raise HTTPException(status_code=400, detail="Complaint is already escalated")
+    
+    if complaint.assigned_to_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You must be assigned to this complaint to escalate it")
+    
+    escalation = ComplaintEscalation(
+        complaint_id=complaint_id,
+        escalated_by_id=current_user.id,
+        escalation_type=EscalationType.MANUAL,
+        target_role=UserRole.HIGHER_COMMITTEE,
+        reason=escalation_request.reason
+    )
+    
+    db.add(escalation)
+    
+    complaint.status = ComplaintStatus.ESCALATED
+    complaint.escalation_state = EscalationState.TC_MANUAL
+    
+    from task_queue_service import task_queue_service
+    queue_entry = task_queue_service.add_to_queue(
+        complaint_id=complaint_id,
+        assigned_role=UserRole.HIGHER_COMMITTEE,
+        db=db
+    )
+    
+    if queue_entry and queue_entry.assigned_user_id:
+        complaint.assigned_to_id = queue_entry.assigned_user_id
+        complaint.task_status = TaskStatus.ASSIGNED
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "MANUAL_ESCALATE",
+        "complaint",
+        complaint.id,
+        f"Manually escalated complaint #{complaint.id}. Reason: {escalation_request.reason}"
+    )
+    
+    db.commit()
+    db.refresh(complaint)
+    
+    if queue_entry and queue_entry.assigned_user_id:
+        assigned_user = db.query(User).filter(User.id == queue_entry.assigned_user_id).first()
+        if assigned_user:
+            await notification_service.send_assignment_notification(
+                db,
+                assigned_user.id,
+                assigned_user.email,
+                assigned_user.phone,
+                complaint.id,
+                language="ar"
+            )
+    
+    return complaint
+
+
+@app.post("/api/complaints/{complaint_id}/appeals", response_model=ComplaintAppealResponse)
+async def create_complaint_appeal(
+    complaint_id: int,
+    appeal_data: ComplaintAppealCreate,
+    current_user: User = Depends(require_role(UserRole.TRADER)),
+    db: Session = Depends(get_db)
+):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    if complaint.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only appeal your own complaints")
+    
+    existing_appeal = db.query(ComplaintAppeal).filter(
+        ComplaintAppeal.complaint_id == complaint_id,
+        ComplaintAppeal.status == AppealStatus.PENDING
+    ).first()
+    
+    if existing_appeal:
+        raise HTTPException(status_code=400, detail="There is already a pending appeal for this complaint")
+    
+    appeal = ComplaintAppeal(
+        complaint_id=complaint_id,
+        requester_id=current_user.id,
+        status=AppealStatus.PENDING,
+        reason=appeal_data.reason
+    )
+    
+    db.add(appeal)
+    
+    complaint.escalation_state = EscalationState.TRADER_APPEAL
+    
+    from task_queue_service import task_queue_service
+    queue_entry = task_queue_service.add_to_queue(
+        complaint_id=complaint_id,
+        assigned_role=UserRole.HIGHER_COMMITTEE,
+        db=db
+    )
+    
+    if queue_entry and queue_entry.assigned_user_id:
+        complaint.assigned_to_id = queue_entry.assigned_user_id
+        complaint.task_status = TaskStatus.ASSIGNED
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "CREATE_APPEAL",
+        "complaint",
+        complaint.id,
+        f"Created appeal for complaint #{complaint.id}. Reason: {appeal_data.reason}"
+    )
+    
+    db.commit()
+    db.refresh(appeal)
+    
+    if queue_entry and queue_entry.assigned_user_id:
+        assigned_user = db.query(User).filter(User.id == queue_entry.assigned_user_id).first()
+        if assigned_user:
+            await notification_service.send_assignment_notification(
+                db,
+                assigned_user.id,
+                assigned_user.email,
+                assigned_user.phone,
+                complaint.id,
+                language="ar"
+            )
+    
+    return appeal
+
+
+@app.get("/api/complaints/{complaint_id}/appeals", response_model=List[ComplaintAppealResponse])
+def get_complaint_appeals(
+    complaint_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    if current_user.role == UserRole.TRADER and complaint.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only view appeals for your own complaints")
+    
+    appeals = db.query(ComplaintAppeal).filter(
+        ComplaintAppeal.complaint_id == complaint_id
+    ).all()
+    
+    return appeals
+
+
+@app.patch("/api/appeals/{appeal_id}", response_model=ComplaintAppealResponse)
+async def update_appeal(
+    appeal_id: int,
+    appeal_update: ComplaintAppealUpdate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    appeal = db.query(ComplaintAppeal).filter(ComplaintAppeal.id == appeal_id).first()
+    
+    if not appeal:
+        raise HTTPException(status_code=404, detail="Appeal not found")
+    
+    if appeal.status != AppealStatus.PENDING:
+        raise HTTPException(status_code=400, detail="This appeal has already been decided")
+    
+    appeal.status = appeal_update.status
+    appeal.decision_rationale = appeal_update.decision_rationale
+    appeal.decided_at = datetime.utcnow()
+    appeal.decided_by_id = current_user.id
+    
+    complaint = db.query(Complaint).filter(Complaint.id == appeal.complaint_id).first()
+    
+    if appeal_update.status == AppealStatus.ACCEPTED:
+        complaint.status = ComplaintStatus.UNDER_REVIEW
+        complaint.escalation_state = EscalationState.NONE
+    elif appeal_update.status == AppealStatus.REJECTED:
+        complaint.escalation_state = EscalationState.NONE
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "DECIDE_APPEAL",
+        "appeal",
+        appeal.id,
+        f"Decided appeal #{appeal.id}: {appeal_update.status.value}. Rationale: {appeal_update.decision_rationale}"
+    )
+    
+    db.commit()
+    db.refresh(appeal)
+    
+    requester = db.query(User).filter(User.id == appeal.requester_id).first()
+    if requester:
+        await notification_service.send_complaint_status_update(
+            db,
+            requester.id,
+            requester.email,
+            requester.phone,
+            complaint.id,
+            f"Appeal {appeal_update.status.value}",
+            language="ar"
+        )
+    
+    return appeal
+
+
+@app.post("/api/complaints/{complaint_id}/reassign", response_model=ComplaintResponse)
+async def reassign_complaint(
+    complaint_id: int,
+    reassignment_data: ReassignmentRequest,
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    if complaint.assigned_to_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You must be assigned to this complaint to reassign it")
+    
+    from task_queue_service import task_queue_service
+    
+    if reassignment_data.target_user_id:
+        target_user = db.query(User).filter(
+            User.id == reassignment_data.target_user_id,
+            User.role == UserRole.TECHNICAL_COMMITTEE,
+            User.is_active == True
+        ).first()
+        
+        if not target_user:
+            raise HTTPException(status_code=404, detail="Target user not found or not eligible")
+        
+        complaint.assigned_to_id = target_user.id
+        complaint.task_status = TaskStatus.ASSIGNED
+        
+        queue_entry = db.query(TaskQueue).filter(
+            TaskQueue.complaint_id == complaint_id,
+            TaskQueue.assigned_role == UserRole.TECHNICAL_COMMITTEE
+        ).first()
+        
+        if queue_entry:
+            queue_entry.assigned_user_id = target_user.id
+            queue_entry.assigned_at = datetime.utcnow()
+    else:
+        new_assignee = task_queue_service.reassign_task(
+            complaint_id=complaint_id,
+            excluding_user_id=current_user.id,
+            db=db
+        )
+        
+        if new_assignee:
+            complaint.assigned_to_id = new_assignee.id
+            complaint.task_status = TaskStatus.ASSIGNED
+        else:
+            create_audit_log(
+                db,
+                current_user.id,
+                "REASSIGN_WARNING",
+                "complaint",
+                complaint.id,
+                f"No different TC member available for reassignment. Complaint remains with {current_user.email}"
+            )
+            raise HTTPException(status_code=400, detail="No other available TC members for reassignment")
+    
+    escalation = ComplaintEscalation(
+        complaint_id=complaint_id,
+        escalated_by_id=current_user.id,
+        escalation_type=EscalationType.MANUAL,
+        target_role=UserRole.TECHNICAL_COMMITTEE,
+        reason=reassignment_data.reason
+    )
+    
+    db.add(escalation)
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "REASSIGN_COMPLAINT",
+        "complaint",
+        complaint.id,
+        f"Reassigned complaint #{complaint.id}. Reason: {reassignment_data.reason}"
+    )
+    
+    db.commit()
+    db.refresh(complaint)
+    
+    if complaint.assigned_to_id:
+        assigned_user = db.query(User).filter(User.id == complaint.assigned_to_id).first()
+        if assigned_user and assigned_user.id != current_user.id:
+            await notification_service.send_assignment_notification(
+                db,
+                assigned_user.id,
+                assigned_user.email,
+                assigned_user.phone,
+                complaint.id,
+                language="ar"
+            )
+    
+    return complaint
+
+
+@app.post("/api/complaints/{complaint_id}/approvals/multi-review", response_model=ComplaintApprovalResponse)
+async def create_multi_review_approval(
+    complaint_id: int,
+    required_approvals: int = Query(..., ge=1),
+    stage: str = Query(...),
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    approval = ComplaintApproval(
+        complaint_id=complaint_id,
+        approver_id=current_user.id,
+        approval_status=ApprovalStatus.PENDING,
+        stage=stage,
+        required_approvals=required_approvals,
+        is_multi_reviewer=True
+    )
+    
+    db.add(approval)
+    
+    complaint.task_status = TaskStatus.PENDING_APPROVAL
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "CREATE_MULTI_REVIEW",
+        "complaint",
+        complaint.id,
+        f"Created multi-review approval for complaint #{complaint.id}. Stage: {stage}, Required: {required_approvals}"
+    )
+    
+    db.commit()
+    db.refresh(approval)
+    
+    return approval
+
+
+@app.get("/api/complaints/{complaint_id}/approvals/status")
+def get_approval_status(
+    complaint_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    approvals = db.query(ComplaintApproval).filter(
+        ComplaintApproval.complaint_id == complaint_id
+    ).all()
+    
+    multi_review_approvals = [a for a in approvals if a.is_multi_reviewer]
+    
+    if not multi_review_approvals:
+        return {
+            "complaint_id": complaint_id,
+            "has_multi_review": False,
+            "total_approvals": len(approvals),
+            "approved_count": len([a for a in approvals if a.approval_status == ApprovalStatus.APPROVED]),
+            "pending_count": len([a for a in approvals if a.approval_status == ApprovalStatus.PENDING]),
+            "rejected_count": len([a for a in approvals if a.approval_status == ApprovalStatus.REJECTED])
+        }
+    
+    stages = {}
+    for approval in multi_review_approvals:
+        stage = approval.stage
+        if stage not in stages:
+            stages[stage] = {
+                "required_approvals": approval.required_approvals,
+                "approved_count": 0,
+                "pending_count": 0,
+                "rejected_count": 0
+            }
+        
+        if approval.approval_status == ApprovalStatus.APPROVED:
+            stages[stage]["approved_count"] += 1
+        elif approval.approval_status == ApprovalStatus.PENDING:
+            stages[stage]["pending_count"] += 1
+        elif approval.approval_status == ApprovalStatus.REJECTED:
+            stages[stage]["rejected_count"] += 1
+    
+    return {
+        "complaint_id": complaint_id,
+        "has_multi_review": True,
+        "stages": stages,
+        "total_approvals": len(approvals)
+    }
+
+
+@app.post("/api/complaints/{complaint_id}/mediation-request", response_model=ComplaintMediationRequestResponse)
+async def create_mediation_request(
+    complaint_id: int,
+    mediation_data: ComplaintMediationRequestCreate,
+    current_user: User = Depends(require_role(UserRole.TECHNICAL_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    
+    if not complaint:
+        raise HTTPException(status_code=404, detail="Complaint not found")
+    
+    if complaint.assigned_to_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You must be assigned to this complaint to request mediation")
+    
+    existing_request = db.query(ComplaintMediationRequest).filter(
+        ComplaintMediationRequest.complaint_id == complaint_id,
+        ComplaintMediationRequest.status.in_([MediationStatus.PENDING, MediationStatus.ACCEPTED, MediationStatus.IN_PROGRESS])
+    ).first()
+    
+    if existing_request:
+        raise HTTPException(status_code=400, detail="There is already an active mediation request for this complaint")
+    
+    mediation_request = ComplaintMediationRequest(
+        complaint_id=complaint_id,
+        requested_by_id=current_user.id,
+        status=MediationStatus.PENDING,
+        reason=mediation_data.reason
+    )
+    
+    db.add(mediation_request)
+    
+    complaint.status = ComplaintStatus.MEDIATION_PENDING
+    complaint.escalation_state = EscalationState.MEDIATION
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "CREATE_MEDIATION_REQUEST",
+        "complaint",
+        complaint.id,
+        f"Created mediation request for complaint #{complaint.id}. Reason: {mediation_data.reason}"
+    )
+    
+    db.commit()
+    db.refresh(mediation_request)
+    
+    higher_committee_users = db.query(User).filter(
+        User.role == UserRole.HIGHER_COMMITTEE,
+        User.is_active == True
+    ).all()
+    
+    for hc_user in higher_committee_users:
+        await notification_service.send_assignment_notification(
+            db,
+            hc_user.id,
+            hc_user.email,
+            hc_user.phone,
+            complaint.id,
+            language="ar"
+        )
+    
+    return mediation_request
+
+
+@app.patch("/api/mediation-requests/{request_id}", response_model=ComplaintMediationRequestResponse)
+async def update_mediation_request(
+    request_id: int,
+    mediation_update: ComplaintMediationRequestUpdate,
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    mediation_request = db.query(ComplaintMediationRequest).filter(
+        ComplaintMediationRequest.id == request_id
+    ).first()
+    
+    if not mediation_request:
+        raise HTTPException(status_code=404, detail="Mediation request not found")
+    
+    mediation_request.status = mediation_update.status
+    
+    if mediation_update.mediator_id:
+        mediator = db.query(User).filter(
+            User.id == mediation_update.mediator_id,
+            User.role == UserRole.HIGHER_COMMITTEE,
+            User.is_active == True
+        ).first()
+        
+        if not mediator:
+            raise HTTPException(status_code=404, detail="Mediator not found or not eligible")
+        
+        mediation_request.mediator_id = mediation_update.mediator_id
+    
+    if mediation_update.notes:
+        mediation_request.notes = mediation_update.notes
+    
+    complaint = db.query(Complaint).filter(Complaint.id == mediation_request.complaint_id).first()
+    
+    if mediation_update.status == MediationStatus.ACCEPTED:
+        complaint.status = ComplaintStatus.MEDIATION_IN_PROGRESS
+    elif mediation_update.status == MediationStatus.RESOLVED:
+        complaint.status = ComplaintStatus.RESOLVED
+        complaint.resolved_at = datetime.utcnow()
+        complaint.escalation_state = EscalationState.NONE
+    elif mediation_update.status == MediationStatus.REJECTED:
+        complaint.status = ComplaintStatus.UNDER_REVIEW
+        complaint.escalation_state = EscalationState.NONE
+    elif mediation_update.status == MediationStatus.CANCELLED:
+        complaint.status = ComplaintStatus.UNDER_REVIEW
+        complaint.escalation_state = EscalationState.NONE
+    
+    create_audit_log(
+        db,
+        current_user.id,
+        "UPDATE_MEDIATION_REQUEST",
+        "mediation_request",
+        mediation_request.id,
+        f"Updated mediation request #{mediation_request.id}: {mediation_update.status.value}"
+    )
+    
+    db.commit()
+    db.refresh(mediation_request)
+    
+    requester = db.query(User).filter(User.id == mediation_request.requested_by_id).first()
+    if requester:
+        await notification_service.send_complaint_status_update(
+            db,
+            requester.id,
+            requester.email,
+            requester.phone,
+            complaint.id,
+            f"Mediation {mediation_update.status.value}",
+            language="ar"
+        )
+    
+    return mediation_request
+
+
+@app.get("/api/mediation-requests", response_model=List[ComplaintMediationRequestResponse])
+def get_mediation_requests(
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
+    db: Session = Depends(get_db),
+    status_filter: Optional[str] = Query(None)
+):
+    query = db.query(ComplaintMediationRequest)
+    
+    if status_filter:
+        try:
+            status_enum = MediationStatus(status_filter)
+            query = query.filter(ComplaintMediationRequest.status == status_enum)
+        except ValueError:
+            pass
+    
+    mediation_requests = query.order_by(ComplaintMediationRequest.created_at.desc()).all()
+    
+    return mediation_requests
 
 
 @app.get("/api/dashboard/stats", response_model=DashboardStats)

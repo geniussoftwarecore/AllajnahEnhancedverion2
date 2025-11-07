@@ -5,52 +5,80 @@ import enum
 from database import Base
 
 class UserRole(str, enum.Enum):
-    TRADER = "trader"
-    TECHNICAL_COMMITTEE = "technical_committee"
-    HIGHER_COMMITTEE = "higher_committee"
+    TRADER = "TRADER"
+    TECHNICAL_COMMITTEE = "TECHNICAL_COMMITTEE"
+    HIGHER_COMMITTEE = "HIGHER_COMMITTEE"
 
 class ComplaintStatus(str, enum.Enum):
-    SUBMITTED = "submitted"
-    UNDER_REVIEW = "under_review"
-    ESCALATED = "escalated"
-    RESOLVED = "resolved"
-    REJECTED = "rejected"
+    SUBMITTED = "SUBMITTED"
+    UNDER_REVIEW = "UNDER_REVIEW"
+    ESCALATED = "ESCALATED"
+    RESOLVED = "RESOLVED"
+    REJECTED = "REJECTED"
+    MEDIATION_PENDING = "MEDIATION_PENDING"
+    MEDIATION_IN_PROGRESS = "MEDIATION_IN_PROGRESS"
 
 class Priority(str, enum.Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    URGENT = "urgent"
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    URGENT = "URGENT"
 
 class TaskStatus(str, enum.Enum):
-    UNASSIGNED = "unassigned"
-    IN_QUEUE = "in_queue"
-    ASSIGNED = "assigned"
-    ACCEPTED = "accepted"
-    IN_PROGRESS = "in_progress"
-    PENDING_APPROVAL = "pending_approval"
-    COMPLETED = "completed"
+    UNASSIGNED = "UNASSIGNED"
+    IN_QUEUE = "IN_QUEUE"
+    ASSIGNED = "ASSIGNED"
+    ACCEPTED = "ACCEPTED"
+    IN_PROGRESS = "IN_PROGRESS"
+    PENDING_APPROVAL = "PENDING_APPROVAL"
+    COMPLETED = "COMPLETED"
 
 class ApprovalStatus(str, enum.Enum):
-    PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
 
 class SubscriptionStatus(str, enum.Enum):
-    ACTIVE = "active"
-    EXPIRED = "expired"
-    PENDING = "pending"
-    CANCELLED = "cancelled"
+    ACTIVE = "ACTIVE"
+    EXPIRED = "EXPIRED"
+    PENDING = "PENDING"
+    CANCELLED = "CANCELLED"
 
 class PaymentStatus(str, enum.Enum):
-    PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
 
 class AccountStatus(str, enum.Enum):
-    PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+class EscalationType(str, enum.Enum):
+    MANUAL = "MANUAL"
+    SLA_VIOLATION = "SLA_VIOLATION"
+    TRADER_APPEAL = "TRADER_APPEAL"
+    MEDIATION = "MEDIATION"
+
+class AppealStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+    WITHDRAWN = "WITHDRAWN"
+
+class MediationStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    IN_PROGRESS = "IN_PROGRESS"
+    RESOLVED = "RESOLVED"
+    REJECTED = "REJECTED"
+    CANCELLED = "CANCELLED"
+
+class EscalationState(str, enum.Enum):
+    NONE = "NONE"
+    TC_MANUAL = "TC_MANUAL"
+    TRADER_APPEAL = "TRADER_APPEAL"
+    MEDIATION = "MEDIATION"
 
 class User(Base):
     __tablename__ = "users"
@@ -138,14 +166,23 @@ class Complaint(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     resolved_at = Column(DateTime)
     
+    escalation_state = Column(SQLEnum(EscalationState), default=EscalationState.NONE, nullable=False)
+    escalation_locked_until = Column(DateTime, nullable=True)
+    reopened_count = Column(Integer, default=0, nullable=False)
+    last_assigned_tc_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
     user = relationship("User", back_populates="complaints", foreign_keys=[user_id])
     assigned_to_user = relationship("User", back_populates="assigned_complaints", foreign_keys=[assigned_to_id])
     claimed_by_user = relationship("User", foreign_keys=[claimed_by_id])
+    last_assigned_tc = relationship("User", foreign_keys=[last_assigned_tc_id])
     category = relationship("Category", back_populates="complaints")
     comments = relationship("Comment", back_populates="complaint", cascade="all, delete-orphan")
     attachments = relationship("Attachment", back_populates="complaint", cascade="all, delete-orphan")
     feedbacks = relationship("ComplaintFeedback", back_populates="complaint", cascade="all, delete-orphan")
     approvals = relationship("ComplaintApproval", back_populates="complaint", cascade="all, delete-orphan")
+    escalations = relationship("ComplaintEscalation", back_populates="complaint", cascade="all, delete-orphan")
+    appeals = relationship("ComplaintAppeal", back_populates="complaint", cascade="all, delete-orphan")
+    mediation_requests = relationship("ComplaintMediationRequest", back_populates="complaint", cascade="all, delete-orphan")
 
 class Comment(Base):
     __tablename__ = "comments"
@@ -301,6 +338,10 @@ class ComplaintApproval(Base):
     approved_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
+    stage = Column(String, default="default", nullable=False)
+    required_approvals = Column(Integer, default=1, nullable=False)
+    is_multi_reviewer = Column(Boolean, default=False, nullable=False)
+    
     complaint = relationship("Complaint", back_populates="approvals")
     approver = relationship("User")
 
@@ -339,3 +380,53 @@ class NotificationPreference(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     user = relationship("User", backref="notification_preference")
+
+class ComplaintEscalation(Base):
+    __tablename__ = "complaint_escalations"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    complaint_id = Column(Integer, ForeignKey("complaints.id"), nullable=False)
+    escalated_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    escalation_type = Column(SQLEnum(EscalationType), nullable=False)
+    target_role = Column(SQLEnum(UserRole), nullable=False)
+    reason = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    resolved_at = Column(DateTime, nullable=True)
+    
+    complaint = relationship("Complaint", back_populates="escalations")
+    escalated_by = relationship("User")
+
+class ComplaintAppeal(Base):
+    __tablename__ = "complaint_appeals"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    complaint_id = Column(Integer, ForeignKey("complaints.id"), nullable=False)
+    requester_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    status = Column(SQLEnum(AppealStatus), default=AppealStatus.PENDING)
+    reason = Column(Text, nullable=False)
+    submitted_at = Column(DateTime, default=datetime.utcnow)
+    decided_at = Column(DateTime, nullable=True)
+    decided_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    decision_rationale = Column(Text, nullable=True)
+    
+    complaint = relationship("Complaint", back_populates="appeals")
+    requester = relationship("User", foreign_keys=[requester_id])
+    decided_by = relationship("User", foreign_keys=[decided_by_id])
+
+class ComplaintMediationRequest(Base):
+    __tablename__ = "complaint_mediation_requests"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    complaint_id = Column(Integer, ForeignKey("complaints.id"), nullable=False)
+    requested_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    status = Column(SQLEnum(MediationStatus), default=MediationStatus.PENDING)
+    mediator_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    reason = Column(Text, nullable=False)
+    scheduled_at = Column(DateTime, nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    complaint = relationship("Complaint", back_populates="mediation_requests")
+    requested_by = relationship("User", foreign_keys=[requested_by_id])
+    mediator = relationship("User", foreign_keys=[mediator_id])

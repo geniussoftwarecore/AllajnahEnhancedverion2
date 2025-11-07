@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
-from models import UserRole, ComplaintStatus, Priority, SubscriptionStatus, PaymentStatus, TaskStatus, ApprovalStatus, AccountStatus
+from models import UserRole, ComplaintStatus, Priority, SubscriptionStatus, PaymentStatus, TaskStatus, ApprovalStatus, AccountStatus, EscalationType, AppealStatus, MediationStatus, EscalationState
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -146,6 +146,10 @@ class ComplaintResponse(BaseModel):
     resolved_at: Optional[datetime] = None
     closed_at: Optional[datetime] = None
     can_reopen_until: Optional[datetime] = None
+    escalation_state: EscalationState
+    escalation_locked_until: Optional[datetime] = None
+    reopened_count: int
+    last_assigned_tc_id: Optional[int] = None
     user: Optional[UserResponse] = None
     category: Optional[CategoryResponse] = None
     assigned_to_user: Optional[UserResponse] = None
@@ -437,6 +441,9 @@ class ComplaintApprovalResponse(BaseModel):
     approval_notes: Optional[str] = None
     approved_at: Optional[datetime] = None
     created_at: datetime
+    stage: str
+    required_approvals: int
+    is_multi_reviewer: bool
     approver: Optional[UserResponse] = None
     
     class Config:
@@ -522,3 +529,77 @@ class NotificationPreferenceResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+class ComplaintEscalationCreate(BaseModel):
+    escalation_type: EscalationType
+    target_role: UserRole
+    reason: Optional[str] = None
+
+class ComplaintEscalationResponse(BaseModel):
+    id: int
+    complaint_id: int
+    escalated_by_id: int
+    escalation_type: EscalationType
+    target_role: UserRole
+    reason: Optional[str] = None
+    created_at: datetime
+    resolved_at: Optional[datetime] = None
+    escalated_by: Optional[UserResponse] = None
+    
+    class Config:
+        from_attributes = True
+
+class ComplaintAppealCreate(BaseModel):
+    reason: str
+
+class ComplaintAppealUpdate(BaseModel):
+    status: AppealStatus
+    decision_rationale: Optional[str] = None
+
+class ComplaintAppealResponse(BaseModel):
+    id: int
+    complaint_id: int
+    requester_id: int
+    status: AppealStatus
+    reason: str
+    submitted_at: datetime
+    decided_at: Optional[datetime] = None
+    decided_by_id: Optional[int] = None
+    decision_rationale: Optional[str] = None
+    requester: Optional[UserResponse] = None
+    decided_by: Optional[UserResponse] = None
+    
+    class Config:
+        from_attributes = True
+
+class ComplaintMediationRequestCreate(BaseModel):
+    reason: str
+
+class ComplaintMediationRequestUpdate(BaseModel):
+    status: MediationStatus
+    mediator_id: Optional[int] = None
+    notes: Optional[str] = None
+
+class ComplaintMediationRequestResponse(BaseModel):
+    id: int
+    complaint_id: int
+    requested_by_id: int
+    status: MediationStatus
+    mediator_id: Optional[int] = None
+    reason: str
+    scheduled_at: Optional[datetime] = None
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    requested_by: Optional[UserResponse] = None
+    mediator: Optional[UserResponse] = None
+    
+    class Config:
+        from_attributes = True
+
+class ManualEscalationRequest(BaseModel):
+    reason: str
+
+class ReassignmentRequest(BaseModel):
+    target_user_id: Optional[int] = None
+    reason: str
