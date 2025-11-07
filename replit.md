@@ -18,18 +18,26 @@ I prefer iterative development with a focus on completing core functionalities f
 -   **Authentication**: JWT-based authentication with robust role-based access control (RBAC).
 -   **Database**: PostgreSQL managed with SQLAlchemy ORM.
 -   **Workflow Automation**: Smart task queuing, multi-member task assignment, SLA monitoring with auto-escalation, and auto-closing. Includes concurrency protection and a Higher Committee approval system.
+-   **Enhanced Escalation System**: Manual escalation by TC members, trader appeal paths to Higher Committee, intelligent TC reassignment, automatic routing of reopened complaints to different reviewers, multi-reviewer approval requirements for complex cases, and mediation request workflow.
 -   **Duplicate Detection**: Text similarity to warn about potential duplicate complaints.
 -   **Notification System**: Comprehensive email (SendGrid) and SMS (Twilio - currently email-only mode) notification system with granular user preferences. Uses Replit connectors first, falling back to environment variables.
 -   **Analytics**: Comprehensive dashboard statistics and administrative analytics.
--   **Audit Trail**: System-wide logging of key actions.
+-   **Audit Trail**: System-wide logging of key actions including all escalations, appeals, reassignments, and mediation requests.
 -   **Security**: Robust file upload validation, CORS configuration, rate limiting, and session handling.
 -   **Deployment**: Configured for production deployment on Replit with VM deployment target, including health check endpoints and optimized build processes.
 -   **Account Approval**: Merchant accounts require Higher Committee approval after registration, with pending/rejected statuses and audit logging.
 
 ### Feature Specifications
--   **User Roles**: Trader (submits/tracks), Technical Committee (reviews/assigns/updates), Higher Committee (admin access, decision-making, approvals).
+-   **User Roles**: Trader (submits/tracks/appeals), Technical Committee (reviews/assigns/updates/escalates/reassigns/requests mediation), Higher Committee (admin access, decision-making, approvals, mediates).
 -   **Profile Management**: Self-service editing, profile picture upload (with quick upload from dropdown), secure password changes, email updates, profile completion indicator, account statistics, and notification preferences.
--   **Complaint Workflow**: Multi-status progression (Submitted, Under Review, Escalated, Resolved/Rejected) with re-opening, feedback, task acceptance/rejection, multi-step approvals, and file attachment support.
+-   **Complaint Workflow**: Multi-status progression (Submitted, Under Review, Escalated, Resolved/Rejected, Mediation Pending/In Progress) with re-opening, feedback, task acceptance/rejection, multi-step approvals, and file attachment support.
+-   **Escalation & Appeals**:
+    - **Manual Escalation**: TC members can escalate complex cases directly to Higher Committee without waiting for SLA violations
+    - **Trader Appeals**: Traders can request Higher Committee review of resolved/rejected complaints if unsatisfied
+    - **TC Reassignment**: TC members can transfer cases to colleagues or request automatic reassignment based on workload
+    - **Smart Reopening**: Reopened complaints automatically route to different TC members for fresh perspective
+    - **Multi-Reviewer Approvals**: Complex cases can require multiple Higher Committee approvals before finalization
+    - **Mediation Requests**: TC can request Higher Committee mediation for cases with communication challenges
 -   **File Attachments**: Multi-file upload with drag-and-drop, per-file error tracking, smart retry logic, download functionality with authorization checks, and audit logging.
 -   **Subscription & Payment Management**: Annual subscriptions for traders, committee approval for payment proofs, multiple payment methods, and detailed instructions.
 -   **Admin Management**: CRUD operations for users, categories, payment methods, SLA configurations, and system settings.
