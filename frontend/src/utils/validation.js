@@ -161,7 +161,14 @@ export const mapBackendError = (error, lang = 'ar') => {
     }
   };
   
-  const message = error?.response?.data?.detail || error?.message || 'Unknown error';
+  let detail = error?.response?.data?.detail;
+  
+  if (Array.isArray(detail)) {
+    const messages = detail.map(err => err.msg || err.message || '').filter(Boolean);
+    return messages.length > 0 ? messages.join(', ') : (lang === 'ar' ? 'البيانات المدخلة غير صحيحة' : 'Invalid data provided');
+  }
+  
+  const message = detail || error?.message || 'Unknown error';
   return errorMessages[lang][message] || message;
 };
 

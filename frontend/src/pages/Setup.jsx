@@ -154,7 +154,7 @@ function Setup() {
         password: formData.password,
         first_name: formData.first_name,
         last_name: formData.last_name,
-        role: 'higher_committee'
+        role: 'HIGHER_COMMITTEE'
       });
 
       localStorage.setItem('setup_completed', 'true');
