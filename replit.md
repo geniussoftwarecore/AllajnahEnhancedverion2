@@ -63,3 +63,43 @@ I prefer iterative development with a focus on completing core functionalities f
 -   **Notifications**: react-toastify
 -   **Icons**: lucide-react
 -   **Animation**: Framer Motion
+
+## Environment Configuration
+
+### Required Secrets
+The following secrets must be configured in Replit Secrets:
+
+1. **JWT_SECRET_KEY** (Required) - Secret key for JWT token generation and validation. Must be at least 32 characters long. Generate using: `python3 -c "import secrets; print(secrets.token_urlsafe(32))"`
+
+2. **DATABASE_URL** (Auto-configured) - PostgreSQL database connection URL. Automatically provided by Replit's PostgreSQL database service.
+
+### Optional Integrations
+To enable email and SMS notifications, configure these Replit connectors:
+
+1. **SendGrid** (connector:ccfg_sendgrid_01K69QKAPBPJ4SWD8GQHGY03D5)
+   - Purpose: Send transactional emails for complaint notifications
+   - Setup: Requires SendGrid API key from your SendGrid account
+   - After setting up connector, enable in Replit Secrets: `ENABLE_EMAIL_NOTIFICATIONS=true`
+   - Fallback: Can also use SENDGRID_API_KEY directly in Secrets without connector
+
+2. **Twilio** (connector:ccfg_twilio_01K69QJTED9YTJFE2SJ7E4SY08)
+   - Purpose: Send SMS notifications for urgent complaint updates
+   - Setup: Requires Twilio Account SID, Auth Token, and Phone Number
+   - After setting up connector, enable in Replit Secrets: `ENABLE_SMS_NOTIFICATIONS=true`
+   - Fallback: Can also use TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER directly in Secrets without connector
+
+### Environment Variables Reference
+See `backend/.env.example` for a complete list of configurable environment variables including:
+- JWT configuration
+- CORS settings
+- Rate limiting
+- File upload restrictions
+- Password policies
+- Feature flags
+
+## Migration Notes (November 2025)
+- Migrated from previous Replit environment
+- Configured JWT_SECRET_KEY for persistent authentication
+- Added .gitignore files for backend and frontend
+- Fixed role validation bug (HIGHER_COMMITTEE enum value)
+- Improved error handling for validation responses

@@ -58,7 +58,7 @@ def get_current_user(
     try:
         token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id_str: str = payload.get("sub")
+        user_id_str = payload.get("sub")
         if user_id_str is None:
             raise credentials_exception
         user_id = int(user_id_str)
