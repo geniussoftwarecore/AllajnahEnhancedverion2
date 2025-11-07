@@ -5,6 +5,8 @@ from twilio.rest import Client
 from config import get_settings
 from replit_connectors import get_twilio_credentials, get_sendgrid_credentials
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
+from models import NotificationPreference
 
 settings = get_settings()
 
@@ -14,8 +16,7 @@ class NotificationService:
         self.twilio_credentials = None
         self.sendgrid_credentials = None
     
-    def _get_user_preferences(self, db: Session, user_id: int):
-        from models import NotificationPreference
+    def _get_user_preferences(self, db: Session, user_id: int) -> NotificationPreference:
         prefs = db.query(NotificationPreference).filter(
             NotificationPreference.user_id == user_id
         ).first()
