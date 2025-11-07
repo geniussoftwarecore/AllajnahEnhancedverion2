@@ -8,7 +8,7 @@ import api from '../../api/axios';
 function PaymentsReview() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('pending');
+  const [filter, setFilter] = useState('PENDING');
   const [selectedPayment, setSelectedPayment] = useState(null);
 
   useEffect(() => {
@@ -35,7 +35,7 @@ function PaymentsReview() {
 
     try {
       await api.patch(`/payments/${paymentId}`, {
-        status: 'approved',
+        status: 'APPROVED',
         approval_notes: notes || undefined
       });
       toast.success('تمت الموافقة على الدفع بنجاح');
@@ -55,7 +55,7 @@ function PaymentsReview() {
 
     try {
       await api.patch(`/payments/${paymentId}`, {
-        status: 'rejected',
+        status: 'REJECTED',
         approval_notes: notes
       });
       toast.success('تم رفض الدفع');
@@ -67,7 +67,8 @@ function PaymentsReview() {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
+    const statusLower = status?.toLowerCase();
+    switch (statusLower) {
       case 'pending': return 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400';
       case 'approved': return 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400';
       case 'rejected': return 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400';
@@ -76,7 +77,8 @@ function PaymentsReview() {
   };
 
   const getStatusText = (status) => {
-    switch (status) {
+    const statusLower = status?.toLowerCase();
+    switch (statusLower) {
       case 'pending': return 'قيد المراجعة';
       case 'approved': return 'موافق عليه';
       case 'rejected': return 'مرفوض';
@@ -119,9 +121,9 @@ function PaymentsReview() {
               الكل ({payments.length})
             </button>
             <button
-              onClick={() => setFilter('pending')}
+              onClick={() => setFilter('PENDING')}
               className={`px-6 py-2.5 rounded-xl font-semibold transition-all ${
-                filter === 'pending' 
+                filter === 'PENDING' 
                   ? 'bg-yellow-600 dark:bg-yellow-500 text-white shadow-md' 
                   : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
               }`}
@@ -129,9 +131,9 @@ function PaymentsReview() {
               قيد المراجعة
             </button>
             <button
-              onClick={() => setFilter('approved')}
+              onClick={() => setFilter('APPROVED')}
               className={`px-6 py-2.5 rounded-xl font-semibold transition-all ${
-                filter === 'approved' 
+                filter === 'APPROVED' 
                   ? 'bg-green-600 dark:bg-green-500 text-white shadow-md' 
                   : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
               }`}
@@ -139,9 +141,9 @@ function PaymentsReview() {
               موافق عليها
             </button>
             <button
-              onClick={() => setFilter('rejected')}
+              onClick={() => setFilter('REJECTED')}
               className={`px-6 py-2.5 rounded-xl font-semibold transition-all ${
-                filter === 'rejected' 
+                filter === 'REJECTED' 
                   ? 'bg-red-600 dark:bg-red-500 text-white shadow-md' 
                   : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
               }`}
@@ -310,7 +312,7 @@ function PaymentsReview() {
                   >
                     إغلاق
                   </CTAButton>
-                  {selectedPayment.status === 'pending' && (
+                  {selectedPayment.status === 'PENDING' && (
                     <>
                       <CTAButton
                         type="button"
