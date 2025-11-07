@@ -114,9 +114,9 @@ function AppRoutes() {
           path="/"
           element={
             <PrivateRoute>
-              {user?.role === 'trader' && <TraderDashboard />}
-              {user?.role === 'technical_committee' && <TechnicalCommitteeDashboard />}
-              {user?.role === 'higher_committee' && <HigherCommitteeDashboard />}
+              {user?.role === 'TRADER' && <TraderDashboard />}
+              {user?.role === 'TECHNICAL_COMMITTEE' && <TechnicalCommitteeDashboard />}
+              {user?.role === 'HIGHER_COMMITTEE' && <HigherCommitteeDashboard />}
               {!user && <Navigate to="/login" />}
             </PrivateRoute>
           }
@@ -126,7 +126,7 @@ function AppRoutes() {
         <Route
           path="/complaints"
           element={
-            <PrivateRoute allowedRoles={['trader', 'technical_committee', 'higher_committee']}>
+            <PrivateRoute allowedRoles={['TRADER', 'TECHNICAL_COMMITTEE', 'HIGHER_COMMITTEE']}>
               <ComplaintList />
             </PrivateRoute>
           }
@@ -134,7 +134,7 @@ function AppRoutes() {
         <Route
           path="/complaints/new"
           element={
-            <PrivateRoute allowedRoles={['trader']}>
+            <PrivateRoute allowedRoles={['TRADER']}>
               <ComplaintForm />
             </PrivateRoute>
           }
@@ -142,7 +142,7 @@ function AppRoutes() {
         <Route
           path="/complaints/:id"
           element={
-            <PrivateRoute allowedRoles={['trader', 'technical_committee', 'higher_committee']}>
+            <PrivateRoute allowedRoles={['TRADER', 'TECHNICAL_COMMITTEE', 'HIGHER_COMMITTEE']}>
               <ComplaintDetail />
             </PrivateRoute>
           }
@@ -152,7 +152,7 @@ function AppRoutes() {
         <Route
           path="/profile"
           element={
-            <PrivateRoute allowedRoles={['trader', 'technical_committee', 'higher_committee']}>
+            <PrivateRoute allowedRoles={['TRADER', 'TECHNICAL_COMMITTEE', 'HIGHER_COMMITTEE']}>
               <Profile />
             </PrivateRoute>
           }
@@ -160,7 +160,7 @@ function AppRoutes() {
         <Route
           path="/change-password"
           element={
-            <PrivateRoute allowedRoles={['trader', 'technical_committee', 'higher_committee']}>
+            <PrivateRoute allowedRoles={['TRADER', 'TECHNICAL_COMMITTEE', 'HIGHER_COMMITTEE']}>
               <ChangePassword />
             </PrivateRoute>
           }
@@ -168,7 +168,7 @@ function AppRoutes() {
         <Route
           path="/settings"
           element={
-            <PrivateRoute allowedRoles={['trader', 'technical_committee', 'higher_committee']}>
+            <PrivateRoute allowedRoles={['TRADER', 'TECHNICAL_COMMITTEE', 'HIGHER_COMMITTEE']}>
               <UserSettings />
             </PrivateRoute>
           }
@@ -178,7 +178,7 @@ function AppRoutes() {
         <Route
           path="/subscription"
           element={
-            <PrivateRoute allowedRoles={['trader']}>
+            <PrivateRoute allowedRoles={['TRADER']}>
               <TraderSubscription />
             </PrivateRoute>
           }
@@ -188,7 +188,7 @@ function AppRoutes() {
         <Route
           path="/task-queue"
           element={
-            <PrivateRoute allowedRoles={['technical_committee', 'higher_committee']}>
+            <PrivateRoute allowedRoles={['TECHNICAL_COMMITTEE', 'HIGHER_COMMITTEE']}>
               <TaskQueue />
             </PrivateRoute>
           }
@@ -198,7 +198,7 @@ function AppRoutes() {
         <Route
           path="/approvals"
           element={
-            <PrivateRoute allowedRoles={['higher_committee']}>
+            <PrivateRoute allowedRoles={['HIGHER_COMMITTEE']}>
               <ApprovalManagement />
             </PrivateRoute>
           }
@@ -206,7 +206,7 @@ function AppRoutes() {
         <Route
           path="/merchant-approvals"
           element={
-            <PrivateRoute allowedRoles={['higher_committee']}>
+            <PrivateRoute allowedRoles={['HIGHER_COMMITTEE']}>
               <MerchantApprovals />
             </PrivateRoute>
           }
@@ -216,7 +216,7 @@ function AppRoutes() {
         <Route
           path="/admin/users"
           element={
-            <PrivateRoute allowedRoles={['higher_committee']}>
+            <PrivateRoute allowedRoles={['HIGHER_COMMITTEE']}>
               <UsersManagement />
             </PrivateRoute>
           }
@@ -224,7 +224,7 @@ function AppRoutes() {
         <Route
           path="/admin/payments"
           element={
-            <PrivateRoute allowedRoles={['higher_committee']}>
+            <PrivateRoute allowedRoles={['HIGHER_COMMITTEE']}>
               <PaymentsReview />
             </PrivateRoute>
           }
@@ -232,7 +232,7 @@ function AppRoutes() {
         <Route
           path="/admin/settings"
           element={
-            <PrivateRoute allowedRoles={['higher_committee']}>
+            <PrivateRoute allowedRoles={['HIGHER_COMMITTEE']}>
               <Settings />
             </PrivateRoute>
           }
@@ -240,7 +240,7 @@ function AppRoutes() {
         <Route
           path="/admin/analytics"
           element={
-            <PrivateRoute allowedRoles={['higher_committee']}>
+            <PrivateRoute allowedRoles={['HIGHER_COMMITTEE']}>
               <Analytics />
             </PrivateRoute>
           }
@@ -248,7 +248,7 @@ function AppRoutes() {
         <Route
           path="/admin/audit-log"
           element={
-            <PrivateRoute allowedRoles={['higher_committee']}>
+            <PrivateRoute allowedRoles={['HIGHER_COMMITTEE']}>
               <AuditLog />
             </PrivateRoute>
           }
@@ -256,7 +256,7 @@ function AppRoutes() {
         <Route
           path="/admin/quick-replies"
           element={
-            <PrivateRoute allowedRoles={['technical_committee', 'higher_committee']}>
+            <PrivateRoute allowedRoles={['TECHNICAL_COMMITTEE', 'HIGHER_COMMITTEE']}>
               <QuickReplies />
             </PrivateRoute>
           }

@@ -80,7 +80,7 @@ function HigherCommitteeDashboard() {
     try {
       const [statsRes, complaintsRes] = await Promise.all([
         api.get('/dashboard/stats'),
-        api.get('/complaints?limit=10&status=escalated')
+        api.get('/complaints?limit=10&status=ESCALATED')
       ]);
       
       setStats(statsRes.data);
@@ -94,6 +94,7 @@ function HigherCommitteeDashboard() {
   };
 
   const getStatusColor = (status) => {
+    const statusLower = status?.toLowerCase();
     const colors = {
       submitted: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
       under_review: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300',
@@ -101,10 +102,11 @@ function HigherCommitteeDashboard() {
       resolved: 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300',
       rejected: 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300',
     };
-    return colors[status] || 'bg-gray-100 text-gray-700';
+    return colors[statusLower] || 'bg-gray-100 text-gray-700';
   };
 
   const getStatusLabel = (status) => {
+    const statusLower = status?.toLowerCase();
     const labels = {
       submitted: 'مقدمة',
       under_review: 'قيد المراجعة',
@@ -112,7 +114,7 @@ function HigherCommitteeDashboard() {
       resolved: 'محلولة',
       rejected: 'مرفوضة',
     };
-    return labels[status] || status;
+    return labels[statusLower] || status;
   };
 
   const resolutionRate = stats ? 
@@ -350,7 +352,7 @@ function OverviewTab({ stats, escalatedCount, resolutionRate, navigate }) {
             </div>
             {escalatedCount > 0 && (
               <CTAButton
-                onClick={() => navigate('/complaints?status=escalated')}
+                onClick={() => navigate('/complaints?status=ESCALATED')}
                 variant="warning"
                 size="md"
                 fullWidth
@@ -467,7 +469,7 @@ function ComplaintsTab({ recentComplaints, navigate, getStatusColor, getStatusLa
             </div>
           </div>
           <CTAButton
-            onClick={() => navigate('/complaints?status=escalated')}
+            onClick={() => navigate('/complaints?status=ESCALATED')}
             variant="primary"
             size="md"
             icon={EyeIcon}

@@ -280,9 +280,9 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
             <p className="text-sm text-gray-600">رقم الشكوى: #{complaint.id}</p>
           </div>
           <span className={`px-4 py-2 rounded-full text-sm ${
-            complaint.status === 'resolved' ? 'bg-green-100 text-green-800' :
-            complaint.status === 'rejected' ? 'bg-red-100 text-red-800' :
-            complaint.status === 'escalated' ? 'bg-yellow-100 text-yellow-800' :
+            complaint.status === 'RESOLVED' ? 'bg-green-100 text-green-800' :
+            complaint.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+            complaint.status === 'ESCALATED' ? 'bg-yellow-100 text-yellow-800' :
             'bg-blue-100 text-blue-800'
           }`}>
             {getStatusText(complaint.status)}

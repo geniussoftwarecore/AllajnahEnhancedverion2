@@ -26,10 +26,10 @@ function AccountStats({ user }) {
         
         const statsData = {
           total: complaints.length,
-          submitted: complaints.filter(c => c.status === 'submitted').length,
-          underReview: complaints.filter(c => c.status === 'under_review').length,
-          resolved: complaints.filter(c => c.status === 'resolved').length,
-          rejected: complaints.filter(c => c.status === 'rejected').length,
+          submitted: complaints.filter(c => c.status === 'SUBMITTED').length,
+          underReview: complaints.filter(c => c.status === 'UNDER_REVIEW').length,
+          resolved: complaints.filter(c => c.status === 'RESOLVED').length,
+          rejected: complaints.filter(c => c.status === 'REJECTED').length,
           loading: false
         };
         
