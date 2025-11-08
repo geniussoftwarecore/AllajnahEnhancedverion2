@@ -1,8 +1,20 @@
 {
-  "name": "Allajnah Enhanced - Complaint Management",
-  "short_name": "Allajnah",
-  "description": "نظام إدارة الشكاوى المحسن - Complaint Management System",
+  "name": "الاجنة المحسنة - نظام إدارة الشكاوى",
+  "short_name": "الاجنة",
+  "description": "نظام إدارة الشكاوى المحسن للتجار واللجان الرقابية - Complaint Management System for Traders and Oversight Committees",
   "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
     {
       "src": "/favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
@@ -10,10 +22,13 @@
     }
   ],
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#3b82f6",
+  "theme_color": "#22c55e",
   "background_color": "#ffffff",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "lang": "ar",
-  "dir": "rtl"
+  "dir": "rtl",
+  "categories": ["government", "productivity", "business"],
+  "screenshots": []
 }
