@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FilterBar, ChartCard, ResponsivePageShell, Alert, ConfirmDialog, CTAButton, LoadingFallback } from './ui';
+import { FilterBar, ChartCard, ResponsivePageShell, Alert, ConfirmDialog, CTAButton, LoadingFallback, ExportButton } from './ui';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { 
@@ -322,6 +322,44 @@ function ComplaintList({ onUpdate, role, embedded = false }) {
           showPriority={role === 'technical_committee' || role === 'higher_committee'}
           onClearFilters={clearFilters}
         />
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+        className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-700"
+      >
+        <div>
+          <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">تصدير البيانات</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400">تصدير الشكاوى الحالية بتنسيقات مختلفة</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <ExportButton
+            endpoint="/api/export/complaints/excel"
+            filename="complaints"
+            params={{
+              status: statusFilter !== 'all' ? statusFilter : undefined,
+              category_id: categoryFilter !== 'all' ? categoryFilter : undefined,
+              priority: priorityFilter !== 'all' ? priorityFilter : undefined,
+              search: searchTerm || undefined
+            }}
+            label="تصدير Excel"
+            format="excel"
+          />
+          <ExportButton
+            endpoint="/api/export/complaints/csv"
+            filename="complaints"
+            params={{
+              status: statusFilter !== 'all' ? statusFilter : undefined,
+              category_id: categoryFilter !== 'all' ? categoryFilter : undefined,
+              priority: priorityFilter !== 'all' ? priorityFilter : undefined,
+              search: searchTerm || undefined
+            }}
+            label="تصدير CSV"
+            format="csv"
+          />
+        </div>
       </motion.div>
 
       {canUseBulkActions && selectedIds.length > 0 && (

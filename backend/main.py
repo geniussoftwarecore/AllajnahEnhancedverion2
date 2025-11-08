@@ -3124,6 +3124,8 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(...), db: 
 async def export_complaints_csv(
     status: Optional[ComplaintStatus] = None,
     category_id: Optional[int] = None,
+    priority: Optional[Priority] = None,
+    search: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -3136,6 +3138,15 @@ async def export_complaints_csv(
         query = query.filter(Complaint.status == status)
     if category_id:
         query = query.filter(Complaint.category_id == category_id)
+    if priority:
+        query = query.filter(Complaint.priority == priority)
+    if search:
+        query = query.filter(
+            or_(
+                Complaint.title.ilike(f"%{search}%"),
+                Complaint.description.ilike(f"%{search}%")
+            )
+        )
     
     complaints = query.all()
     data = [
@@ -3164,6 +3175,8 @@ async def export_complaints_csv(
 async def export_complaints_excel(
     status: Optional[ComplaintStatus] = None,
     category_id: Optional[int] = None,
+    priority: Optional[Priority] = None,
+    search: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -3176,6 +3189,15 @@ async def export_complaints_excel(
         query = query.filter(Complaint.status == status)
     if category_id:
         query = query.filter(Complaint.category_id == category_id)
+    if priority:
+        query = query.filter(Complaint.priority == priority)
+    if search:
+        query = query.filter(
+            or_(
+                Complaint.title.ilike(f"%{search}%"),
+                Complaint.description.ilike(f"%{search}%")
+            )
+        )
     
     complaints = query.all()
     data = [
@@ -3230,6 +3252,102 @@ async def export_complaint_pdf(
         iter([pdf_buffer.getvalue()]),
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename=complaint_{complaint_id}.pdf"}
+    )
+
+
+@app.get("/api/export/analytics/excel")
+async def export_analytics_excel(
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE, UserRole.TECHNICAL_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    total_complaints = db.query(func.count(Complaint.id)).scalar()
+    submitted = db.query(func.count(Complaint.id)).filter(Complaint.status == ComplaintStatus.SUBMITTED).scalar()
+    under_review = db.query(func.count(Complaint.id)).filter(Complaint.status == ComplaintStatus.UNDER_REVIEW).scalar()
+    escalated = db.query(func.count(Complaint.id)).filter(Complaint.status == ComplaintStatus.ESCALATED).scalar()
+    resolved = db.query(func.count(Complaint.id)).filter(Complaint.status == ComplaintStatus.RESOLVED).scalar()
+    rejected = db.query(func.count(Complaint.id)).filter(Complaint.status == ComplaintStatus.REJECTED).scalar()
+    
+    data = [
+        {
+            "Metric": "Total Complaints",
+            "Value": total_complaints
+        },
+        {
+            "Metric": "Submitted",
+            "Value": submitted
+        },
+        {
+            "Metric": "Under Review",
+            "Value": under_review
+        },
+        {
+            "Metric": "Escalated",
+            "Value": escalated
+        },
+        {
+            "Metric": "Resolved",
+            "Value": resolved
+        },
+        {
+            "Metric": "Rejected",
+            "Value": rejected
+        }
+    ]
+    
+    excel_buffer = export_service.export_to_excel(data, "Analytics")
+    
+    return StreamingResponse(
+        iter([excel_buffer.getvalue()]),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename=analytics_{datetime.now().strftime('%Y%m%d')}.xlsx"}
+    )
+
+
+@app.get("/api/export/analytics/csv")
+async def export_analytics_csv(
+    current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE, UserRole.TECHNICAL_COMMITTEE)),
+    db: Session = Depends(get_db)
+):
+    total_complaints = db.query(func.count(Complaint.id)).scalar()
+    submitted = db.query(func.count(Complaint.id)).filter(Complaint.status == ComplaintStatus.SUBMITTED).scalar()
+    under_review = db.query(func.count(Complaint.id)).filter(Complaint.status == ComplaintStatus.UNDER_REVIEW).scalar()
+    escalated = db.query(func.count(Complaint.id)).filter(Complaint.status == ComplaintStatus.ESCALATED).scalar()
+    resolved = db.query(func.count(Complaint.id)).filter(Complaint.status == ComplaintStatus.RESOLVED).scalar()
+    rejected = db.query(func.count(Complaint.id)).filter(Complaint.status == ComplaintStatus.REJECTED).scalar()
+    
+    data = [
+        {
+            "Metric": "Total Complaints",
+            "Value": total_complaints
+        },
+        {
+            "Metric": "Submitted",
+            "Value": submitted
+        },
+        {
+            "Metric": "Under Review",
+            "Value": under_review
+        },
+        {
+            "Metric": "Escalated",
+            "Value": escalated
+        },
+        {
+            "Metric": "Resolved",
+            "Value": resolved
+        },
+        {
+            "Metric": "Rejected",
+            "Value": rejected
+        }
+    ]
+    
+    csv_buffer = export_service.export_to_csv(data)
+    
+    return StreamingResponse(
+        iter([csv_buffer.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=analytics_{datetime.now().strftime('%Y%m%d')}.csv"}
     )
 
 

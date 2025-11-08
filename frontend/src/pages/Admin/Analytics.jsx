@@ -113,6 +113,18 @@ function Analytics() {
               </div>
               <div className="flex flex-wrap gap-3">
                 <ExportButton
+                  endpoint="/api/export/analytics/excel"
+                  filename="analytics_report"
+                  label="تصدير Excel"
+                  format="excel"
+                />
+                <ExportButton
+                  endpoint="/api/export/analytics/csv"
+                  filename="analytics_report"
+                  label="تصدير CSV"
+                  format="csv"
+                />
+                <ExportButton
                   endpoint="/api/export/analytics/pdf"
                   filename="analytics_report"
                   label="تصدير PDF"
