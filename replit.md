@@ -46,10 +46,10 @@ I prefer iterative development with a focus on completing core functionalities f
 -   **Admin Management**: CRUD operations for users, categories, payment methods, SLA configurations, and system settings.
 -   **Category System**: Complaints organized by government entities with cascading selection.
 -   **Export & Reporting**:
-    - **Excel Export**: Export complaints list with filters (status, category) in Excel format
-    - **CSV Export**: Export complaints data in CSV format
-    - **PDF Reports**: Generate PDF reports for individual complaints and analytics with Arabic RTL support
-    - **Analytics Export**: Export analytics data as PDF with proper Arabic formatting
+    - **Complaint List Export**: Export filtered complaints to Excel or CSV formats with full filter support (status, category, priority, search term)
+    - **Individual Complaint PDF**: Export single complaints to PDF with Arabic RTL support
+    - **Analytics Export**: Export analytics data to Excel, CSV, or PDF formats with proper Arabic formatting
+    - **Filter Parity**: All exports respect active filters to ensure exported data matches on-screen results for accurate government oversight reporting
 
 ### System Design Choices
 -   **Modularity**: Project structured into `backend/` and `frontend/` directories.
@@ -123,9 +123,10 @@ See `backend/.env.example` for a complete list of configurable environment varia
    - Service worker registration in production mode only
 3. **Mobile Responsiveness**: Comprehensive mobile-first design already implemented
 4. **Data Export Functionality**: Complete export system with:
-   - Excel export for complaints and analytics with filtering
-   - CSV export for data portability
-   - PDF reports with full Arabic RTL support
-   - Arabic font rendering using NotoSansArabic.ttf
-   - Proper text reshaping using arabic-reshaper and python-bidi
-   - ExportButton UI component integrated in Analytics page
+   - **Complaint List Exports**: Excel and CSV formats with full filter support (status, category, priority, search)
+   - **Individual Complaint PDF**: Export single complaints with Arabic RTL formatting
+   - **Analytics Exports**: Excel, CSV, and PDF formats for comprehensive reporting
+   - **Filter Parity**: All exports honor active filters ensuring data accuracy for official government reporting
+   - **UI Integration**: ExportButton components in ComplaintList, ComplaintDetail, and Analytics pages
+   - **Arabic Support**: Full RTL support using NotoSansArabic.ttf, arabic-reshaper, and python-bidi
+   - **Backend Endpoints**: `/api/export/complaints/excel`, `/api/export/complaints/csv`, `/api/export/complaint/{id}/pdf`, `/api/export/analytics/excel`, `/api/export/analytics/csv`, `/api/export/analytics/pdf`
