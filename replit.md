@@ -71,6 +71,8 @@ I prefer iterative development with a focus on completing core functionalities f
 -   **Notifications**: react-toastify
 -   **Icons**: lucide-react
 -   **Animation**: Framer Motion
+-   **PDF Generation**: ReportLab (Python) with NotoSansArabic.ttf font for Arabic RTL support
+-   **Arabic Text Processing**: arabic-reshaper, python-bidi for proper Arabic text rendering in PDFs
 
 ## Environment Configuration
 
@@ -111,3 +113,19 @@ See `backend/.env.example` for a complete list of configurable environment varia
 - Added .gitignore files for backend and frontend
 - Fixed role validation bug (HIGHER_COMMITTEE enum value)
 - Improved error handling for validation responses
+
+## Recent Updates (November 8, 2025)
+### High-Priority Features Completed
+1. **In-App Notification System**: Fully functional with real-time WebSocket updates, notification bell UI, unread count, mark as read/unread functionality, and toast notifications
+2. **PWA (Progressive Web App)**: Complete PWA setup with:
+   - manifest.json with proper app icons and configuration
+   - Service worker with smart caching strategies (cache-first for static assets, network-first for APIs)
+   - Service worker registration in production mode only
+3. **Mobile Responsiveness**: Comprehensive mobile-first design already implemented
+4. **Data Export Functionality**: Complete export system with:
+   - Excel export for complaints and analytics with filtering
+   - CSV export for data portability
+   - PDF reports with full Arabic RTL support
+   - Arabic font rendering using NotoSansArabic.ttf
+   - Proper text reshaping using arabic-reshaper and python-bidi
+   - ExportButton UI component integrated in Analytics page
