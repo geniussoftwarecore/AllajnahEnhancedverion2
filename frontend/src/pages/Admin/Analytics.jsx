@@ -5,7 +5,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { ResponsivePageShell, AdminNavMenu } from '../../components/ui';
+import { ResponsivePageShell, AdminNavMenu, ExportButton } from '../../components/ui';
 import api from '../../api/axios';
 
 function Analytics() {
@@ -101,6 +101,23 @@ function Analytics() {
                   </svg>
                   تطبيق التصفية
                 </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="card-premium p-6 mb-6 shadow-lg">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">تصدير التقارير</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">قم بتصدير البيانات التحليلية بتنسيقات مختلفة</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <ExportButton
+                  endpoint="/api/export/analytics/pdf"
+                  filename="analytics_report"
+                  label="تصدير PDF"
+                  format="pdf"
+                />
               </div>
             </div>
           </div>

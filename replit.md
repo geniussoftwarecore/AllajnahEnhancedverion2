@@ -12,7 +12,8 @@ I prefer iterative development with a focus on completing core functionalities f
 -   **Language Support**: Full Arabic language support with RTL layout using i18next; English also supported.
 -   **Design System**: TailwindCSS for consistent, responsive design, incorporating modern aesthetics like Neumorphism and Glassmorphism, and full dark mode support. Features smooth animations via Framer Motion.
 -   **Accessibility**: Enhanced ARIA roles and semantic HTML across UI components.
--   **Responsive Design**: Mobile-first approach with custom Tailwind breakpoints.
+-   **Responsive Design**: Mobile-first approach with custom Tailwind breakpoints, mobile navigation drawer, bottom navigation, touch-friendly design.
+-   **Progressive Web App (PWA)**: Installable on mobile devices with service worker for offline caching, app manifest with proper icons, optimized caching strategies (cache-first for static assets, network-first for API calls).
 
 ### Technical Implementations
 -   **Authentication**: JWT-based authentication with robust role-based access control (RBAC).
@@ -20,7 +21,9 @@ I prefer iterative development with a focus on completing core functionalities f
 -   **Workflow Automation**: Smart task queuing, multi-member task assignment, SLA monitoring with auto-escalation, and auto-closing. Includes concurrency protection and a Higher Committee approval system.
 -   **Enhanced Escalation System**: Manual escalation by TC members, trader appeal paths to Higher Committee, intelligent TC reassignment, automatic routing of reopened complaints to different reviewers, multi-reviewer approval requirements for complex cases, and mediation request workflow.
 -   **Duplicate Detection**: Text similarity to warn about potential duplicate complaints.
--   **Notification System**: Comprehensive email (SendGrid) and SMS (Twilio - currently email-only mode) notification system with granular user preferences. Uses Replit connectors first, falling back to environment variables.
+-   **Notification System**: 
+    - **In-App Notifications**: Real-time notification bell with unread count, dropdown panel, mark as read/unread, WebSocket-powered live updates, toast notifications for new events
+    - **External Notifications** (Optional): Email (SendGrid) and SMS (Twilio) support with granular user preferences. Uses Replit connectors first, falling back to environment variables.
 -   **Analytics**: Comprehensive dashboard statistics and administrative analytics.
 -   **Audit Trail**: System-wide logging of key actions including all escalations, appeals, reassignments, and mediation requests.
 -   **Security**: Robust file upload validation, CORS configuration, rate limiting, and session handling.
@@ -42,6 +45,11 @@ I prefer iterative development with a focus on completing core functionalities f
 -   **Subscription & Payment Management**: Annual subscriptions for traders, committee approval for payment proofs, multiple payment methods, and detailed instructions.
 -   **Admin Management**: CRUD operations for users, categories, payment methods, SLA configurations, and system settings.
 -   **Category System**: Complaints organized by government entities with cascading selection.
+-   **Export & Reporting**:
+    - **Excel Export**: Export complaints list with filters (status, category) in Excel format
+    - **CSV Export**: Export complaints data in CSV format
+    - **PDF Reports**: Generate PDF reports for individual complaints and analytics with Arabic RTL support
+    - **Analytics Export**: Export analytics data as PDF with proper Arabic formatting
 
 ### System Design Choices
 -   **Modularity**: Project structured into `backend/` and `frontend/` directories.

@@ -17,3 +17,4 @@ export { default as EmptyState } from './EmptyState';
 export { default as LoadingFallback } from '../LoadingFallback';
 export { default as AdminNavMenu } from './AdminNavMenu';
 export { default as NotificationBell } from './NotificationBell';
+export { default as ExportButton } from './ExportButton';
