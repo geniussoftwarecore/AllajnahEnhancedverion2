@@ -16,3 +16,4 @@ export { default as Skeleton, SkeletonCard, SkeletonStat, SkeletonTable, Skeleto
 export { default as EmptyState } from './EmptyState';
 export { default as LoadingFallback } from '../LoadingFallback';
 export { default as AdminNavMenu } from './AdminNavMenu';
+export { default as NotificationBell } from './NotificationBell';

@@ -71,6 +71,18 @@
   "password": {
     "requirements": "Password must contain uppercase, lowercase, number and special character"
   },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications",
+    "markAllRead": "Mark all as read",
+    "markRead": "Mark as read",
+    "delete": "Delete",
+    "viewAll": "View all notifications",
+    "justNow": "Just now",
+    "minsAgo": "{{count}} mins ago",
+    "hoursAgo": "{{count}} hours ago",
+    "daysAgo": "{{count}} days ago"
+  },
   "common": {
     "loading": "Loading...",
     "submit": "Submit",

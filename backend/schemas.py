@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
-from models import UserRole, ComplaintStatus, Priority, SubscriptionStatus, PaymentStatus, TaskStatus, ApprovalStatus, AccountStatus, EscalationType, AppealStatus, MediationStatus, EscalationState
+from models import UserRole, ComplaintStatus, Priority, SubscriptionStatus, PaymentStatus, TaskStatus, ApprovalStatus, AccountStatus, EscalationType, AppealStatus, MediationStatus, EscalationState, NotificationType
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -603,3 +603,42 @@ class ManualEscalationRequest(BaseModel):
 class ReassignmentRequest(BaseModel):
     target_user_id: Optional[int] = None
     reason: str
+
+class NotificationCreate(BaseModel):
+    user_id: int
+    type: NotificationType
+    title_ar: str
+    title_en: str
+    message_ar: str
+    message_en: str
+    related_complaint_id: Optional[int] = None
+    related_user_id: Optional[int] = None
+    related_payment_id: Optional[int] = None
+    action_url: Optional[str] = None
+
+class NotificationUpdate(BaseModel):
+    is_read: Optional[bool] = None
+
+class NotificationResponse(BaseModel):
+    id: int
+    user_id: int
+    type: NotificationType
+    title_ar: str
+    title_en: str
+    message_ar: str
+    message_en: str
+    is_read: bool
+    related_complaint_id: Optional[int] = None
+    related_user_id: Optional[int] = None
+    related_payment_id: Optional[int] = None
+    action_url: Optional[str] = None
+    created_at: datetime
+    read_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class NotificationListResponse(BaseModel):
+    total: int
+    unread_count: int
+    notifications: List[NotificationResponse]

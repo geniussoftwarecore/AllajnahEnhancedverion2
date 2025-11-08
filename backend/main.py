@@ -38,7 +38,8 @@ from schemas import (
     ComplaintEscalationCreate, ComplaintEscalationResponse,
     ComplaintAppealCreate, ComplaintAppealUpdate, ComplaintAppealResponse,
     ComplaintMediationRequestCreate, ComplaintMediationRequestUpdate, ComplaintMediationRequestResponse,
-    ManualEscalationRequest, ReassignmentRequest
+    ManualEscalationRequest, ReassignmentRequest,
+    NotificationResponse, NotificationListResponse
 )
 from auth import (
     get_password_hash, verify_password, create_access_token,
@@ -344,7 +345,7 @@ def register_merchant(
     db.commit()
     db.refresh(new_user)
     
-    create_audit_log(db, None, "MERCHANT_REGISTRATION", "user", new_user.id, 
+    create_audit_log(db, new_user.id, "MERCHANT_REGISTRATION", "user", new_user.id, 
                      f"Merchant registration request submitted for {new_user.email}")
     db.commit()
     
@@ -411,7 +412,7 @@ def get_merchant_requests(
     return [UserResponse.model_validate(req) for req in requests]
 
 @app.put("/api/admin/merchant-requests/{user_id}", response_model=UserResponse)
-def approve_reject_merchant(
+async def approve_reject_merchant(
     user_id: int,
     approval_data: MerchantApprovalRequest,
     current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
@@ -461,6 +462,29 @@ def approve_reject_merchant(
     
     create_audit_log(db, current_user.id, action, "user", merchant.id, message)
     db.commit()
+    
+    if approval_data.approved:
+        await notification_service.create_in_app_notification(
+            db=db,
+            user_id=merchant.id,
+            notification_type="ACCOUNT_APPROVED",
+            title_ar="تمت الموافقة على حسابك",
+            title_en="Account Approved",
+            message_ar="تمت الموافقة على حسابك كتاجر. يمكنك الآن تسجيل الدخول وتقديم الشكاوى.",
+            message_en="Your merchant account has been approved. You can now login and submit complaints.",
+            action_url="/dashboard"
+        )
+    else:
+        await notification_service.create_in_app_notification(
+            db=db,
+            user_id=merchant.id,
+            notification_type="ACCOUNT_REJECTED",
+            title_ar="تم رفض حسابك",
+            title_en="Account Rejected",
+            message_ar=f"تم رفض حسابك كتاجر. السبب: {approval_data.rejection_reason}",
+            message_en=f"Your merchant account has been rejected. Reason: {approval_data.rejection_reason}",
+            action_url="/login"
+        )
     
     return UserResponse.model_validate(merchant)
 
@@ -698,7 +722,7 @@ def check_complaint_duplicate(
 
 @app.post("/api/complaints", response_model=ComplaintResponse)
 @limiter.limit(COMPLAINT_RATE_LIMIT)
-def create_complaint(
+async def create_complaint(
     request: Request,
     complaint_data: ComplaintCreate,
     current_user: User = Depends(require_role(UserRole.TRADER)),
@@ -719,6 +743,19 @@ def create_complaint(
     create_audit_log(db, current_user.id, "CREATE_COMPLAINT", "complaint", new_complaint.id,
                      f"Created complaint #{new_complaint.id}")
     db.commit()
+    
+    if new_complaint.assigned_to_id:
+        await notification_service.create_in_app_notification(
+            db=db,
+            user_id=new_complaint.assigned_to_id,
+            notification_type="COMPLAINT_ASSIGNED",
+            title_ar=f"شكوى جديدة #{new_complaint.id}",
+            title_en=f"New Complaint #{new_complaint.id}",
+            message_ar=f"تم تعيين شكوى جديدة لك: {new_complaint.title}",
+            message_en=f"A new complaint has been assigned to you: {new_complaint.title}",
+            related_complaint_id=new_complaint.id,
+            action_url=f"/complaints/{new_complaint.id}"
+        )
     
     return ComplaintResponse.model_validate(new_complaint)
 
@@ -3006,6 +3043,57 @@ def trigger_auto_close(
         "message": "Auto-close completed",
         "closed_complaints": closed
     }
+
+@app.get("/api/notifications", response_model=NotificationListResponse)
+async def get_notifications(
+    skip: int = 0,
+    limit: int = 20,
+    unread_only: bool = False,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    result = notification_service.get_user_notifications(
+        db, current_user.id, skip, limit, unread_only
+    )
+    return result
+
+@app.get("/api/notifications/unread-count")
+def get_unread_count(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    count = notification_service.get_unread_count(db, current_user.id)
+    return {"count": count}
+
+@app.patch("/api/notifications/{notification_id}/read", response_model=NotificationResponse)
+def mark_notification_read(
+    notification_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    notification = notification_service.mark_notification_as_read(db, notification_id, current_user.id)
+    if not notification:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return notification
+
+@app.post("/api/notifications/mark-all-read")
+def mark_all_notifications_read(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    count = notification_service.mark_all_as_read(db, current_user.id)
+    return {"message": f"Marked {count} notifications as read", "count": count}
+
+@app.delete("/api/notifications/{notification_id}")
+def delete_notification(
+    notification_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    success = notification_service.delete_notification(db, notification_id, current_user.id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return {"message": "Notification deleted successfully"}
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, token: str = Query(...), db: Session = Depends(get_db)):

@@ -4,10 +4,9 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import ProfileDropdown from './ui/ProfileDropdown';
+import NotificationBell from './ui/NotificationBell';
 import { 
-  HomeIcon, 
-  BellIcon,
-  Bars3Icon
+  HomeIcon
 } from '@heroicons/react/24/outline';
 
 function Header() {
@@ -52,14 +51,7 @@ function Header() {
               <HomeIcon className="w-6 h-6" />
             </motion.button>
 
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all"
-              aria-label="الإشعارات"
-            >
-              <BellIcon className="w-6 h-6" />
-            </motion.button>
+            <NotificationBell />
 
             <motion.button
               whileHover={{ scale: 1.1, rotate: 180 }}

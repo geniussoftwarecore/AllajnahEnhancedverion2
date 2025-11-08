@@ -71,6 +71,18 @@
   "password": {
     "requirements": "يجب أن تحتوي كلمة المرور على أحرف كبيرة وصغيرة وأرقام ورموز خاصة"
   },
+  "notifications": {
+    "title": "الإشعارات",
+    "empty": "لا توجد إشعارات",
+    "markAllRead": "تحديد الكل كمقروء",
+    "markRead": "تحديد كمقروء",
+    "delete": "حذف",
+    "viewAll": "عرض جميع الإشعارات",
+    "justNow": "الآن",
+    "minsAgo": "منذ {{count}} دقيقة",
+    "hoursAgo": "منذ {{count}} ساعة",
+    "daysAgo": "منذ {{count}} يوم"
+  },
   "common": {
     "loading": "جاري التحميل...",
     "submit": "إرسال",

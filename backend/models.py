@@ -80,6 +80,25 @@ class EscalationState(str, enum.Enum):
     TRADER_APPEAL = "TRADER_APPEAL"
     MEDIATION = "MEDIATION"
 
+class NotificationType(str, enum.Enum):
+    COMPLAINT_CREATED = "COMPLAINT_CREATED"
+    COMPLAINT_ASSIGNED = "COMPLAINT_ASSIGNED"
+    COMPLAINT_STATUS_UPDATED = "COMPLAINT_STATUS_UPDATED"
+    COMPLAINT_ESCALATED = "COMPLAINT_ESCALATED"
+    COMMENT_ADDED = "COMMENT_ADDED"
+    TASK_ASSIGNED = "TASK_ASSIGNED"
+    TASK_ACCEPTED = "TASK_ACCEPTED"
+    TASK_DECLINED = "TASK_DECLINED"
+    APPROVAL_REQUIRED = "APPROVAL_REQUIRED"
+    APPEAL_SUBMITTED = "APPEAL_SUBMITTED"
+    MEDIATION_REQUESTED = "MEDIATION_REQUESTED"
+    PAYMENT_STATUS_CHANGED = "PAYMENT_STATUS_CHANGED"
+    SUBSCRIPTION_EXPIRING = "SUBSCRIPTION_EXPIRING"
+    SLA_WARNING = "SLA_WARNING"
+    SLA_VIOLATION = "SLA_VIOLATION"
+    ACCOUNT_APPROVED = "ACCOUNT_APPROVED"
+    ACCOUNT_REJECTED = "ACCOUNT_REJECTED"
+
 class User(Base):
     __tablename__ = "users"
     
@@ -110,6 +129,7 @@ class User(Base):
     feedbacks = relationship("ComplaintFeedback", back_populates="user")
     audit_logs = relationship("AuditLog", back_populates="actor")
     approved_by = relationship("User", remote_side=[id], foreign_keys=[approved_by_id])
+    notifications = relationship("Notification", back_populates="user", foreign_keys="Notification.user_id")
 
 class Category(Base):
     __tablename__ = "categories"
@@ -430,3 +450,26 @@ class ComplaintMediationRequest(Base):
     complaint = relationship("Complaint", back_populates="mediation_requests")
     requested_by = relationship("User", foreign_keys=[requested_by_id])
     mediator = relationship("User", foreign_keys=[mediator_id])
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    type = Column(SQLEnum(NotificationType), nullable=False)
+    title_ar = Column(String, nullable=False)
+    title_en = Column(String, nullable=False)
+    message_ar = Column(Text, nullable=False)
+    message_en = Column(Text, nullable=False)
+    is_read = Column(Boolean, default=False, nullable=False)
+    related_complaint_id = Column(Integer, ForeignKey("complaints.id"), nullable=True)
+    related_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    related_payment_id = Column(Integer, ForeignKey("payments.id"), nullable=True)
+    action_url = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    read_at = Column(DateTime, nullable=True)
+    
+    user = relationship("User", back_populates="notifications", foreign_keys=[user_id])
+    related_complaint = relationship("Complaint", foreign_keys=[related_complaint_id])
+    related_user = relationship("User", foreign_keys=[related_user_id])
+    related_payment = relationship("Payment", foreign_keys=[related_payment_id])

@@ -668,6 +668,145 @@ class NotificationService:
             sms_sent = await self.send_sms(user_phone, sms)
         
         return email_sent or sms_sent
+    
+    async def create_in_app_notification(
+        self,
+        db: Session,
+        user_id: int,
+        notification_type: str,
+        title_ar: str,
+        title_en: str,
+        message_ar: str,
+        message_en: str,
+        related_complaint_id: Optional[int] = None,
+        related_user_id: Optional[int] = None,
+        related_payment_id: Optional[int] = None,
+        action_url: Optional[str] = None
+    ):
+        from models import Notification, NotificationType
+        from websocket_manager import manager
+        
+        notification = Notification(
+            user_id=user_id,
+            type=NotificationType(notification_type),
+            title_ar=title_ar,
+            title_en=title_en,
+            message_ar=message_ar,
+            message_en=message_en,
+            related_complaint_id=related_complaint_id,
+            related_user_id=related_user_id,
+            related_payment_id=related_payment_id,
+            action_url=action_url
+        )
+        db.add(notification)
+        db.commit()
+        db.refresh(notification)
+        
+        await manager.send_personal_message({
+            "type": "notification",
+            "data": {
+                "id": notification.id,
+                "type": notification.type.value,
+                "title_ar": notification.title_ar,
+                "title_en": notification.title_en,
+                "message_ar": notification.message_ar,
+                "message_en": notification.message_en,
+                "is_read": notification.is_read,
+                "related_complaint_id": notification.related_complaint_id,
+                "related_user_id": notification.related_user_id,
+                "related_payment_id": notification.related_payment_id,
+                "action_url": notification.action_url,
+                "created_at": notification.created_at.isoformat()
+            }
+        }, user_id)
+        
+        return notification
+    
+    def get_user_notifications(
+        self,
+        db: Session,
+        user_id: int,
+        skip: int = 0,
+        limit: int = 20,
+        unread_only: bool = False
+    ):
+        from models import Notification
+        
+        query = db.query(Notification).filter(Notification.user_id == user_id)
+        
+        if unread_only:
+            query = query.filter(Notification.is_read == False)
+        
+        total = query.count()
+        notifications = query.order_by(Notification.created_at.desc()).offset(skip).limit(limit).all()
+        
+        unread_count = db.query(Notification).filter(
+            Notification.user_id == user_id,
+            Notification.is_read == False
+        ).count()
+        
+        return {
+            "total": total,
+            "unread_count": unread_count,
+            "notifications": notifications
+        }
+    
+    def mark_notification_as_read(self, db: Session, notification_id: int, user_id: int):
+        from models import Notification
+        from datetime import datetime
+        
+        notification = db.query(Notification).filter(
+            Notification.id == notification_id,
+            Notification.user_id == user_id
+        ).first()
+        
+        if notification:
+            notification.is_read = True
+            notification.read_at = datetime.utcnow()
+            db.commit()
+            db.refresh(notification)
+        
+        return notification
+    
+    def mark_all_as_read(self, db: Session, user_id: int):
+        from models import Notification
+        from datetime import datetime
+        
+        notifications = db.query(Notification).filter(
+            Notification.user_id == user_id,
+            Notification.is_read == False
+        ).all()
+        
+        for notification in notifications:
+            notification.is_read = True
+            notification.read_at = datetime.utcnow()
+        
+        db.commit()
+        
+        return len(notifications)
+    
+    def delete_notification(self, db: Session, notification_id: int, user_id: int):
+        from models import Notification
+        
+        notification = db.query(Notification).filter(
+            Notification.id == notification_id,
+            Notification.user_id == user_id
+        ).first()
+        
+        if notification:
+            db.delete(notification)
+            db.commit()
+            return True
+        
+        return False
+    
+    def get_unread_count(self, db: Session, user_id: int) -> int:
+        from models import Notification
+        
+        return db.query(Notification).filter(
+            Notification.user_id == user_id,
+            Notification.is_read == False
+        ).count()
 
 
 notification_service = NotificationService()
