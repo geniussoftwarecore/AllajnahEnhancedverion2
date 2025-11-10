@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 from typing import List, Tuple
-from models import Complaint
+from models import Complaint, ComplaintStatus
 from difflib import SequenceMatcher
+from datetime import datetime, timedelta
 
 
 def calculate_text_similarity(text1: str, text2: str) -> float:
@@ -21,11 +22,22 @@ def find_similar_complaints(
     description: str = "",
     summary: str = "",
     similarity_threshold: float = 0.6,
-    limit: int = 5
+    limit: int = 5,
+    days_back: int = 180
 ) -> List[Tuple[Complaint, float]]:
+    cutoff_date = datetime.utcnow() - timedelta(days=days_back)
+    
     same_category_complaints = db.query(Complaint).filter(
-        Complaint.category_id == category_id
-    ).all()
+        Complaint.category_id == category_id,
+        Complaint.created_at >= cutoff_date,
+        Complaint.status.in_([
+            ComplaintStatus.SUBMITTED,
+            ComplaintStatus.UNDER_REVIEW,
+            ComplaintStatus.ESCALATED,
+            ComplaintStatus.MEDIATION_PENDING,
+            ComplaintStatus.MEDIATION_IN_PROGRESS
+        ])
+    ).order_by(Complaint.created_at.desc()).limit(500).all()
     
     similar_complaints = []
     

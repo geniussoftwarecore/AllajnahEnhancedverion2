@@ -81,6 +81,25 @@ app.add_middleware(
 async def startup_event():
     print("Starting application...")
     
+    print("Validating critical configuration...")
+    try:
+        if not settings.JWT_SECRET_KEY or len(settings.JWT_SECRET_KEY) < 32:
+            raise RuntimeError("JWT_SECRET_KEY must be set and at least 32 characters long. Generate one using: python3 -c \"import secrets; print(secrets.token_urlsafe(32))\"")
+        
+        if not settings.DATABASE_URL:
+            raise RuntimeError("DATABASE_URL must be set")
+        
+        if not settings.CORS_ORIGINS:
+            raise RuntimeError("CORS_ORIGINS must be set. Use '*' for development or comma-separated origins for production")
+        
+        if settings.CORS_ORIGINS == "*":
+            print("⚠️  WARNING: CORS is set to '*'. This is acceptable for development but MUST be changed to specific origins in production!")
+        
+        print(f"✓ Configuration validated (JWT key length: {len(settings.JWT_SECRET_KEY)} chars)")
+    except Exception as e:
+        print(f"✗ CRITICAL CONFIGURATION ERROR: {e}")
+        raise RuntimeError(f"Application startup failed due to configuration error: {e}")
+    
     print("Initializing database...")
     try:
         from database import Base, engine, SessionLocal

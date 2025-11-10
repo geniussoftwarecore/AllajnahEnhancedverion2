@@ -1,17 +1,16 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
-import secrets
 import os
 
 
 class Settings(BaseSettings):
     DATABASE_URL: str
     
-    JWT_SECRET_KEY: str = secrets.token_urlsafe(32)
+    JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
     
-    CORS_ORIGINS: str = "*"
+    CORS_ORIGINS: str
     
     RATE_LIMIT_LOGIN_PER_MINUTE: int = 5
     RATE_LIMIT_COMPLAINTS_PER_HOUR: int = 10

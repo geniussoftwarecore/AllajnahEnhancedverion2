@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Coroutine, Any
 import asyncio
+import logging
 
 from models import (
     Complaint, User, UserRole, ComplaintStatus, Category,
@@ -10,6 +11,50 @@ from models import (
 from audit_helper import create_audit_log
 from task_queue_service import task_queue_service
 from notification_service import notification_service
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def _log_task_result(task: asyncio.Task) -> None:
+    """Callback to log the result of background notification tasks."""
+    try:
+        exc = task.exception()
+        if exc:
+            logger.error(f"Background notification task failed: {exc}", exc_info=exc)
+    except asyncio.CancelledError:
+        logger.warning("Background notification task was cancelled")
+    except Exception as e:
+        logger.error(f"Error retrieving task result: {e}", exc_info=True)
+
+
+def run_async_safely(coro: Coroutine[Any, Any, Any]) -> Any:
+    """
+    Safely run async code from synchronous context.
+    Handles both cases: existing event loop (scheduler) and no event loop.
+    
+    Note: When running in scheduler context, notifications are fire-and-forget
+    to avoid blocking. Failures are logged but not retried. For production,
+    consider implementing a task queue with retry logic.
+    """
+    try:
+        # Try to get the current running event loop
+        try:
+            loop = asyncio.get_running_loop()
+            # We're in an event loop (scheduler context), schedule as background task
+            task = loop.create_task(coro)
+            # Add callback to log any failures
+            task.add_done_callback(_log_task_result)
+            # Don't wait for completion to avoid blocking scheduler
+            logger.debug(f"Scheduled background task: {task.get_name()}")
+            return task
+        except RuntimeError:
+            # No running loop, safe to use asyncio.run
+            logger.debug("Running async task with asyncio.run()")
+            return asyncio.run(coro)
+    except Exception as e:
+        logger.error(f"Error running async task: {e}", exc_info=True)
+        return None
 
 
 def get_setting(db: Session, key: str, default: str) -> str:
@@ -44,22 +89,16 @@ def auto_assign_complaint(db: Session, complaint: Complaint) -> Optional[User]:
                 
                 db.commit()
                 
-                try:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    loop.run_until_complete(
-                        notification_service.send_assignment_notification(
-                            db,
-                            assigned_user.id,
-                            assigned_user.email,
-                            assigned_user.phone,
-                            complaint.id,
-                            language="ar"
-                        )
+                run_async_safely(
+                    notification_service.send_assignment_notification(
+                        db,
+                        assigned_user.id,
+                        assigned_user.email,
+                        assigned_user.phone,
+                        complaint.id,
+                        language="ar"
                     )
-                    loop.close()
-                except Exception as notif_error:
-                    print(f"Error sending assignment notification: {notif_error}")
+                )
                 
                 return assigned_user
         
@@ -67,7 +106,7 @@ def auto_assign_complaint(db: Session, complaint: Complaint) -> Optional[User]:
         db.commit()
         return None
     except Exception as e:
-        print(f"Error in auto_assign_complaint: {e}")
+        logger.error(f"Error in auto_assign_complaint: {e}", exc_info=True)
         db.rollback()
         return None
 
@@ -116,45 +155,33 @@ def check_sla_violations(db: Session, actor_id: Optional[int] = None) -> int:
                     
                     assigned_user = db.query(User).filter(User.id == queue_entry.assigned_user_id).first()
                     if assigned_user:
-                        try:
-                            loop = asyncio.new_event_loop()
-                            asyncio.set_event_loop(loop)
-                            loop.run_until_complete(
-                                notification_service.send_assignment_notification(
-                                    db,
-                                    assigned_user.id,
-                                    assigned_user.email,
-                                    assigned_user.phone,
-                                    complaint.id,
-                                    language="ar"
-                                )
+                        run_async_safely(
+                            notification_service.send_assignment_notification(
+                                db,
+                                assigned_user.id,
+                                assigned_user.email,
+                                assigned_user.phone,
+                                complaint.id,
+                                language="ar"
                             )
-                            loop.close()
-                        except Exception as notif_error:
-                            print(f"Error sending assignment notification: {notif_error}")
+                        )
                 else:
                     complaint.task_status = TaskStatus.IN_QUEUE
                 
                 # Send escalation notification to complaint owner (trader)
                 complaint_owner = db.query(User).filter(User.id == complaint.user_id).first()
                 if complaint_owner:
-                    try:
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-                        loop.run_until_complete(
-                            notification_service.send_escalation_notification(
-                                db,
-                                complaint_owner.id,
-                                complaint_owner.email,
-                                complaint_owner.phone,
-                                complaint.id,
-                                f"تجاوز الوقت المحدد ({escalation_threshold})",
-                                language="ar"
-                            )
+                    run_async_safely(
+                        notification_service.send_escalation_notification(
+                            db,
+                            complaint_owner.id,
+                            complaint_owner.email,
+                            complaint_owner.phone,
+                            complaint.id,
+                            f"تجاوز الوقت المحدد ({escalation_threshold})",
+                            language="ar"
                         )
-                        loop.close()
-                    except Exception as notif_error:
-                        print(f"Error sending escalation notification: {notif_error}")
+                    )
                 
                 create_audit_log(
                     db,
@@ -166,14 +193,14 @@ def check_sla_violations(db: Session, actor_id: Optional[int] = None) -> int:
                 )
                 
                 escalation_count += 1
-                print(f"Auto-escalated complaint #{complaint.id} after {time_since_creation}")
+                logger.info(f"Auto-escalated complaint #{complaint.id} after {time_since_creation}")
         
         if escalation_count > 0:
             db.commit()
-            print(f"Total complaints escalated: {escalation_count}")
+            logger.info(f"Total complaints escalated: {escalation_count}")
     
     except Exception as e:
-        print(f"Error in check_sla_violations: {e}")
+        logger.error(f"Error in check_sla_violations: {e}", exc_info=True)
         db.rollback()
     
     return escalation_count
@@ -229,47 +256,35 @@ def check_sla_warnings(db: Session, actor_id: Optional[int] = None) -> int:
                 # Send warning to complaint owner
                 complaint_owner = db.query(User).filter(User.id == complaint.user_id).first()
                 if complaint_owner:
-                    try:
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-                        loop.run_until_complete(
+                    run_async_safely(
+                        notification_service.send_sla_warning_notification(
+                            db,
+                            complaint_owner.id,
+                            complaint_owner.email,
+                            complaint_owner.phone,
+                            complaint.id,
+                            time_remaining_str,
+                            sla_deadline,
+                            language="ar"
+                        )
+                    )
+                
+                # Send warning to assigned user if exists
+                if complaint.assigned_to_id:
+                    assigned_user = db.query(User).filter(User.id == complaint.assigned_to_id).first()
+                    if assigned_user:
+                        run_async_safely(
                             notification_service.send_sla_warning_notification(
                                 db,
-                                complaint_owner.id,
-                                complaint_owner.email,
-                                complaint_owner.phone,
+                                assigned_user.id,
+                                assigned_user.email,
+                                assigned_user.phone,
                                 complaint.id,
                                 time_remaining_str,
                                 sla_deadline,
                                 language="ar"
                             )
                         )
-                        loop.close()
-                    except Exception as notif_error:
-                        print(f"Error sending SLA warning to owner: {notif_error}")
-                
-                # Send warning to assigned user if exists
-                if complaint.assigned_to_id:
-                    assigned_user = db.query(User).filter(User.id == complaint.assigned_to_id).first()
-                    if assigned_user:
-                        try:
-                            loop = asyncio.new_event_loop()
-                            asyncio.set_event_loop(loop)
-                            loop.run_until_complete(
-                                notification_service.send_sla_warning_notification(
-                                    db,
-                                    assigned_user.id,
-                                    assigned_user.email,
-                                    assigned_user.phone,
-                                    complaint.id,
-                                    time_remaining_str,
-                                    sla_deadline,
-                                    language="ar"
-                                )
-                            )
-                            loop.close()
-                        except Exception as notif_error:
-                            print(f"Error sending SLA warning to assigned user: {notif_error}")
                 
                 # Create audit log to track that warning was sent
                 if actor_id is None:
@@ -288,14 +303,14 @@ def check_sla_warnings(db: Session, actor_id: Optional[int] = None) -> int:
                     )
                 
                 warning_count += 1
-                print(f"SLA warning sent for complaint #{complaint.id} - {time_remaining_str} remaining")
+                logger.info(f"SLA warning sent for complaint #{complaint.id} - {time_remaining_str} remaining")
         
         if warning_count > 0:
             db.commit()
-            print(f"Total SLA warnings sent: {warning_count}")
+            logger.info(f"Total SLA warnings sent: {warning_count}")
     
     except Exception as e:
-        print(f"Error in check_sla_warnings: {e}")
+        logger.error(f"Error in check_sla_warnings: {e}", exc_info=True)
         db.rollback()
     
     return warning_count
@@ -337,26 +352,25 @@ def auto_close_resolved_complaints(db: Session, actor_id: Optional[int] = None) 
             )
             
             closed_count += 1
-            print(f"Auto-closed complaint #{complaint.id}")
+            logger.info(f"Auto-closed complaint #{complaint.id}")
         
         if closed_count > 0:
             db.commit()
-            print(f"Total complaints auto-closed: {closed_count}")
+            logger.info(f"Total complaints auto-closed: {closed_count}")
     
     except Exception as e:
-        print(f"Error in auto_close_resolved_complaints: {e}")
+        logger.error(f"Error in auto_close_resolved_complaints: {e}", exc_info=True)
         db.rollback()
     
     return closed_count
 
 
 def run_periodic_tasks(db: Session, actor_id: Optional[int] = None):
-    print(f"\n=== Running periodic workflow automation tasks at {datetime.utcnow()} ===")
+    logger.info(f"Running periodic workflow automation tasks at {datetime.utcnow()}")
     
     escalated = check_sla_violations(db, actor_id)
     closed = auto_close_resolved_complaints(db, actor_id)
     
-    print(f"Summary: {escalated} complaints escalated, {closed} complaints closed")
-    print("=" * 70 + "\n")
+    logger.info(f"Summary: {escalated} complaints escalated, {closed} complaints closed")
     
     return {"escalated": escalated, "closed": closed}
