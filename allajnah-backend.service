@@ -1,0 +1,25 @@
+[Unit]
+Description=AllAjnah Backend Service
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/allajnah/backend
+Environment="PATH=/var/www/allajnah/backend/venv/bin"
+ExecStart=/var/www/allajnah/backend/venv/bin/gunicorn main:app \
+    --workers 4 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --bind 0.0.0.0:8000 \
+    --timeout 120 \
+    --access-logfile /var/log/allajnah/access.log \
+    --error-logfile /var/log/allajnah/error.log
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
