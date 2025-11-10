@@ -31,15 +31,17 @@ Your AllAjnah Municipal Complaints Management System is now:
    - Production deployment options
    - Security best practices
 
-2. **QUICKSTART.md** (190+ lines)
+2. **QUICKSTART.md** (195+ lines) *Updated*
    - Get started in 5 minutes
    - Automated and manual setup options
+   - **Database migration instructions**
    - First steps after installation
    - Troubleshooting guide
 
-3. **DEPLOYMENT.md** (590+ lines)
+3. **DEPLOYMENT.md** (595+ lines) *Updated*
    - Docker deployment (recommended)
    - Manual VPS deployment
+   - **Database migration with Alembic**
    - Nginx configuration
    - SSL setup with Let's Encrypt
    - Systemd service configuration
@@ -47,73 +49,111 @@ Your AllAjnah Municipal Complaints Management System is now:
    - Security hardening
    - Monitoring setup
 
-4. **INSTALLATION_SUMMARY.md**
+4. **TESTING.md** *New!*
+   - Frontend testing with Playwright
+   - Backend API testing
+   - Manual testing checklists
+   - Performance testing guidelines
+   - Security testing basics
+   - CI/CD integration examples
+
+5. **INSTALLATION_SUMMARY.md** *Updated*
    - Quick reference of all created files
    - Deployment checklist
    - Download instructions
 
-5. **PROJECT_STATUS.md** (This file)
+6. **PROJECT_STATUS.md** (This file) *Updated*
    - Current system status
    - Deployment roadmap
+   - Complete file inventory
 
 ### 🐳 Docker Deployment Files
-6. **docker-compose.yml**
+7. **docker-compose.yml**
    - Multi-container orchestration
    - PostgreSQL + Redis + Backend + Frontend
    - Health checks included
    - Volume management
 
-7. **backend/Dockerfile**
+8. **backend/Dockerfile** *Updated*
    - Python 3.11 slim image
    - Gunicorn with Uvicorn workers
+   - **Entrypoint for automatic migrations**
    - Production-ready configuration
 
-8. **frontend/Dockerfile**
-   - Multi-stage build (Node + Nginx)
-   - Optimized production bundle
-   - Static asset serving
+9. **backend/docker-entrypoint.sh** *New!*
+   - Waits for database readiness
+   - **Runs migrations automatically on startup**
+   - Starts application server
 
-9. **frontend/nginx.conf**
-   - Reverse proxy configuration
-   - Compression enabled
-   - Cache headers optimized
+10. **frontend/Dockerfile**
+    - Multi-stage build (Node + Nginx)
+    - Optimized production bundle
+    - Static asset serving
+
+11. **frontend/nginx.conf**
+    - Reverse proxy configuration
+    - Compression enabled
+    - Cache headers optimized
 
 ### 🖥️ Server Deployment Files
-10. **allajnah-backend.service**
+12. **allajnah-backend.service**
     - Systemd service configuration
     - Auto-restart on failure
     - Proper logging setup
 
-11. **nginx-production.conf**
+13. **nginx-production.conf**
     - Production web server config
     - SSL-ready configuration
     - Security headers included
     - Compression and caching
 
-12. **install-local.sh** (Executable)
+14. **install-local.sh** (Executable)
     - Automated local installation
     - Database setup
     - Environment configuration
     - Dependency installation
 
+15. **backup-db.sh** (Executable) *New!*
+    - Automated PostgreSQL backup
+    - Compression with gzip
+    - **30-day automatic rotation**
+    - Interactive and auto modes
+    - Cron-ready for scheduling
+
+16. **logrotate.conf** *New!*
+    - Log rotation configuration
+    - Daily rotation, 30-day retention
+    - Compression enabled
+    - Service reload hooks
+
 ### ⚙️ Configuration Files
-13. **backend/.env** (Replit environment)
+17. **backend/.env** (Replit environment)
     - Configured for Replit
     - JWT secret secured
     - Database connected
 
-14. **backend/.env.example**
+18. **backend/.env.example**
     - Template with all settings
     - Comments explaining each variable
     - Safe defaults
 
-15. **backend/requirements.txt** (Updated)
+19. **backend/requirements.txt** (Updated)
     - All 27 production dependencies
     - Pinned versions for stability
 
-16. **.env.example.production**
+20. **.env.example.production**
     - Production environment template
     - Security-focused settings
+
+21. **frontend/.env.example** *New!*
+    - Frontend environment variables
+    - **VITE_API_URL configuration**
+    - Production API endpoint setup
+
+22. **frontend/vite.config.js** *Updated*
+    - **Environment variable support**
+    - Dynamic API URL configuration
+    - WebSocket proxy support
 
 ---
 

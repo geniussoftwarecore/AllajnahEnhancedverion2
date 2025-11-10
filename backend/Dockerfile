@@ -16,6 +16,9 @@ COPY . .
 
 RUN mkdir -p uploads
 
+RUN chmod +x docker-entrypoint.sh
+
 EXPOSE 8000
 
+ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["gunicorn", "main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "120"]

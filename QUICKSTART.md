@@ -85,6 +85,9 @@ pip install gunicorn
 cp .env.example .env
 # Edit .env with production values
 
+# Run database migrations
+alembic upgrade head
+
 # 4. Build frontend
 cd ../frontend
 npm install
