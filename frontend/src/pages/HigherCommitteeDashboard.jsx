@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ResponsivePageShell, StatCard, CTAButton, Alert, ProgressRing, SkeletonDashboard, LoadingFallback, AdminNavMenu } from '../components/ui';
+import { ResponsivePageShell, StatCard, CTAButton, Alert, ProgressRing, LoadingFallback, AdminNavMenu } from '../components/ui';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
-import api from '../api/axios';
+import { useDashboardStats, useEscalatedComplaints } from '../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
   DocumentTextIcon, 
   ClockIcon, 
@@ -55,43 +56,28 @@ function HigherCommitteeDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const [stats, setStats] = useState(null);
-  const [recentComplaints, setRecentComplaints] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [notification, setNotification] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
 
-  const { isConnected } = useWebSocket((message) => {
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: recentComplaints = [], isLoading: complaintsLoading } = useEscalatedComplaints(10);
+  
+  const loading = statsLoading || complaintsLoading;
+
+  const handleWebSocketMessage = useCallback((message) => {
     if (message.type === 'complaint_update' || message.type === 'new_complaint' || message.type === 'new_comment') {
       setNotification({
         message: message.message || 'تم تحديث',
         type: 'info'
       });
       setTimeout(() => setNotification(null), 5000);
-      loadDashboardData();
+      queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+      queryClient.invalidateQueries({ queryKey: ['complaints', 'escalated'] });
     }
-  });
+  }, [queryClient]);
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
-    try {
-      const [statsRes, complaintsRes] = await Promise.all([
-        api.get('/dashboard/stats'),
-        api.get('/complaints?limit=10&status=ESCALATED')
-      ]);
-      
-      setStats(statsRes.data);
-      setRecentComplaints(complaintsRes.data.complaints || []);
-      
-    } catch (error) {
-      console.error('Error loading dashboard:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { isConnected } = useWebSocket(handleWebSocketMessage);
 
   const getStatusColor = (status) => {
     const statusLower = status?.toLowerCase();
@@ -129,7 +115,7 @@ function HigherCommitteeDashboard() {
         subtitle="إدارة شاملة للنظام"
         notificationCount={0}
       >
-        <SkeletonDashboard />
+        <LoadingFallback message="جاري تحميل لوحة التحكم..." />
       </ResponsivePageShell>
     );
   }

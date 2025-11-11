@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResponsivePageShell, StatCard, QuickActionCard, ChartCard, FilterBar, Alert, SkeletonDashboard } from '../components/ui';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
-import api from '../api/axios';
+import { useDashboardStats, useCategories, useComplaints } from '../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
+import { debounce } from '../utils/debounce';
 import { 
   DocumentPlusIcon, 
   ClockIcon, 
@@ -20,71 +22,41 @@ import { ar } from 'date-fns/locale';
 function TechnicalCommitteeDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [stats, setStats] = useState(null);
-  const [complaints, setComplaints] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [notification, setNotification] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
 
-  const { isConnected } = useWebSocket((message) => {
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: categories = [] } = useCategories();
+  
+  const filters = useMemo(() => ({
+    limit: 10,
+    ...(searchTerm && { search: searchTerm }),
+    ...(statusFilter !== 'all' && { status: statusFilter }),
+    ...(priorityFilter !== 'all' && { priority: priorityFilter }),
+    ...(categoryFilter !== 'all' && { category_id: categoryFilter }),
+  }), [searchTerm, statusFilter, priorityFilter, categoryFilter]);
+
+  const { data: complaintsData, isLoading: complaintsLoading } = useComplaints(filters);
+  const complaints = complaintsData?.complaints || [];
+  const loading = statsLoading;
+
+  const handleWebSocketMessage = useCallback((message) => {
     if (message.type === 'complaint_update' || message.type === 'new_complaint' || message.type === 'new_comment') {
       setNotification({
         message: message.message || 'تم تحديث شكوى',
         type: 'info'
       });
       setTimeout(() => setNotification(null), 5000);
-      loadDashboardData();
+      queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+      queryClient.invalidateQueries({ queryKey: ['complaints'] });
     }
-  });
+  }, [queryClient]);
 
-  useEffect(() => {
-    loadDashboardData();
-    loadCategories();
-  }, []);
-
-  useEffect(() => {
-    loadComplaints();
-  }, [searchTerm, statusFilter, priorityFilter, categoryFilter]);
-
-  const loadDashboardData = async () => {
-    try {
-      const response = await api.get('/dashboard/stats');
-      setStats(response.data);
-    } catch (error) {
-      console.error('Error loading stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadCategories = async () => {
-    try {
-      const response = await api.get('/categories');
-      setCategories(response.data);
-    } catch (error) {
-      console.error('Error loading categories:', error);
-    }
-  };
-
-  const loadComplaints = async () => {
-    try {
-      const params = {
-        limit: 10,
-        ...(searchTerm && { search: searchTerm }),
-        ...(statusFilter !== 'all' && { status: statusFilter }),
-        ...(priorityFilter !== 'all' && { priority: priorityFilter }),
-        ...(categoryFilter !== 'all' && { category_id: categoryFilter }),
-      };
-      const response = await api.get('/complaints', { params });
-      setComplaints(response.data.complaints || []);
-    } catch (error) {
-      console.error('Error loading complaints:', error);
-    }
-  };
+  const { isConnected } = useWebSocket(handleWebSocketMessage);
 
   const getStatusColor = (status) => {
     const colors = {
