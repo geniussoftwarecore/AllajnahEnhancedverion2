@@ -62,6 +62,23 @@ from websocket_manager import manager
 
 settings = get_settings()
 
+# Helper function to get dashboard URL
+def get_dashboard_url(path: str = "") -> str:
+    """Construct the full dashboard URL for email links"""
+    # Get the first CORS origin as the frontend URL (or use wildcard fallback)
+    if settings.CORS_ORIGINS and settings.CORS_ORIGINS != "*":
+        frontend_url = settings.CORS_ORIGINS.split(',')[0].strip()
+    else:
+        # Fallback to environment variable or default
+        frontend_url = os.getenv("FRONTEND_URL", "https://allajnah-enhanced.replit.app")
+    
+    # Remove trailing slash
+    frontend_url = frontend_url.rstrip('/')
+    # Add path
+    if path:
+        return f"{frontend_url}/{path.lstrip('/')}"
+    return frontend_url
+
 app = FastAPI(title="Allajnah Enhanced API")
 
 app.state.limiter = limiter
@@ -924,12 +941,17 @@ async def reopen_complaint(
                 f"Reopened complaint #{complaint.id} from status {old_status.value}. Reassigned to different TC member: {new_assignee.email}"
             )
             
+            assigner_name = f"{current_user.first_name} {current_user.last_name}"
+            dashboard_url = get_dashboard_url(f"complaints/{complaint.id}")
             await notification_service.send_assignment_notification(
                 db,
                 new_assignee.id,
                 new_assignee.email,
                 new_assignee.phone,
                 complaint.id,
+                complaint.title,
+                assigner_name,
+                dashboard_url,
                 language="ar"
             )
         else:
@@ -948,12 +970,17 @@ async def reopen_complaint(
             if complaint.assigned_to_id:
                 assigned_user = db.query(User).filter(User.id == complaint.assigned_to_id).first()
                 if assigned_user:
+                    assigner_name = f"{current_user.first_name} {current_user.last_name}"
+                    dashboard_url = get_dashboard_url(f"complaints/{complaint.id}")
                     await notification_service.send_assignment_notification(
                         db,
                         assigned_user.id,
                         assigned_user.email,
                         assigned_user.phone,
                         complaint.id,
+                        complaint.title,
+                        assigner_name,
+                        dashboard_url,
                         language="ar"
                     )
     else:
@@ -979,12 +1006,17 @@ async def reopen_complaint(
         if queue_entry and queue_entry.assigned_user_id:
             assigned_user = db.query(User).filter(User.id == queue_entry.assigned_user_id).first()
             if assigned_user:
+                assigner_name = f"{current_user.first_name} {current_user.last_name}"
+                dashboard_url = get_dashboard_url(f"complaints/{complaint.id}")
                 await notification_service.send_assignment_notification(
                     db,
                     assigned_user.id,
                     assigned_user.email,
                     assigned_user.phone,
                     complaint.id,
+                    complaint.title,
+                    assigner_name,
+                    dashboard_url,
                     language="ar"
                 )
     
@@ -1630,12 +1662,17 @@ async def manual_escalate_complaint(
     if queue_entry and queue_entry.assigned_user_id:
         assigned_user = db.query(User).filter(User.id == queue_entry.assigned_user_id).first()
         if assigned_user:
+            assigner_name = f"{current_user.first_name} {current_user.last_name}"
+            dashboard_url = get_dashboard_url(f"complaints/{complaint.id}")
             await notification_service.send_assignment_notification(
                 db,
                 assigned_user.id,
                 assigned_user.email,
                 assigned_user.phone,
                 complaint.id,
+                complaint.title,
+                assigner_name,
+                dashboard_url,
                 language="ar"
             )
     
@@ -1702,12 +1739,17 @@ async def create_complaint_appeal(
     if queue_entry and queue_entry.assigned_user_id:
         assigned_user = db.query(User).filter(User.id == queue_entry.assigned_user_id).first()
         if assigned_user:
+            assigner_name = f"{current_user.first_name} {current_user.last_name}"
+            dashboard_url = get_dashboard_url(f"complaints/{complaint.id}")
             await notification_service.send_assignment_notification(
                 db,
                 assigned_user.id,
                 assigned_user.email,
                 assigned_user.phone,
                 complaint.id,
+                complaint.title,
+                assigner_name,
+                dashboard_url,
                 language="ar"
             )
     
@@ -1874,12 +1916,17 @@ async def reassign_complaint(
     if complaint.assigned_to_id:
         assigned_user = db.query(User).filter(User.id == complaint.assigned_to_id).first()
         if assigned_user and assigned_user.id != current_user.id:
+            assigner_name = f"{current_user.first_name} {current_user.last_name}"
+            dashboard_url = get_dashboard_url(f"complaints/{complaint.id}")
             await notification_service.send_assignment_notification(
                 db,
                 assigned_user.id,
                 assigned_user.email,
                 assigned_user.phone,
                 complaint.id,
+                complaint.title,
+                assigner_name,
+                dashboard_url,
                 language="ar"
             )
     
