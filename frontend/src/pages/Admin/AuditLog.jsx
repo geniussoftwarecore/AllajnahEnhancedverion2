@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ResponsivePageShell, LoadingFallback, CTAButton, AdminNavMenu } from '../../components/ui';
 import { RefreshCcw, ChevronLeft, ChevronRight } from 'lucide-react';
-import api from '../../api/axios';
+import { useAuditLogs } from '../../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
 
 function AuditLog() {
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState({
     user_id: '',
     action: '',
@@ -14,33 +14,10 @@ function AuditLog() {
     limit: 100,
     offset: 0
   });
-  const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    loadLogs();
-  }, [filters]);
-
-  const loadLogs = async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (filters.user_id) params.user_id = filters.user_id;
-      if (filters.action) params.action = filters.action;
-      if (filters.target_type) params.target_type = filters.target_type;
-      params.limit = filters.limit;
-      params.offset = filters.offset;
-      
-      const response = await api.get('/admin/audit-logs', { params });
-      setLogs(response.data);
-      
-      setTotalPages(Math.ceil(response.data.length / filters.limit) || 1);
-    } catch (error) {
-      console.error('Error loading audit logs:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: logs = [], isLoading: loading } = useAuditLogs(filters);
+  const totalPages = useMemo(() => Math.ceil(logs.length / filters.limit) || 1, [logs.length, filters.limit]);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);

@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ResponsivePageShell, CTAButton, LoadingFallback, ConfirmDialog } from '../components/ui';
 import { toast } from 'react-toastify';
+import { useMerchantRequests } from '../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
 import {
   UserGroupIcon,
@@ -19,8 +21,7 @@ import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
 function MerchantApprovals() {
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState('pending');
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
@@ -28,24 +29,7 @@ function MerchantApprovals() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    loadRequests();
-  }, [filter]);
-
-  const loadRequests = async () => {
-    setLoading(true);
-    try {
-      const response = await api.get('/admin/merchant-requests', {
-        params: { status_filter: filter }
-      });
-      setRequests(response.data);
-    } catch (error) {
-      console.error('Error loading merchant requests:', error);
-      toast.error('حدث خطأ أثناء تحميل الطلبات');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: requests = [], isLoading: loading } = useMerchantRequests(filter);
 
   const handleApprove = async (request) => {
     setSelectedRequest(request);
@@ -68,7 +52,7 @@ function MerchantApprovals() {
       });
       toast.success('تم قبول طلب التاجر بنجاح');
       setShowApproveDialog(false);
-      loadRequests();
+      queryClient.invalidateQueries({ queryKey: ['merchantRequests'] });
     } catch (error) {
       console.error('Error approving merchant:', error);
       toast.error('حدث خطأ أثناء قبول الطلب');
@@ -92,7 +76,7 @@ function MerchantApprovals() {
       toast.success('تم رفض طلب التاجر');
       setShowRejectDialog(false);
       setRejectionReason('');
-      loadRequests();
+      queryClient.invalidateQueries({ queryKey: ['merchantRequests'] });
     } catch (error) {
       console.error('Error rejecting merchant:', error);
       toast.error('حدث خطأ أثناء رفض الطلب');

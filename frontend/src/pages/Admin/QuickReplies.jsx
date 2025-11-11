@@ -1,42 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { ResponsivePageShell, ConfirmDialog, AdminNavMenu } from '../../components/ui';
 import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { useQuickReplies } from '../../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '../../api/axios';
 
 function QuickReplies() {
-  const [quickReplies, setQuickReplies] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [editingReply, setEditingReply] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null, isLoading: false });
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     category: ''
   });
 
-  useEffect(() => {
-    loadQuickReplies();
-  }, []);
-
-  const loadQuickReplies = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/quick-replies');
-      setQuickReplies(response.data);
-      
-      const uniqueCategories = [...new Set(response.data.map(r => r.category).filter(Boolean))];
-      setCategories(uniqueCategories);
-    } catch (error) {
-      console.error('Error loading quick replies:', error);
-      toast.error('فشل في تحميل الردود السريعة');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: quickReplies = [], isLoading: loading } = useQuickReplies();
+  const categories = useMemo(() => 
+    [...new Set(quickReplies.map(r => r.category).filter(Boolean))],
+    [quickReplies]
+  );
 
   const handleCreate = () => {
     setEditingReply(null);
@@ -72,7 +58,7 @@ function QuickReplies() {
       }
       
       setShowModal(false);
-      loadQuickReplies();
+      queryClient.invalidateQueries({ queryKey: ['quickReplies'] });
     } catch (error) {
       console.error('Error saving quick reply:', error);
       toast.error(error.response?.data?.detail || 'فشل في حفظ الرد السريع');
@@ -90,7 +76,7 @@ function QuickReplies() {
       await api.delete(`/quick-replies/${confirmDialog.id}`);
       toast.success('تم حذف الرد السريع بنجاح');
       setConfirmDialog({ isOpen: false, id: null, isLoading: false });
-      loadQuickReplies();
+      queryClient.invalidateQueries({ queryKey: ['quickReplies'] });
     } catch (error) {
       console.error('Error deleting quick reply:', error);
       toast.error('فشل في حذف الرد السريع');

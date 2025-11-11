@@ -1,33 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ResponsivePageShell, LoadingFallback, CTAButton, AdminNavMenu } from '../../components/ui';
 import { Eye, CheckCircle, XCircle, X } from 'lucide-react';
+import { usePayments } from '../../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '../../api/axios';
 
 function PaymentsReview() {
-  const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState('PENDING');
   const [selectedPayment, setSelectedPayment] = useState(null);
 
-  useEffect(() => {
-    loadPayments();
-  }, [filter]);
-
-  const loadPayments = async () => {
-    setLoading(true);
-    try {
-      const params = filter !== 'all' ? { status: filter } : {};
-      const response = await api.get('/payments', { params });
-      setPayments(response.data);
-    } catch (error) {
-      console.error('Error loading payments:', error);
-      toast.error('فشل في تحميل الدفعات');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: payments = [], isLoading: loading } = usePayments(filter);
 
   const handleApprove = async (paymentId) => {
     const notes = window.prompt('ملاحظات الموافقة (اختياري):');
@@ -39,7 +24,7 @@ function PaymentsReview() {
         approval_notes: notes || undefined
       });
       toast.success('تمت الموافقة على الدفع بنجاح');
-      loadPayments();
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
       setSelectedPayment(null);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'فشل في الموافقة على الدفع');
@@ -59,7 +44,7 @@ function PaymentsReview() {
         approval_notes: notes
       });
       toast.success('تم رفض الدفع');
-      loadPayments();
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
       setSelectedPayment(null);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'فشل في رفض الدفع');
