@@ -1,6 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastContainer } from 'react-toastify';
@@ -13,6 +14,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Setup from './pages/Setup';
 import MerchantRegister from './pages/MerchantRegister';
+import { queryClient } from './lib/queryClient';
 
 const TraderDashboard = lazy(() => import('./pages/TraderDashboard'));
 const TraderSubscription = lazy(() => import('./pages/TraderSubscription'));
@@ -291,13 +293,15 @@ function AppContent() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <AppContent />
-        </Router>
-      </AuthProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <AppContent />
+          </Router>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 
