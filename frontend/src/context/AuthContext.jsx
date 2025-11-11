@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useMemo, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '../api/axios';
 
 const AuthContext = createContext();
@@ -14,6 +15,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -27,6 +29,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (email, password) => {
     try {
+      queryClient.clear();
+      
       const response = await api.post('auth/login', { email, password });
       const { access_token, user: userData } = response.data;
       
@@ -38,10 +42,12 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       throw error;
     }
-  }, []);
+  }, [queryClient]);
 
   const register = useCallback(async (userData) => {
     try {
+      queryClient.clear();
+      
       const response = await api.post('auth/register', userData);
       const { access_token, user: newUser } = response.data;
       
@@ -53,13 +59,14 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       throw error;
     }
-  }, []);
+  }, [queryClient]);
 
   const logout = useCallback(() => {
+    queryClient.clear();
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
-  }, []);
+  }, [queryClient]);
 
   const updateUser = useCallback((userData) => {
     localStorage.setItem('user', JSON.stringify(userData));

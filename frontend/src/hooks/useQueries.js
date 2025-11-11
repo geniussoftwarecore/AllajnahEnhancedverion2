@@ -1,43 +1,51 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 
 export const useDashboardStats = () => {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['dashboardStats'],
+    queryKey: ['dashboardStats', user?.id],
     queryFn: async () => {
       const response = await api.get('/dashboard/stats');
       return response.data;
     },
     staleTime: 2 * 60 * 1000,
+    enabled: !!user,
   });
 };
 
 export const useRecentComplaints = (limit = 5) => {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['complaints', 'recent', limit],
+    queryKey: ['complaints', 'recent', user?.id, limit],
     queryFn: async () => {
       const response = await api.get(`/complaints?limit=${limit}`);
       return response.data.complaints || [];
     },
     staleTime: 1 * 60 * 1000,
+    enabled: !!user,
   });
 };
 
 export const useSubscription = () => {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['subscription', 'me'],
+    queryKey: ['subscription', 'me', user?.id],
     queryFn: async () => {
       const response = await api.get('/subscriptions/me');
       return response.data;
     },
     staleTime: 5 * 60 * 1000,
     retry: false,
+    enabled: !!user,
   });
 };
 
 export const useAnalytics = (filters = {}) => {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['analytics', filters],
+    queryKey: ['analytics', user?.id, filters],
     queryFn: async () => {
       const params = {};
       if (filters.start_date) params.start_date = filters.start_date;
@@ -46,13 +54,14 @@ export const useAnalytics = (filters = {}) => {
       return response.data;
     },
     staleTime: 3 * 60 * 1000,
-    enabled: true,
+    enabled: !!user,
   });
 };
 
 export const useComplaints = (filters = {}) => {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['complaints', filters],
+    queryKey: ['complaints', user?.id, filters],
     queryFn: async () => {
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
@@ -62,12 +71,14 @@ export const useComplaints = (filters = {}) => {
       return response.data;
     },
     staleTime: 1 * 60 * 1000,
+    enabled: !!user,
   });
 };
 
 export const useUsers = (filters = {}) => {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ['users', filters],
+    queryKey: ['users', user?.id, filters],
     queryFn: async () => {
       const params = {};
       if (filters.role) params.role = filters.role;
@@ -77,6 +88,7 @@ export const useUsers = (filters = {}) => {
       return response.data;
     },
     staleTime: 2 * 60 * 1000,
+    enabled: !!user,
   });
 };
 
