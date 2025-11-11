@@ -1,42 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { ResponsivePageShell, AdminNavMenu, ExportButton } from '../../components/ui';
-import api from '../../api/axios';
+import { useAnalytics } from '../../hooks/useQueries';
 
-function Analytics() {
-  const [analytics, setAnalytics] = useState(null);
-  const [loading, setLoading] = useState(true);
+const Analytics = React.memo(() => {
   const [dateRange, setDateRange] = useState({ start_date: '', end_date: '' });
+  const [appliedFilters, setAppliedFilters] = useState({});
 
-  useEffect(() => {
-    loadAnalytics();
-  }, []);
+  const { data: analytics, isLoading: loading } = useAnalytics(appliedFilters);
 
-  const loadAnalytics = async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (dateRange.start_date) params.start_date = dateRange.start_date;
-      if (dateRange.end_date) params.end_date = dateRange.end_date;
-      
-      const response = await api.get('/admin/analytics', { params });
-      setAnalytics(response.data);
-    } catch (error) {
-      console.error('Error loading analytics:', error);
-      toast.error('فشل في تحميل التحليلات');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleApplyFilters = () => {
-    loadAnalytics();
-  };
+  const handleApplyFilters = useCallback(() => {
+    setAppliedFilters(dateRange);
+  }, [dateRange]);
 
   if (loading) {
     return (
@@ -450,6 +429,8 @@ function Analytics() {
         </div>
       </ResponsivePageShell>
   );
-}
+});
+
+Analytics.displayName = 'Analytics';
 
 export default Analytics;

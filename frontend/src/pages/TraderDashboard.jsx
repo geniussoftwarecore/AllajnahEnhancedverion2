@@ -1,23 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
-import { ResponsivePageShell, StatCard, QuickActionCard, ChartCard, Alert, ProgressRing, SkeletonDashboard, CTAButton, LoadingFallback } from '../components/ui';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ResponsivePageShell, StatCard, Alert, ProgressRing, CTAButton, LoadingFallback } from '../components/ui';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
-import api from '../api/axios';
-import { 
-  DocumentTextIcon, 
-  ClockIcon, 
-  ArrowTrendingUpIcon, 
-  CheckCircleIcon, 
-  XCircleIcon,
-  CreditCardIcon,
-  PlusCircleIcon,
-  ViewfinderCircleIcon,
-  SparklesIcon,
-  BellAlertIcon,
-  CalendarIcon
-} from '@heroicons/react/24/outline';
+import { useDashboardStats, useRecentComplaints, useSubscription } from '../hooks/useQueries';
+import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Eye, CreditCard, Bell, Sparkles, TrendingUp, FileText, Clock, CheckCircle, XCircle, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -26,51 +14,30 @@ function TraderDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const shouldReduceMotion = useReducedMotion();
-  const [stats, setStats] = useState(null);
-  const [recentComplaints, setRecentComplaints] = useState([]);
-  const [subscription, setSubscription] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
+  const queryClient = useQueryClient();
 
-  const { isConnected } = useWebSocket((message) => {
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: recentComplaints = [], isLoading: complaintsLoading } = useRecentComplaints(5);
+  const { data: subscription, isLoading: subLoading } = useSubscription();
+
+  const loading = statsLoading || complaintsLoading;
+
+  const handleWebSocketMessage = useCallback((message) => {
     if (message.type === 'complaint_update' || message.type === 'new_comment') {
       setNotification({
         message: message.message || 'تم تحديث شكوى',
         type: 'info'
       });
       setTimeout(() => setNotification(null), 5000);
-      loadDashboardData();
+      queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+      queryClient.invalidateQueries({ queryKey: ['complaints', 'recent'] });
     }
-  });
+  }, [queryClient]);
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
+  const { isConnected } = useWebSocket(handleWebSocketMessage);
 
-  const loadDashboardData = async () => {
-    try {
-      const [statsRes, complaintsRes] = await Promise.all([
-        api.get('/dashboard/stats'),
-        api.get('/complaints?limit=5')
-      ]);
-      
-      setStats(statsRes.data);
-      setRecentComplaints(complaintsRes.data.complaints || []);
-      
-      try {
-        const subRes = await api.get('/subscriptions/me');
-        setSubscription(subRes.data);
-      } catch (error) {
-        console.log('No subscription found');
-      }
-    } catch (error) {
-      console.error('Error loading dashboard:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusColor = (status) => {
+  const getStatusColor = useCallback((status) => {
     const colors = {
       submitted: 'bg-gray-100 text-gray-700',
       under_review: 'bg-primary-100 text-primary-700',
@@ -79,9 +46,9 @@ function TraderDashboard() {
       rejected: 'bg-danger-100 text-danger-700',
     };
     return colors[status] || 'bg-gray-100 text-gray-700';
-  };
+  }, []);
 
-  const getStatusLabel = (status) => {
+  const getStatusLabel = useCallback((status) => {
     const labels = {
       submitted: 'مقدمة',
       under_review: 'قيد المراجعة',
@@ -90,10 +57,12 @@ function TraderDashboard() {
       rejected: 'مرفوضة',
     };
     return labels[status] || status;
-  };
+  }, []);
 
-  const completionRate = stats ? 
-    Math.round((stats.resolved / Math.max(stats.total_complaints, 1)) * 100) : 0;
+  const completionRate = useMemo(() => 
+    stats ? Math.round((stats.resolved / Math.max(stats.total_complaints, 1)) * 100) : 0,
+    [stats]
+  );
 
   if (loading) {
     return (
@@ -120,61 +89,33 @@ function TraderDashboard() {
           />
         )}
 
-        <motion.div
-          initial={shouldReduceMotion ? {} : { opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between gap-4 mb-2"
-        >
+        <div className="flex items-center justify-between gap-4 mb-2 animate-fade-in">
           <div className="flex items-center gap-2 text-sm">
-            <motion.span
-              animate={shouldReduceMotion ? {} : { scale: isConnected ? [1, 1.2, 1] : 1 }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              className={`inline-block w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-success-500 shadow-lg shadow-success-500/50' : 'bg-gray-400'}`}
-            />
+            <span className={`inline-block w-2.5 h-2.5 rounded-full transition-all duration-300 ${isConnected ? 'bg-success-500 shadow-lg shadow-success-500/50 animate-pulse' : 'bg-gray-400'}`} />
             <span className="text-gray-600 dark:text-gray-400 font-semibold">{isConnected ? 'متصل بالنظام' : 'غير متصل'}</span>
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
             {format(new Date(), 'EEEE، d MMMM yyyy', { locale: ar })}
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={shouldReduceMotion ? {} : { opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.1 }}
-          className="card-glass-strong relative overflow-hidden rounded-2xl shadow-2xl border-2 border-primary-200/30 dark:border-primary-700/30"
-        >
+        <div className="card-glass-strong relative overflow-hidden rounded-2xl shadow-2xl border-2 border-primary-200/30 dark:border-primary-700/30 animate-fade-in-up">
           <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-purple-700"></div>
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30"></div>
           <div className="relative p-8">
             <div className="flex items-start justify-between">
               <div>
-                <motion.h2
-                  initial={shouldReduceMotion ? {} : { opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.2 }}
-                  className="text-3xl font-black text-white mb-2 drop-shadow-lg"
-                >
+                <h2 className="text-3xl font-black text-white mb-2 drop-shadow-lg">
                   لوحة التحكم الذكية
-                </motion.h2>
-                <motion.p
-                  initial={shouldReduceMotion ? {} : { opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.3 }}
-                  className="text-primary-100 font-medium text-lg"
-                >
+                </h2>
+                <p className="text-primary-100 font-medium text-lg">
                   إدارة شكاواك بكل سهولة وفعالية
-                </motion.p>
+                </p>
               </div>
-              <motion.div
-                animate={shouldReduceMotion ? {} : { rotate: [0, 10, 0, -10, 0] }}
-                transition={{ repeat: Infinity, duration: 5 }}
-              >
-                <Sparkles className="w-16 h-16 text-primary-200 drop-shadow-xl" />
-              </motion.div>
+              <Sparkles className="w-16 h-16 text-primary-200 drop-shadow-xl" />
             </div>
           </div>
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           <motion.button
@@ -489,4 +430,4 @@ function TraderDashboard() {
   );
 }
 
-export default TraderDashboard;
+export default React.memo(TraderDashboard);
