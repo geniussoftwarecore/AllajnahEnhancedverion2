@@ -65,22 +65,22 @@ def get_base_template(content: str, direction: str = "rtl", lang: str = "ar") ->
         }}
         .info-box {{
             background-color: #f0fdf4;
-            border-{direction === "rtl" ? "right" : "left"}: 4px solid #10b981;
+            border-{"right" if direction == "rtl" else "left"}: 4px solid #10b981;
             padding: 20px;
             margin: 25px 0;
             border-radius: 8px;
         }}
         .info-box-warning {{
             background-color: #fef3c7;
-            border-{direction === "rtl" ? "right" : "left"}: 4px solid #f59e0b;
+            border-{"right" if direction == "rtl" else "left"}: 4px solid #f59e0b;
         }}
         .info-box-error {{
             background-color: #fee2e2;
-            border-{direction === "rtl" ? "right" : "left"}: 4px solid #ef4444;
+            border-{"right" if direction == "rtl" else "left"}: 4px solid #ef4444;
         }}
         .info-box-blue {{
             background-color: #eff6ff;
-            border-{direction === "rtl" ? "right" : "left"}: 4px solid #3b82f6;
+            border-{"right" if direction == "rtl" else "left"}: 4px solid #3b82f6;
         }}
         .info-item {{
             margin: 10px 0;

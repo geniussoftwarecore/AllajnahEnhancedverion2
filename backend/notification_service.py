@@ -7,6 +7,7 @@ from replit_connectors import get_twilio_credentials, get_sendgrid_credentials
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from models import NotificationPreference
+import email_templates as templates
 
 settings = get_settings()
 
@@ -111,7 +112,11 @@ class NotificationService:
         user_email: str,
         user_phone: Optional[str],
         complaint_id: int,
+        complaint_title: str,
+        old_status: str,
         new_status: str,
+        updated_by: str,
+        dashboard_url: str = "https://allajnah.com/dashboard",
         language: str = "ar"
     ):
         prefs = self._get_user_preferences(db, user_id)
@@ -119,31 +124,40 @@ class NotificationService:
         if not prefs.notify_status_change:
             return False
         
+        status_translations_ar = {
+            "SUBMITTED": "مقدمة",
+            "UNDER_REVIEW": "قيد المراجعة",
+            "ESCALATED": "مصعدة",
+            "RESOLVED": "محلولة",
+            "REJECTED": "مرفوضة",
+            "MEDIATION_PENDING": "في انتظار الوساطة",
+            "MEDIATION_IN_PROGRESS": "جاري الوساطة"
+        }
+        
         if language == "ar":
             email_subject = f"تحديث حالة الشكوى #{complaint_id}"
-            email_body = f"""
-            <html dir="rtl">
-                <body>
-                    <h2>تحديث حالة الشكوى</h2>
-                    <p>تم تحديث حالة شكواك رقم <strong>#{complaint_id}</strong></p>
-                    <p>الحالة الجديدة: <strong>{new_status}</strong></p>
-                    <p>يمكنك متابعة شكواك من خلال لوحة التحكم.</p>
-                </body>
-            </html>
-            """
-            sms_message = f"تحديث الشكوى #{complaint_id}: الحالة الجديدة {new_status}"
+            email_body = templates.complaint_status_update_template(
+                complaint_id=complaint_id,
+                complaint_title=complaint_title,
+                old_status=old_status,
+                new_status=new_status,
+                updated_by=updated_by,
+                dashboard_url=dashboard_url,
+                language=language
+            )
+            status_ar = status_translations_ar.get(new_status, new_status)
+            sms_message = f"تحديث الشكوى #{complaint_id}: الحالة الجديدة {status_ar}"
         else:
             email_subject = f"Complaint #{complaint_id} Status Update"
-            email_body = f"""
-            <html>
-                <body>
-                    <h2>Complaint Status Update</h2>
-                    <p>Your complaint <strong>#{complaint_id}</strong> has been updated</p>
-                    <p>New status: <strong>{new_status}</strong></p>
-                    <p>You can track your complaint from the dashboard.</p>
-                </body>
-            </html>
-            """
+            email_body = templates.complaint_status_update_template(
+                complaint_id=complaint_id,
+                complaint_title=complaint_title,
+                old_status=old_status,
+                new_status=new_status,
+                updated_by=updated_by,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms_message = f"Complaint #{complaint_id} update: {new_status}"
         
         email_sent = False
@@ -164,6 +178,11 @@ class NotificationService:
         user_email: str,
         user_phone: Optional[str],
         complaint_id: int,
+        complaint_title: str,
+        complaint_category: str,
+        priority: str,
+        submitted_by: str,
+        dashboard_url: str = "https://allajnah.com/dashboard",
         language: str = "ar"
     ):
         prefs = self._get_user_preferences(db, user_id)
@@ -173,27 +192,27 @@ class NotificationService:
         
         if language == "ar":
             subject = f"تم تكليفك بشكوى جديدة #{complaint_id}"
-            body = f"""
-            <html dir="rtl">
-                <body>
-                    <h2>شكوى جديدة</h2>
-                    <p>تم تكليفك بمراجعة الشكوى رقم <strong>#{complaint_id}</strong></p>
-                    <p>يرجى مراجعتها من خلال لوحة التحكم.</p>
-                </body>
-            </html>
-            """
+            body = templates.complaint_assignment_template(
+                complaint_id=complaint_id,
+                complaint_title=complaint_title,
+                complaint_category=complaint_category,
+                priority=priority,
+                submitted_by=submitted_by,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms = f"تم تكليفك بالشكوى #{complaint_id}. يرجى المراجعة."
         else:
             subject = f"New Complaint Assigned #{complaint_id}"
-            body = f"""
-            <html>
-                <body>
-                    <h2>New Complaint Assignment</h2>
-                    <p>You have been assigned to complaint <strong>#{complaint_id}</strong></p>
-                    <p>Please review it from the dashboard.</p>
-                </body>
-            </html>
-            """
+            body = templates.complaint_assignment_template(
+                complaint_id=complaint_id,
+                complaint_title=complaint_title,
+                complaint_category=complaint_category,
+                priority=priority,
+                submitted_by=submitted_by,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms = f"New complaint #{complaint_id} assigned to you. Please review."
         
         email_sent = False
@@ -214,7 +233,11 @@ class NotificationService:
         user_email: str,
         user_phone: Optional[str],
         complaint_id: int,
+        complaint_title: str,
         requester_name: str,
+        requester_role: str,
+        request_reason: str,
+        dashboard_url: str = "https://allajnah.com/dashboard",
         language: str = "ar"
     ):
         prefs = self._get_user_preferences(db, user_id)
@@ -224,29 +247,27 @@ class NotificationService:
         
         if language == "ar":
             subject = f"طلب موافقة جديد للشكوى #{complaint_id}"
-            body = f"""
-            <html dir="rtl">
-                <body>
-                    <h2>طلب موافقة جديد</h2>
-                    <p>تم تصعيد الشكوى رقم <strong>#{complaint_id}</strong> وتحتاج موافقتك</p>
-                    <p>طالب الموافقة: <strong>{requester_name}</strong></p>
-                    <p>يرجى مراجعة الطلب واتخاذ القرار المناسب من خلال لوحة التحكم.</p>
-                </body>
-            </html>
-            """
+            body = templates.approval_request_template(
+                complaint_id=complaint_id,
+                complaint_title=complaint_title,
+                requester_name=requester_name,
+                requester_role=requester_role,
+                request_reason=request_reason,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms = f"طلب موافقة جديد للشكوى #{complaint_id} من {requester_name}"
         else:
             subject = f"New Approval Request for Complaint #{complaint_id}"
-            body = f"""
-            <html>
-                <body>
-                    <h2>New Approval Request</h2>
-                    <p>Complaint <strong>#{complaint_id}</strong> has been escalated and requires your approval</p>
-                    <p>Requested by: <strong>{requester_name}</strong></p>
-                    <p>Please review and make a decision from the dashboard.</p>
-                </body>
-            </html>
-            """
+            body = templates.approval_request_template(
+                complaint_id=complaint_id,
+                complaint_title=complaint_title,
+                requester_name=requester_name,
+                requester_role=requester_role,
+                request_reason=request_reason,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms = f"New approval request for complaint #{complaint_id} from {requester_name}"
         
         email_sent = False
@@ -267,9 +288,11 @@ class NotificationService:
         user_email: str,
         user_phone: Optional[str],
         complaint_id: int,
+        complaint_title: str,
         decision: str,
         approver_name: str,
         notes: Optional[str] = None,
+        dashboard_url: str = "https://allajnah.com/dashboard",
         language: str = "ar"
     ):
         prefs = self._get_user_preferences(db, user_id)
@@ -282,33 +305,27 @@ class NotificationService:
         
         if language == "ar":
             subject = f"قرار الموافقة للشكوى #{complaint_id}: {decision_ar}"
-            body = f"""
-            <html dir="rtl">
-                <body>
-                    <h2>قرار الموافقة</h2>
-                    <p>تم اتخاذ قرار بشأن الشكوى رقم <strong>#{complaint_id}</strong></p>
-                    <p>القرار: <strong>{decision_ar}</strong></p>
-                    <p>بواسطة: <strong>{approver_name}</strong></p>
-                    {f'<p>ملاحظات: {notes}</p>' if notes else ''}
-                    <p>يمكنك متابعة الشكوى من خلال لوحة التحكم.</p>
-                </body>
-            </html>
-            """
+            body = templates.approval_decision_template(
+                complaint_id=complaint_id,
+                complaint_title=complaint_title,
+                decision=decision,
+                approver_name=approver_name,
+                notes=notes,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms = f"الشكوى #{complaint_id}: {decision_ar} بواسطة {approver_name}"
         else:
             subject = f"Approval Decision for Complaint #{complaint_id}: {decision_en}"
-            body = f"""
-            <html>
-                <body>
-                    <h2>Approval Decision</h2>
-                    <p>A decision has been made for complaint <strong>#{complaint_id}</strong></p>
-                    <p>Decision: <strong>{decision_en}</strong></p>
-                    <p>By: <strong>{approver_name}</strong></p>
-                    {f'<p>Notes: {notes}</p>' if notes else ''}
-                    <p>You can track the complaint from the dashboard.</p>
-                </body>
-            </html>
-            """
+            body = templates.approval_decision_template(
+                complaint_id=complaint_id,
+                complaint_title=complaint_title,
+                decision=decision,
+                approver_name=approver_name,
+                notes=notes,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms = f"Complaint #{complaint_id}: {decision_en} by {approver_name}"
         
         email_sent = False
@@ -397,8 +414,10 @@ class NotificationService:
         user_email: str,
         user_phone: Optional[str],
         complaint_id: int,
+        complaint_title: str,
         commenter_name: str,
         comment_preview: str,
+        dashboard_url: str = "https://allajnah.com/dashboard",
         language: str = "ar"
     ):
         """Send notification when a new comment is added to a complaint."""
@@ -412,31 +431,25 @@ class NotificationService:
         
         if language == "ar":
             subject = f"تعليق جديد على الشكوى #{complaint_id}"
-            body = f"""
-            <html dir="rtl">
-                <body>
-                    <h2>تعليق جديد</h2>
-                    <p>تم إضافة تعليق جديد على الشكوى رقم <strong>#{complaint_id}</strong></p>
-                    <p>من: <strong>{commenter_name}</strong></p>
-                    <p>التعليق: <em>{preview}</em></p>
-                    <p>يمكنك مراجعة التعليق الكامل من خلال لوحة التحكم.</p>
-                </body>
-            </html>
-            """
+            body = templates.new_comment_template(
+                complaint_id=complaint_id,
+                complaint_title=complaint_title,
+                commenter_name=commenter_name,
+                comment_preview=preview,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms = f"تعليق جديد على الشكوى #{complaint_id} من {commenter_name}"
         else:
             subject = f"New Comment on Complaint #{complaint_id}"
-            body = f"""
-            <html>
-                <body>
-                    <h2>New Comment</h2>
-                    <p>A new comment has been added to complaint <strong>#{complaint_id}</strong></p>
-                    <p>From: <strong>{commenter_name}</strong></p>
-                    <p>Comment: <em>{preview}</em></p>
-                    <p>You can view the full comment from the dashboard.</p>
-                </body>
-            </html>
-            """
+            body = templates.new_comment_template(
+                complaint_id=complaint_id,
+                complaint_title=complaint_title,
+                commenter_name=commenter_name,
+                comment_preview=preview,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms = f"New comment on complaint #{complaint_id} from {commenter_name}"
         
         email_sent = False
@@ -457,7 +470,11 @@ class NotificationService:
         user_email: str,
         user_phone: Optional[str],
         complaint_id: int,
+        complaint_title: str,
         escalation_reason: str,
+        escalated_from: str,
+        escalated_to: str,
+        dashboard_url: str = "https://allajnah.com/dashboard",
         language: str = "ar"
     ):
         """Send notification when a complaint is escalated to Higher Committee."""
@@ -468,31 +485,27 @@ class NotificationService:
         
         if language == "ar":
             subject = f"تم تصعيد الشكوى #{complaint_id} للجنة العليا"
-            body = f"""
-            <html dir="rtl">
-                <body>
-                    <h2>تصعيد الشكوى</h2>
-                    <p>تم تصعيد الشكوى رقم <strong>#{complaint_id}</strong> إلى اللجنة العليا</p>
-                    <p>سبب التصعيد: <strong>{escalation_reason}</strong></p>
-                    <p>سيتم مراجعة الشكوى من قبل اللجنة العليا واتخاذ القرار المناسب.</p>
-                    <p>يمكنك متابعة حالة الشكوى من خلال لوحة التحكم.</p>
-                </body>
-            </html>
-            """
+            body = templates.complaint_escalation_template(
+                complaint_id=complaint_id,
+                complaint_title=complaint_title,
+                escalation_reason=escalation_reason,
+                escalated_from=escalated_from,
+                escalated_to=escalated_to,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms = f"تم تصعيد الشكوى #{complaint_id} للجنة العليا"
         else:
             subject = f"Complaint #{complaint_id} Escalated to Higher Committee"
-            body = f"""
-            <html>
-                <body>
-                    <h2>Complaint Escalated</h2>
-                    <p>Complaint <strong>#{complaint_id}</strong> has been escalated to the Higher Committee</p>
-                    <p>Escalation reason: <strong>{escalation_reason}</strong></p>
-                    <p>The complaint will be reviewed by the Higher Committee and appropriate action will be taken.</p>
-                    <p>You can track the complaint status from the dashboard.</p>
-                </body>
-            </html>
-            """
+            body = templates.complaint_escalation_template(
+                complaint_id=complaint_id,
+                complaint_title=complaint_title,
+                escalation_reason=escalation_reason,
+                escalated_from=escalated_from,
+                escalated_to=escalated_to,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms = f"Complaint #{complaint_id} escalated to Higher Committee"
         
         email_sent = False
@@ -513,8 +526,10 @@ class NotificationService:
         user_email: str,
         user_phone: Optional[str],
         complaint_id: int,
+        complaint_title: str,
         time_remaining: str,
         sla_deadline: str,
+        dashboard_url: str = "https://allajnah.com/dashboard",
         language: str = "ar"
     ):
         """Send notification when a complaint is approaching its SLA deadline."""
@@ -525,31 +540,25 @@ class NotificationService:
         
         if language == "ar":
             subject = f"تحذير: الشكوى #{complaint_id} تقترب من الموعد النهائي"
-            body = f"""
-            <html dir="rtl">
-                <body>
-                    <h2>تحذير الموعد النهائي (SLA)</h2>
-                    <p>الشكوى رقم <strong>#{complaint_id}</strong> تقترب من الموعد النهائي المحدد</p>
-                    <p>الوقت المتبقي: <strong style="color: #dc2626;">{time_remaining}</strong></p>
-                    <p>الموعد النهائي: <strong>{sla_deadline}</strong></p>
-                    <p>يرجى اتخاذ الإجراءات اللازمة في أقرب وقت ممكن.</p>
-                </body>
-            </html>
-            """
+            body = templates.sla_warning_template(
+                complaint_id=complaint_id,
+                complaint_title=complaint_title,
+                time_remaining=time_remaining,
+                sla_deadline=sla_deadline,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms = f"تحذير: الشكوى #{complaint_id} تقترب من الموعد النهائي. الوقت المتبقي: {time_remaining}"
         else:
             subject = f"Warning: Complaint #{complaint_id} Approaching Deadline"
-            body = f"""
-            <html>
-                <body>
-                    <h2>SLA Deadline Warning</h2>
-                    <p>Complaint <strong>#{complaint_id}</strong> is approaching its deadline</p>
-                    <p>Time remaining: <strong style="color: #dc2626;">{time_remaining}</strong></p>
-                    <p>Deadline: <strong>{sla_deadline}</strong></p>
-                    <p>Please take necessary action as soon as possible.</p>
-                </body>
-            </html>
-            """
+            body = templates.sla_warning_template(
+                complaint_id=complaint_id,
+                complaint_title=complaint_title,
+                time_remaining=time_remaining,
+                sla_deadline=sla_deadline,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms = f"Warning: Complaint #{complaint_id} approaching deadline. Time remaining: {time_remaining}"
         
         email_sent = False
