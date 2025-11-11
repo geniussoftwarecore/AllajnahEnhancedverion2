@@ -158,7 +158,8 @@ class NotificationService:
                 dashboard_url=dashboard_url,
                 language=language
             )
-            sms_message = f"Complaint #{complaint_id} update: {new_status}"
+            status_en_readable = new_status.replace('_', ' ').title()
+            sms_message = f"Complaint #{complaint_id} update: {status_en_readable}"
         
         email_sent = False
         sms_sent = False
@@ -623,10 +624,11 @@ class NotificationService:
                 await self.send_sms(committee_user.phone, sms_ar)
     
     async def send_payment_decision_notification(
-        self, db, user_id: int, user_email: str, user_phone: str,
-        payment_id: int, decision: str, notes: str = None, language: str = "ar"
+        self, db, user_id: int, user_email: str, user_phone: Optional[str],
+        payment_id: int, payment_amount: float, decision: str, notes: Optional[str] = None, 
+        dashboard_url: str = "https://allajnah.com/dashboard", language: str = "ar"
     ) -> bool:
-        from models import NotificationPreference
+        from models import NotificationPreference, User
         
         prefs = db.query(NotificationPreference).filter(
             NotificationPreference.user_id == user_id
@@ -635,45 +637,44 @@ class NotificationService:
         if not prefs:
             return False
         
+        user = db.query(User).filter(User.id == user_id).first()
+        user_name = f"{user.first_name} {user.last_name}" if user else "المستخدم"
+        
         decision_ar = "تمت الموافقة" if decision == "approved" else "تم الرفض"
         decision_en = "Approved" if decision == "approved" else "Rejected"
         
         if language == "ar":
             subject = f"قرار طلب الاشتراك #{payment_id}: {decision_ar}"
-            body = f"""
-            <html>
-                <body style="direction: rtl; text-align: right;">
-                    <h2>قرار طلب الاشتراك</h2>
-                    <p>تم اتخاذ قرار بشأن طلب الاشتراك <strong>#{payment_id}</strong></p>
-                    <p>القرار: <strong style="color: {'#16a34a' if decision == 'approved' else '#dc2626'};">{decision_ar}</strong></p>
-                    {f'<p>ملاحظات: {notes}</p>' if notes else ''}
-                    <p>يمكنك متابعة حالة الاشتراك من لوحة التحكم.</p>
-                </body>
-            </html>
-            """
+            body = templates.payment_decision_template(
+                user_name=user_name,
+                payment_id=payment_id,
+                payment_amount=payment_amount,
+                decision=decision,
+                notes=notes,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms = f"طلب الاشتراك #{payment_id}: {decision_ar}"
         else:
             subject = f"Subscription Request #{payment_id}: {decision_en}"
-            body = f"""
-            <html>
-                <body>
-                    <h2>Subscription Request Decision</h2>
-                    <p>A decision has been made for subscription request <strong>#{payment_id}</strong></p>
-                    <p>Decision: <strong style="color: {'#16a34a' if decision == 'approved' else '#dc2626'};">{decision_en}</strong></p>
-                    {f'<p>Notes: {notes}</p>' if notes else ''}
-                    <p>You can track your subscription status from the dashboard.</p>
-                </body>
-            </html>
-            """
+            body = templates.payment_decision_template(
+                user_name=user_name,
+                payment_id=payment_id,
+                payment_amount=payment_amount,
+                decision=decision,
+                notes=notes,
+                dashboard_url=dashboard_url,
+                language=language
+            )
             sms = f"Subscription request #{payment_id}: {decision_en}"
         
         email_sent = False
         sms_sent = False
         
-        if prefs.email_enabled:
+        if prefs.email_enabled == True:
             email_sent = await self.send_email(user_email, subject, body)
         
-        if prefs.sms_enabled and user_phone:
+        if prefs.sms_enabled == True and user_phone:
             sms_sent = await self.send_sms(user_phone, sms)
         
         return email_sent or sms_sent

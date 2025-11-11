@@ -2777,9 +2777,9 @@ async def update_payment(
         trader = db.query(User).filter(User.id == payment.user_id).first()
         if trader:
             await notification_service.send_payment_decision_notification(
-                db, trader.id, trader.email, trader.phone, payment.id,
+                db, trader.id, trader.email, trader.phone, payment.id, payment.amount,
                 "approved" if payment.status == PaymentStatus.APPROVED else "rejected",
-                update_data.approval_notes, "ar"
+                update_data.approval_notes, "https://allajnah.com/dashboard", "ar"
             )
         
         create_audit_log(db, current_user.id, "APPROVE_PAYMENT", "payment", payment.id,

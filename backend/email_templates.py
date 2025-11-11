@@ -246,10 +246,10 @@ def complaint_status_update_template(
             <div class="info-box">
                 <div class="info-item"><span class="info-label">Complaint ID:</span> #{complaint_id}</div>
                 <div class="info-item"><span class="info-label">Title:</span> {complaint_title}</div>
-                <div class="info-item"><span class="info-label">Previous Status:</span> {old_status}</div>
+                <div class="info-item"><span class="info-label">Previous Status:</span> {old_status.replace('_', ' ').title()}</div>
                 <div class="info-item">
                     <span class="info-label">New Status:</span> 
-                    <span class="badge badge-{status_badge}">{new_status}</span>
+                    <span class="badge badge-{status_badge}">{new_status.replace('_', ' ').title()}</span>
                 </div>
                 <div class="info-item"><span class="info-label">Updated by:</span> {updated_by}</div>
             </div>
@@ -796,6 +796,74 @@ def payment_approval_template(
                     <a href="{dashboard_url}" class="button">Contact Support</a>
                 </center>
             """
+    
+    direction = "rtl" if language == "ar" else "ltr"
+    return get_base_template(content, direction, language)
+
+
+def payment_decision_template(
+    user_name: str,
+    payment_id: int,
+    payment_amount: float,
+    decision: str,
+    notes: Optional[str],
+    dashboard_url: str,
+    language: str = "ar"
+) -> str:
+    """Email template for payment/subscription decision notification."""
+    
+    is_approved = decision.lower() == "approved"
+    
+    if language == "ar":
+        decision_text = "تمت الموافقة" if is_approved else "تم الرفض"
+        box_class = "info-box" if is_approved else "info-box info-box-error"
+        
+        content = f"""
+            <h2>{'✅' if is_approved else '❌'} قرار طلب الاشتراك</h2>
+            <p>عزيزي/عزيزتي {user_name}،</p>
+            <p>{'يسعدنا إبلاغك بأنه' if is_approved else 'نأسف لإبلاغك بأنه'} تم اتخاذ قرار بشأن طلب الاشتراك الخاص بك.</p>
+            
+            <div class="{box_class}">
+                <div class="info-item"><span class="info-label">رقم الطلب:</span> #{payment_id}</div>
+                <div class="info-item"><span class="info-label">المبلغ:</span> {payment_amount} ريال</div>
+                <div class="info-item">
+                    <span class="info-label">القرار:</span> 
+                    <span class="badge badge-{'success' if is_approved else 'error'}">{decision_text}</span>
+                </div>
+                {f'<div class="info-item"><span class="info-label">ملاحظات:</span> {notes}</div>' if notes else ''}
+            </div>
+            
+            <p>{'يمكنك الآن الاستفادة من جميع خدمات النظام وتقديم الشكاوى.' if is_approved else 'يرجى التواصل معنا لمزيد من المعلومات أو إعادة تقديم الطلب.'}</p>
+            
+            <center>
+                <a href="{dashboard_url}" class="button">{'الذهاب إلى لوحة التحكم' if is_approved else 'التواصل مع الدعم'}</a>
+            </center>
+        """
+    else:
+        decision_text = "Approved" if is_approved else "Rejected"
+        box_class = "info-box" if is_approved else "info-box info-box-error"
+        
+        content = f"""
+            <h2>{'✅' if is_approved else '❌'} Subscription Request Decision</h2>
+            <p>Dear {user_name},</p>
+            <p>We {'are pleased to inform' if is_approved else 'regret to inform'} you that a decision has been made regarding your subscription request.</p>
+            
+            <div class="{box_class}">
+                <div class="info-item"><span class="info-label">Request ID:</span> #{payment_id}</div>
+                <div class="info-item"><span class="info-label">Amount:</span> {payment_amount} SAR</div>
+                <div class="info-item">
+                    <span class="info-label">Decision:</span> 
+                    <span class="badge badge-{'success' if is_approved else 'error'}">{decision_text}</span>
+                </div>
+                {f'<div class="info-item"><span class="info-label">Notes:</span> {notes}</div>' if notes else ''}
+            </div>
+            
+            <p>{'You can now use all system services and submit complaints.' if is_approved else 'Please contact us for more information or to resubmit your request.'}</p>
+            
+            <center>
+                <a href="{dashboard_url}" class="button">{'Go to Dashboard' if is_approved else 'Contact Support'}</a>
+            </center>
+        """
     
     direction = "rtl" if language == "ar" else "ltr"
     return get_base_template(content, direction, language)
