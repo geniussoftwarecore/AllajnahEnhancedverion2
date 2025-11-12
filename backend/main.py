@@ -94,6 +94,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add security headers middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    # Prevent clickjacking attacks
+    response.headers["X-Frame-Options"] = "DENY"
+    # Prevent MIME type sniffing
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    # Enable XSS protection
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    # Strict transport security (HTTPS only)
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    # Referrer policy
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    # Permissions policy - disable unnecessary browser features
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    return response
+
 @app.on_event("startup")
 async def startup_event():
     print("Starting application...")
