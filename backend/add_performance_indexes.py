@@ -23,6 +23,11 @@ def add_performance_indexes():
         ("idx_complaints_category_status", "CREATE INDEX IF NOT EXISTS idx_complaints_category_status ON complaints (category_id, status)"),
         ("idx_complaints_status_created", "CREATE INDEX IF NOT EXISTS idx_complaints_status_created ON complaints (status, created_at DESC)"),
         
+        # Trader-specific composite indexes for high performance
+        ("idx_complaints_user_status", "CREATE INDEX IF NOT EXISTS idx_complaints_user_status ON complaints (user_id, status)"),
+        ("idx_complaints_user_created", "CREATE INDEX IF NOT EXISTS idx_complaints_user_created ON complaints (user_id, created_at DESC)"),
+        ("idx_complaints_user_status_created", "CREATE INDEX IF NOT EXISTS idx_complaints_user_status_created ON complaints (user_id, status, created_at DESC)"),
+        
         # Index for SLA monitoring queries
         ("idx_complaints_status_created_sla", "CREATE INDEX IF NOT EXISTS idx_complaints_status_created_sla ON complaints (status, created_at) WHERE status = 'UNDER_REVIEW'"),
         

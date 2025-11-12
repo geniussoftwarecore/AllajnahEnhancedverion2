@@ -59,6 +59,7 @@ from cache_service import cache_service
 from export_service import export_service
 from scheduler_service import start_scheduler, stop_scheduler
 from websocket_manager import manager
+from response_cache import cache_response
 
 settings = get_settings()
 
@@ -271,6 +272,13 @@ async def startup_event():
         print(f"✗ CRITICAL: Database initialization failed: {e}")
         print("⚠ Application cannot start without a working database")
         raise
+    
+    print("Adding performance indexes...")
+    try:
+        from add_performance_indexes import add_performance_indexes
+        add_performance_indexes()
+    except Exception as e:
+        print(f"⚠ Warning: Could not add performance indexes: {e}")
     
     start_scheduler()
     print("✓ Application started successfully!")
@@ -749,6 +757,7 @@ def update_notification_preferences(
     return NotificationPreferenceResponse.model_validate(preferences)
 
 @app.get("/api/categories", response_model=List[CategoryResponse])
+@cache_response(ttl_seconds=300)
 def get_categories(government_entity: str = None, db: Session = Depends(get_db)):
     query = db.query(Category)
     if government_entity:
@@ -830,7 +839,12 @@ def get_complaints(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Complaint)
+    from sqlalchemy.orm import selectinload
+    query = db.query(Complaint).options(
+        selectinload(Complaint.user),
+        selectinload(Complaint.category),
+        selectinload(Complaint.assigned_to_user)
+    )
     
     if current_user.role == UserRole.TRADER:
         query = query.filter(Complaint.user_id == current_user.id)
@@ -866,7 +880,13 @@ def get_complaint(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
+    from sqlalchemy.orm import selectinload
+    complaint = db.query(Complaint).options(
+        selectinload(Complaint.user),
+        selectinload(Complaint.category),
+        selectinload(Complaint.assigned_to_user),
+        selectinload(Complaint.comments)
+    ).filter(Complaint.id == complaint_id).first()
     if not complaint:
         raise HTTPException(status_code=404, detail="Complaint not found")
     

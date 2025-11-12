@@ -103,7 +103,7 @@ async def renewal_reminder_job():
 def start_scheduler():
     scheduler.add_job(
         check_sla_warnings_task,
-        trigger=IntervalTrigger(hours=1),
+        trigger=IntervalTrigger(hours=4),
         id='sla_warnings',
         name='Check SLA Warnings',
         replace_existing=True
@@ -111,7 +111,7 @@ def start_scheduler():
     
     scheduler.add_job(
         check_sla_violations_task,
-        trigger=IntervalTrigger(hours=1),
+        trigger=IntervalTrigger(hours=4),
         id='sla_check',
         name='Check SLA Violations',
         replace_existing=True
