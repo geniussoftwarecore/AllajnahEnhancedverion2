@@ -855,8 +855,22 @@ function PaymentMethodFormModal({ method, onClose, onSubmit }) {
     name_en: method?.name_en || '',
     instructions_ar: method?.instructions_ar || '',
     instructions_en: method?.instructions_en || '',
+    wallet_type: method?.wallet_type || '',
+    wallet_name: method?.wallet_name || '',
+    wallet_number: method?.wallet_number || '',
     is_active: method?.is_active !== false
   });
+  
+  const yemeniWallets = [
+    { value: 'jeeb', label: 'جيب' },
+    { value: 'jawaly', label: 'جوالي' },
+    { value: 'flousc', label: 'فلوسك' },
+    { value: 'cash', label: 'كاش' },
+    { value: 'onecash', label: 'ون كاش' },
+    { value: 'yahmoney', label: 'ياه ماني' },
+    { value: 'onemoney', label: 'ون ماني' },
+    { value: 'mobilemoney', label: 'موبايل ماني' }
+  ];
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -935,7 +949,59 @@ function PaymentMethodFormModal({ method, onClose, onSubmit }) {
                   placeholder="Enter payment instructions in English (optional)"
                 />
               </div>
+              
+              <div className="sm:col-span-2 border-t border-gray-200 dark:border-gray-700 pt-5">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">📱 معلومات المحفظة الإلكترونية (اختياري)</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  قم بملء هذه المعلومات إذا كانت طريقة الدفع هذه محفظة إلكترونية يدفع إليها التاجر
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  نوع المحفظة الإلكترونية
+                </label>
+                <select
+                  value={formData.wallet_type}
+                  onChange={(e) => setFormData({ ...formData, wallet_type: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                >
+                  <option value="">-- اختر نوع المحفظة --</option>
+                  {yemeniWallets.map((wallet) => (
+                    <option key={wallet.value} value={wallet.value}>
+                      {wallet.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  اسم صاحب المحفظة
+                </label>
+                <input
+                  type="text"
+                  value={formData.wallet_name}
+                  onChange={(e) => setFormData({ ...formData, wallet_name: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  placeholder="أدخل اسم صاحب المحفظة"
+                />
+              </div>
+
               <div className="sm:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  رقم المحفظة
+                </label>
+                <input
+                  type="tel"
+                  value={formData.wallet_number}
+                  onChange={(e) => setFormData({ ...formData, wallet_number: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  placeholder="أدخل رقم المحفظة (مثال: 777123456)"
+                />
+              </div>
+
+              <div className="sm:col-span-2 border-t border-gray-200 dark:border-gray-700 pt-5">
                 <label className="flex items-center gap-3 cursor-pointer group">
                   <input
                     type="checkbox"

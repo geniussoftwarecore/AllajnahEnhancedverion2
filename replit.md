@@ -159,17 +159,36 @@ See `backend/.env.example` for a complete list of configurable environment varia
 
 ## Recent Updates (November 12, 2025)
 ### Yemeni E-Wallet Payment Integration
-1. **E-Wallet Payment Option**: Added support for Yemeni electronic wallet payment methods in the subscription payment system:
+1. **E-Wallet Payment Option**: Added complete support for Yemeni electronic wallet payment methods in the subscription payment system:
    - **Supported Wallets**: جيب (Jeeb), جوالي (Jawaly), فلوسك (Flousc), كاش (Cash), ون كاش (OneCash), ياه ماني (YahMoney), ون ماني (OneMoney), موبايل ماني (MobileMoney)
+   
    - **Trader Interface** (`TraderSubscription.jsx`): 
      - New "محفظة إلكترونية" payment method option
      - Dropdown selector for wallet type
      - Input fields for wallet owner name and wallet number
      - Required image proof of payment for e-wallet transactions
      - Clear instructions and validation for wallet payments
-   - **Admin Interface** (`PaymentsReview.jsx`):
+   
+   - **Admin Payment Method Management** (`Settings.jsx` - Payment Methods Tab):
+     - **New Wallet Fields in Form**: Admin can now specify wallet information when creating/editing payment methods
+     - Dropdown selector for wallet type (8 Yemeni wallets)
+     - Input field for wallet owner name
+     - Input field for wallet number
+     - Optional fields - only fill if the payment method is an e-wallet
+     - Clear sectioning with visual separator and helpful instructions
+   
+   - **Admin Payment Review** (`PaymentsReview.jsx`):
      - Display wallet information in payment detail modal
      - Shows wallet type, owner name, and wallet number
      - Arabic wallet names displayed for easy identification
-   - **Data Storage**: Wallet details stored in `account_details` field as JSON for easy retrieval and display
+   
+   - **Backend Updates**:
+     - Added `wallet_type`, `wallet_name`, `wallet_number` fields to `PaymentMethod` model
+     - Updated `PaymentMethodCreate`, `PaymentMethodUpdate`, `PaymentMethodResponse` schemas
+     - Database migration applied to add new columns
+   
+   - **Data Storage**: 
+     - Trader payments: Wallet details stored in `account_details` field as JSON
+     - Admin payment methods: Wallet details stored in dedicated database columns
+   
    - **User Experience**: Streamlined payment flow with contextual help text and required field indicators

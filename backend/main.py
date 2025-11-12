@@ -2585,6 +2585,9 @@ def create_payment_method(
         name_en=payment_method_data.name_en,
         instructions_ar=payment_method_data.instructions_ar,
         instructions_en=payment_method_data.instructions_en,
+        wallet_type=payment_method_data.wallet_type,
+        wallet_name=payment_method_data.wallet_name,
+        wallet_number=payment_method_data.wallet_number,
         is_active=payment_method_data.is_active
     )
     

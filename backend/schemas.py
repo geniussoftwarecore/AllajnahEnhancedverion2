@@ -344,6 +344,9 @@ class PaymentMethodCreate(BaseModel):
     name_en: str
     instructions_ar: Optional[str] = None
     instructions_en: Optional[str] = None
+    wallet_type: Optional[str] = None
+    wallet_name: Optional[str] = None
+    wallet_number: Optional[str] = None
     is_active: bool = True
 
 class PaymentMethodUpdate(BaseModel):
@@ -351,6 +354,9 @@ class PaymentMethodUpdate(BaseModel):
     name_en: Optional[str] = None
     instructions_ar: Optional[str] = None
     instructions_en: Optional[str] = None
+    wallet_type: Optional[str] = None
+    wallet_name: Optional[str] = None
+    wallet_number: Optional[str] = None
     is_active: Optional[bool] = None
 
 class PaymentMethodResponse(BaseModel):
@@ -359,6 +365,9 @@ class PaymentMethodResponse(BaseModel):
     name_en: str
     instructions_ar: Optional[str] = None
     instructions_en: Optional[str] = None
+    wallet_type: Optional[str] = None
+    wallet_name: Optional[str] = None
+    wallet_number: Optional[str] = None
     is_active: bool
     created_at: datetime
     updated_at: Optional[datetime] = None
