@@ -93,5 +93,61 @@
     "close": "Close",
     "yes": "Yes",
     "no": "No"
+  },
+  "subscription": {
+    "title": "Subscription",
+    "pricing": "Subscription Plans",
+    "currentPlan": "Your Current Plan",
+    "subscribeNow": "Subscribe Now",
+    "renewNow": "Renew Now",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "active": "Active",
+    "expired": "Expired",
+    "expiring": "Expiring Soon",
+    "expiresOn": "Expires on",
+    "renewsOn": "Renews on",
+    "daysRemaining": "days remaining",
+    "expiringWarning": "Your subscription will expire in less than 7 days",
+    "expiredError": "Your subscription has expired. Please renew to continue",
+    "benefits": "Benefits",
+    "benefitsList": [
+      "Unlimited complaint submissions",
+      "Track complaint status",
+      "24/7 technical support",
+      "Detailed reports"
+    ],
+    "pricePerMonth": "SAR/month",
+    "pricePerYear": "SAR/year",
+    "savingYearly": "Save 20% with yearly subscription"
+  },
+  "businessVerification": {
+    "title": "Business Verification",
+    "uploadDocument": "Upload Documents",
+    "status": "Verification Status",
+    "pending": "Under Review",
+    "verified": "Verified",
+    "rejected": "Rejected",
+    "uploadSuccess": "Document uploaded successfully",
+    "uploadError": "Failed to upload document",
+    "dragDrop": "Drag and drop document here or click to select",
+    "supportedFormats": "Supported formats: PDF, JPG, PNG",
+    "maxSize": "Max size: 5MB",
+    "verificationPending": "Your documents are under review",
+    "verificationVerified": "Your account has been verified successfully",
+    "verificationRejected": "Your documents were rejected. Please upload valid documents"
+  },
+  "paymentResult": {
+    "success": {
+      "title": "Payment Successful!",
+      "message": "Thank you! Your subscription has been activated successfully.",
+      "backToDashboard": "Back to Dashboard"
+    },
+    "cancel": {
+      "title": "Payment Cancelled",
+      "message": "The payment was not completed. You can try again.",
+      "tryAgain": "Try Again",
+      "backToDashboard": "Back to Dashboard"
+    }
   }
 }

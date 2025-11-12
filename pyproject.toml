@@ -31,4 +31,5 @@ dependencies = [
     "alembic>=1.17.1",
     "python-bidi>=0.6.7",
     "arabic-reshaper>=3.0.0",
+    "stripe>=13.2.0",
 ]

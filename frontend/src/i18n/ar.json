@@ -93,5 +93,61 @@
     "close": "إغلاق",
     "yes": "نعم",
     "no": "لا"
+  },
+  "subscription": {
+    "title": "الاشتراك",
+    "pricing": "خطط الاشتراك",
+    "currentPlan": "خطتك الحالية",
+    "subscribeNow": "اشترك الآن",
+    "renewNow": "جدد الآن",
+    "monthly": "شهري",
+    "yearly": "سنوي",
+    "active": "نشط",
+    "expired": "منتهي",
+    "expiring": "قارب على الانتهاء",
+    "expiresOn": "ينتهي في",
+    "renewsOn": "يتجدد في",
+    "daysRemaining": "يوم متبقي",
+    "expiringWarning": "سينتهي اشتراكك في أقل من 7 أيام",
+    "expiredError": "انتهى اشتراكك. يرجى التجديد للاستمرار",
+    "benefits": "المزايا",
+    "benefitsList": [
+      "تقديم شكاوى غير محدودة",
+      "متابعة حالة الشكاوى",
+      "دعم فني على مدار الساعة",
+      "تقارير مفصلة"
+    ],
+    "pricePerMonth": "ريال/شهر",
+    "pricePerYear": "ريال/سنة",
+    "savingYearly": "وفر 20% بالاشتراك السنوي"
+  },
+  "businessVerification": {
+    "title": "التحقق من الأعمال",
+    "uploadDocument": "رفع المستندات",
+    "status": "حالة التحقق",
+    "pending": "قيد المراجعة",
+    "verified": "موثق",
+    "rejected": "مرفوض",
+    "uploadSuccess": "تم رفع المستند بنجاح",
+    "uploadError": "فشل رفع المستند",
+    "dragDrop": "اسحب وأفلت المستند هنا أو انقر للاختيار",
+    "supportedFormats": "الصيغ المدعومة: PDF, JPG, PNG",
+    "maxSize": "الحجم الأقصى: 5MB",
+    "verificationPending": "مستنداتك قيد المراجعة",
+    "verificationVerified": "تم التحقق من حسابك بنجاح",
+    "verificationRejected": "تم رفض مستنداتك. يرجى رفع مستندات صحيحة"
+  },
+  "paymentResult": {
+    "success": {
+      "title": "تمت عملية الدفع بنجاح!",
+      "message": "شكراً لك! تم تفعيل اشتراكك بنجاح.",
+      "backToDashboard": "العودة إلى لوحة التحكم"
+    },
+    "cancel": {
+      "title": "تم إلغاء عملية الدفع",
+      "message": "لم تكتمل عملية الدفع. يمكنك المحاولة مرة أخرى.",
+      "tryAgain": "حاول مرة أخرى",
+      "backToDashboard": "العودة إلى لوحة التحكم"
+    }
   }
 }

@@ -78,15 +78,30 @@ api.interceptors.response.use(
     }
     
     if (error.response?.status === 403) {
-      toast.error('ليس لديك صلاحية للوصول إلى هذا المورد');
+      const errorDetail = error.response?.data?.detail || '';
+      
+      if (errorDetail.includes('subscription') || errorDetail.includes('اشتراك')) {
+        toast.error('انتهى اشتراكك أو غير نشط. يرجى التجديد للاستمرار / Your subscription is expired or inactive. Please renew to continue', {
+          autoClose: 5000,
+          onClick: () => {
+            window.location.href = '/subscription-payment';
+          }
+        });
+        
+        setTimeout(() => {
+          window.location.href = '/subscription-payment';
+        }, 3000);
+      } else {
+        toast.error('ليس لديك صلاحية للوصول إلى هذا المورد / You do not have permission to access this resource');
+      }
     } else if (error.response?.status === 404) {
-      toast.error('المورد المطلوب غير موجود');
+      toast.error('المورد المطلوب غير موجود / Resource not found');
     } else if (error.response?.status >= 500) {
-      toast.error('خطأ في الخادم، يرجى المحاولة لاحقاً');
+      toast.error('خطأ في الخادم، يرجى المحاولة لاحقاً / Server error, please try again later');
     } else if (error.message === 'Network Error') {
-      toast.error('خطأ في الاتصال بالشبكة، يرجى التحقق من اتصالك بالإنترنت');
+      toast.error('خطأ في الاتصال بالشبكة، يرجى التحقق من اتصالك بالإنترنت / Network connection error');
     } else if (!error.response) {
-      toast.error('فشل الاتصال بالخادم');
+      toast.error('فشل الاتصال بالخادم / Failed to connect to server');
     }
     
     return Promise.reject(error);

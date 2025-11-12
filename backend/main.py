@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, Form, Query, WebSocket, WebSocketDisconnect, Response, Request
+from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, Form, Query, WebSocket, WebSocketDisconnect, Response, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -129,6 +129,9 @@ async def startup_event():
         
         if settings.CORS_ORIGINS == "*":
             print("⚠️  WARNING: CORS is set to '*'. This is acceptable for development but MUST be changed to specific origins in production!")
+        
+        if not settings.STRIPE_WEBHOOK_SECRET:
+            print("⚠️  WARNING: STRIPE_WEBHOOK_SECRET is not configured. Stripe webhooks will be rejected for security. Configure this to enable webhook processing.")
         
         print(f"✓ Configuration validated (JWT key length: {len(settings.JWT_SECRET_KEY)} chars)")
     except Exception as e:
@@ -782,6 +785,9 @@ async def create_complaint(
     current_user: User = Depends(require_role(UserRole.TRADER)),
     db: Session = Depends(get_db)
 ):
+    from subscription_middleware import require_active_subscription
+    require_active_subscription(current_user, db)
+    
     new_complaint = Complaint(
         user_id=current_user.id,
         **complaint_data.dict()
@@ -2810,6 +2816,136 @@ async def update_payment(
     db.refresh(payment)
     
     return PaymentResponse.model_validate(payment)
+
+@app.post("/api/payments/stripe/create-checkout")
+async def create_stripe_checkout(
+    plan_type: str = Body(..., embed=True),
+    current_user: User = Depends(require_role(UserRole.TRADER)),
+    db: Session = Depends(get_db)
+):
+    from stripe_service import create_checkout_session
+    from config import get_settings
+    
+    settings = get_settings()
+    
+    if not settings.STRIPE_SECRET_KEY:
+        logger.warning("Stripe checkout attempted but STRIPE_SECRET_KEY is not configured")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Stripe payment is not available. Please use manual payment methods."
+        )
+    
+    if plan_type not in ['monthly', 'yearly']:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid plan_type. Must be 'monthly' or 'yearly'"
+        )
+    
+    result = create_checkout_session(current_user.id, plan_type, db)
+    
+    if not result:
+        logger.error(f"Failed to create Stripe checkout session for user {current_user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create checkout session. Please try again or use manual payment."
+        )
+    
+    create_audit_log(
+        db=db,
+        actor_user_id=current_user.id,
+        action="stripe_checkout_created",
+        target_type="Payment",
+        target_id=0,
+        details=f"Created Stripe checkout session for plan: {plan_type}"
+    )
+    
+    return {
+        "session_id": result['session_id'],
+        "checkout_url": result['checkout_url'],
+        "message": "Checkout session created successfully"
+    }
+
+@app.post("/api/payments/stripe/webhook")
+async def stripe_webhook(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    from webhooks import handle_stripe_webhook
+    
+    result = await handle_stripe_webhook(request, db)
+    return result
+
+@app.post("/api/users/business-verification/upload")
+async def upload_business_verification(
+    document: UploadFile = File(...),
+    current_user: User = Depends(require_role(UserRole.TRADER)),
+    db: Session = Depends(get_db)
+):
+    validate_upload_file(document)
+    
+    file_extension = os.path.splitext(document.filename)[1]
+    filename = f"business_license_{current_user.id}_{datetime.utcnow().timestamp()}{file_extension}"
+    filepath = os.path.join("uploads", filename)
+    
+    os.makedirs("uploads", exist_ok=True)
+    
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(document.file, buffer)
+    
+    current_user.business_license_path = filepath
+    current_user.business_verification_status = models.BusinessVerificationStatus.PENDING
+    
+    db.commit()
+    db.refresh(current_user)
+    
+    create_audit_log(
+        db=db,
+        actor_user_id=current_user.id,
+        action="business_verification_upload",
+        target_type="User",
+        target_id=current_user.id,
+        details=f"Uploaded business verification document"
+    )
+    
+    return {
+        "message": "Business verification document uploaded successfully",
+        "status": current_user.business_verification_status.value,
+        "file_path": filepath
+    }
+
+@app.get("/api/users/subscription-status")
+def check_subscription_status(
+    current_user: User = Depends(require_role(UserRole.TRADER)),
+    db: Session = Depends(get_db)
+):
+    from subscription_middleware import check_active_subscription
+    
+    has_active = check_active_subscription(current_user, db)
+    
+    active_subscription = None
+    if has_active:
+        active_subscription = db.query(Subscription).filter(
+            Subscription.user_id == current_user.id,
+            Subscription.status == SubscriptionStatus.ACTIVE,
+            Subscription.end_date > datetime.utcnow()
+        ).order_by(Subscription.end_date.desc()).first()
+    
+    response = {
+        "has_active_subscription": has_active,
+        "can_submit_complaints": has_active
+    }
+    
+    if active_subscription:
+        response["subscription"] = {
+            "id": active_subscription.id,
+            "start_date": active_subscription.start_date.isoformat(),
+            "end_date": active_subscription.end_date.isoformat(),
+            "status": active_subscription.status.value,
+            "auto_renew": active_subscription.auto_renew,
+            "days_remaining": (active_subscription.end_date - datetime.utcnow()).days
+        }
+    
+    return response
 
 @app.post("/api/complaints/{complaint_id}/feedback", response_model=FeedbackResponse)
 def create_feedback(

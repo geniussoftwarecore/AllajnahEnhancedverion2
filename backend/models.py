@@ -99,6 +99,15 @@ class NotificationType(str, enum.Enum):
     ACCOUNT_APPROVED = "ACCOUNT_APPROVED"
     ACCOUNT_REJECTED = "ACCOUNT_REJECTED"
 
+class PaymentProvider(str, enum.Enum):
+    STRIPE = "STRIPE"
+    MANUAL = "MANUAL"
+
+class BusinessVerificationStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    VERIFIED = "VERIFIED"
+    REJECTED = "REJECTED"
+
 class User(Base):
     __tablename__ = "users"
     
@@ -118,6 +127,10 @@ class User(Base):
     approved_at = Column(DateTime, nullable=True)
     approved_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     rejection_reason = Column(Text, nullable=True)
+    business_license_path = Column(String, nullable=True)
+    business_verification_status = Column(SQLEnum(BusinessVerificationStatus), default=BusinessVerificationStatus.PENDING, nullable=True)
+    business_verified_at = Column(DateTime, nullable=True)
+    business_verified_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -238,6 +251,9 @@ class Subscription(Base):
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
     status = Column(SQLEnum(SubscriptionStatus), default=SubscriptionStatus.PENDING)
+    stripe_subscription_id = Column(String, nullable=True)
+    auto_renew = Column(Boolean, default=True, nullable=False)
+    next_billing_date = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User", back_populates="subscriptions")
@@ -259,6 +275,10 @@ class Payment(Base):
     status = Column(SQLEnum(PaymentStatus), default=PaymentStatus.PENDING)
     approval_notes = Column(Text)
     technical_review_notes = Column(Text)
+    stripe_payment_id = Column(String, nullable=True)
+    stripe_customer_id = Column(String, nullable=True)
+    stripe_session_id = Column(String, nullable=True)
+    payment_provider = Column(SQLEnum(PaymentProvider), default=PaymentProvider.MANUAL, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     approved_at = Column(DateTime)
     technical_reviewed_at = Column(DateTime)

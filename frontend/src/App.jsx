@@ -18,6 +18,9 @@ import { queryClient } from './lib/queryClient';
 
 const TraderDashboard = lazy(() => import('./pages/TraderDashboard'));
 const TraderSubscription = lazy(() => import('./pages/TraderSubscription'));
+const SubscriptionPayment = lazy(() => import('./pages/SubscriptionPayment'));
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
+const PaymentCancel = lazy(() => import('./pages/PaymentCancel'));
 const TechnicalCommitteeDashboard = lazy(() => import('./pages/TechnicalCommitteeDashboard'));
 const HigherCommitteeDashboard = lazy(() => import('./pages/HigherCommitteeDashboard'));
 const TaskQueue = lazy(() => import('./pages/TaskQueue'));
@@ -182,6 +185,30 @@ function AppRoutes() {
           element={
             <PrivateRoute allowedRoles={['TRADER']}>
               <TraderSubscription />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/subscription-payment"
+          element={
+            <PrivateRoute allowedRoles={['TRADER']}>
+              <SubscriptionPayment />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/payment-success"
+          element={
+            <PrivateRoute allowedRoles={['TRADER']}>
+              <PaymentSuccess />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/payment-cancel"
+          element={
+            <PrivateRoute allowedRoles={['TRADER']}>
+              <PaymentCancel />
             </PrivateRoute>
           }
         />

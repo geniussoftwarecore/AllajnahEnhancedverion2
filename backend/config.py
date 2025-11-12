@@ -36,8 +36,14 @@ class Settings(BaseSettings):
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_PHONE_NUMBER: str = ""
     
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PRICE_ID: str = ""
+    
     ENABLE_EMAIL_NOTIFICATIONS: bool = False
     ENABLE_SMS_NOTIFICATIONS: bool = False
+    
+    FRONTEND_URL: str = ""
     
     class Config:
         env_file = ".env"

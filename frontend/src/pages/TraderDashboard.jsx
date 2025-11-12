@@ -2,6 +2,8 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ResponsivePageShell, StatCard, Alert, ProgressRing, CTAButton, LoadingFallback } from '../components/ui';
+import SubscriptionStatusBanner from '../components/SubscriptionStatusBanner';
+import BusinessVerificationUpload from '../components/BusinessVerificationUpload';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
 import { useDashboardStats, useRecentComplaints, useSubscription } from '../hooks/useQueries';
@@ -99,6 +101,8 @@ function TraderDashboard() {
           </div>
         </div>
 
+        <SubscriptionStatusBanner />
+
         <div className="card-glass-strong relative overflow-hidden rounded-2xl shadow-2xl border-2 border-primary-200/30 dark:border-primary-700/30 animate-fade-in-up">
           <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-purple-700"></div>
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30"></div>
@@ -156,7 +160,7 @@ function TraderDashboard() {
             transition={shouldReduceMotion ? { duration: 0 } : { delay: 0.4 }}
             whileHover={shouldReduceMotion ? {} : { scale: 1.05, y: -5 }}
             whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
-            onClick={() => navigate('/subscription')}
+            onClick={() => navigate('/subscription-payment')}
             className="card-glass group relative overflow-hidden flex flex-col items-center justify-center p-7 bg-gradient-to-br from-indigo-600 via-indigo-600 to-blue-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all cursor-pointer border-2 border-indigo-400/20"
           >
             {subscription?.status !== 'active' && (
@@ -425,6 +429,8 @@ function TraderDashboard() {
             </motion.div>
           )}
         </motion.div>
+
+        <BusinessVerificationUpload />
       </div>
     </ResponsivePageShell>
   );

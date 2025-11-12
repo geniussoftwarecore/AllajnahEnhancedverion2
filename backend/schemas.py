@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
-from models import UserRole, ComplaintStatus, Priority, SubscriptionStatus, PaymentStatus, TaskStatus, ApprovalStatus, AccountStatus, EscalationType, AppealStatus, MediationStatus, EscalationState, NotificationType
+from models import UserRole, ComplaintStatus, Priority, SubscriptionStatus, PaymentStatus, TaskStatus, ApprovalStatus, AccountStatus, EscalationType, AppealStatus, MediationStatus, EscalationState, NotificationType, PaymentProvider, BusinessVerificationStatus
 
 class UserCreate(BaseModel):
     email: EmailStr
