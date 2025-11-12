@@ -156,3 +156,20 @@ See `backend/.env.example` for a complete list of configurable environment varia
    - **Mobile Responsive**: Optimized for viewing on all devices with proper fallbacks
    - **Brand Consistency**: Professional color scheme matching the application's green gradient theme
    - **Next Steps**: Call sites in main.py will need updating to pass additional context parameters (complaint_title, dashboard_url, etc.) to notification functions
+
+## Recent Updates (November 12, 2025)
+### Yemeni E-Wallet Payment Integration
+1. **E-Wallet Payment Option**: Added support for Yemeni electronic wallet payment methods in the subscription payment system:
+   - **Supported Wallets**: جيب (Jeeb), جوالي (Jawaly), فلوسك (Flousc), كاش (Cash), ون كاش (OneCash), ياه ماني (YahMoney), ون ماني (OneMoney), موبايل ماني (MobileMoney)
+   - **Trader Interface** (`TraderSubscription.jsx`): 
+     - New "محفظة إلكترونية" payment method option
+     - Dropdown selector for wallet type
+     - Input fields for wallet owner name and wallet number
+     - Required image proof of payment for e-wallet transactions
+     - Clear instructions and validation for wallet payments
+   - **Admin Interface** (`PaymentsReview.jsx`):
+     - Display wallet information in payment detail modal
+     - Shows wallet type, owner name, and wallet number
+     - Arabic wallet names displayed for easy identification
+   - **Data Storage**: Wallet details stored in `account_details` field as JSON for easy retrieval and display
+   - **User Experience**: Streamlined payment flow with contextual help text and required field indicators

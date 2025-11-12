@@ -284,9 +284,23 @@ function TraderSubscription() {
 function PaymentModal({ subscription, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     method: 'bank_transfer',
-    proof: null
+    proof: null,
+    walletType: '',
+    walletName: '',
+    walletNumber: ''
   });
   const [loading, setLoading] = useState(false);
+
+  const yemeniWallets = [
+    { value: 'jeeb', label: 'جيب' },
+    { value: 'jawaly', label: 'جوالي' },
+    { value: 'flousc', label: 'فلوسك' },
+    { value: 'cash', label: 'كاش' },
+    { value: 'onecash', label: 'ون كاش' },
+    { value: 'yahmoney', label: 'ياه ماني' },
+    { value: 'onemoney', label: 'ون ماني' },
+    { value: 'mobilemoney', label: 'موبايل ماني' }
+  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -295,6 +309,16 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('method', formData.method);
+      
+      if (formData.method === 'e_wallet') {
+        const walletDetails = {
+          walletType: formData.walletType,
+          walletName: formData.walletName,
+          walletNumber: formData.walletNumber
+        };
+        formDataToSend.append('account_details', JSON.stringify(walletDetails));
+      }
+      
       if (formData.proof) {
         formDataToSend.append('proof', formData.proof);
       }
@@ -349,22 +373,90 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">طريقة الدفع</label>
             <select
               value={formData.method}
-              onChange={(e) => setFormData({ ...formData, method: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, method: e.target.value, walletType: '', walletName: '', walletNumber: '' })}
               className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all font-medium"
             >
               <option value="bank_transfer">تحويل بنكي</option>
               <option value="credit_card">بطاقة ائتمان</option>
+              <option value="e_wallet">محفظة إلكترونية</option>
               <option value="cash">نقداً</option>
             </select>
           </div>
 
+          {formData.method === 'e_wallet' && (
+            <>
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+                <p className="text-sm text-blue-700 dark:text-blue-300 font-semibold">
+                  📱 قم باختيار المحفظة الإلكترونية وإدخال معلومات الحساب الذي ستقوم بالدفع إليه
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                  نوع المحفظة الإلكترونية <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.walletType}
+                  onChange={(e) => setFormData({ ...formData, walletType: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all font-medium"
+                  required
+                >
+                  <option value="">اختر المحفظة</option>
+                  {yemeniWallets.map((wallet) => (
+                    <option key={wallet.value} value={wallet.value}>
+                      {wallet.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                  اسم صاحب المحفظة <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.walletName}
+                  onChange={(e) => setFormData({ ...formData, walletName: e.target.value })}
+                  placeholder="أدخل الاسم الكامل لصاحب المحفظة"
+                  className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all font-medium"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                  رقم المحفظة <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={formData.walletNumber}
+                  onChange={(e) => setFormData({ ...formData, walletNumber: e.target.value })}
+                  placeholder="أدخل رقم المحفظة (مثال: 777123456)"
+                  className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all font-medium"
+                  required
+                />
+              </div>
+            </>
+          )}
+
           <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">إثبات الدفع (اختياري)</label>
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+              إثبات الدفع {formData.method === 'e_wallet' && <span className="text-red-500">*</span>}
+              {formData.method !== 'e_wallet' && <span className="text-gray-500 text-xs">(اختياري)</span>}
+            </label>
             <input
               type="file"
+              accept="image/*"
               onChange={(e) => setFormData({ ...formData, proof: e.target.files[0] })}
               className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900 dark:file:text-primary-300"
+              required={formData.method === 'e_wallet'}
             />
+            {formData.method === 'e_wallet' && (
+              <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                يرجى رفع صورة توضح عملية الدفع من محفظتك إلى الرقم المحدد أعلاه
+              </p>
+            )}
           </div>
 
           <div className="flex gap-3 pt-4">

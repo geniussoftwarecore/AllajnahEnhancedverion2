@@ -258,6 +258,43 @@ function PaymentsReview() {
                     </div>
                   </div>
 
+                  {selectedPayment.method === 'e_wallet' && selectedPayment.account_details && (() => {
+                    try {
+                      const walletInfo = JSON.parse(selectedPayment.account_details);
+                      const walletNames = {
+                        'jeeb': 'جيب',
+                        'jawaly': 'جوالي',
+                        'flousc': 'فلوسك',
+                        'cash': 'كاش',
+                        'onecash': 'ون كاش',
+                        'yahmoney': 'ياه ماني',
+                        'onemoney': 'ون ماني',
+                        'mobilemoney': 'موبايل ماني'
+                      };
+                      return (
+                        <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900 dark:to-pink-900 rounded-xl border-2 border-purple-200 dark:border-purple-700">
+                          <p className="text-sm font-bold text-purple-700 dark:text-purple-300 mb-3">📱 معلومات المحفظة الإلكترونية</p>
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">نوع المحفظة:</span>
+                              <span className="font-bold text-gray-900 dark:text-white">{walletNames[walletInfo.walletType] || walletInfo.walletType}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">اسم صاحب المحفظة:</span>
+                              <span className="font-bold text-gray-900 dark:text-white">{walletInfo.walletName}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">رقم المحفظة:</span>
+                              <span className="font-bold text-gray-900 dark:text-white direction-ltr">{walletInfo.walletNumber}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    } catch (e) {
+                      return null;
+                    }
+                  })()}
+
                   {selectedPayment.proof_path && (
                     <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 rounded-xl">
                       <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2">إثبات الدفع</p>
