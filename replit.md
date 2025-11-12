@@ -18,23 +18,32 @@ I prefer iterative development with a focus on completing core functionalities f
 ### Technical Implementations
 -   **Authentication**: JWT-based with robust Role-Based Access Control (RBAC).
 -   **Database**: PostgreSQL managed with SQLAlchemy ORM.
+-   **Payment Gateway**: Stripe integration for automated subscription payments with checkout sessions and webhook handlers.
+-   **Subscription Management**: Automated subscription blocking (no active subscription = no complaint access), renewal reminders, and status tracking.
+-   **Business Verification**: Document upload system for trader verification with status tracking (pending/verified/rejected).
 -   **Workflow Automation**: Smart task queuing, multi-member task assignment, SLA monitoring with auto-escalation, auto-closing, concurrency protection, and Higher Committee approval.
 -   **Enhanced Escalation System**: Manual escalation, trader appeal paths, intelligent reassignment, automatic routing of reopened complaints, multi-reviewer approvals, and mediation requests.
 -   **Duplicate Detection**: Text similarity analysis.
 -   **Notification System**: In-app (real-time, WebSocket-powered, toast notifications) and optional external (Email via SendGrid, SMS via Twilio).
 -   **Analytics**: Comprehensive dashboard statistics and administrative analytics.
--   **Audit Trail**: System-wide logging of key actions.
--   **Security**: File upload validation, CORS, rate limiting, and session handling.
+-   **Audit Trail**: System-wide logging of key actions including payment, subscription, and verification events.
+-   **Security**: File upload validation, CORS, rate limiting, session handling, and Stripe webhook signature verification.
 -   **Deployment**: Configured for production on Replit with VM deployment target.
 -   **Account Approval**: Merchant accounts require Higher Committee approval.
 
 ### Feature Specifications
 -   **User Roles**: Trader, Technical Committee, Higher Committee.
--   **Profile Management**: Self-service editing, profile picture, password changes, notification preferences.
+-   **Profile Management**: Self-service editing, profile picture, password changes, notification preferences, and business verification document upload.
 -   **Complaint Workflow**: Multi-status progression with re-opening, feedback, task acceptance/rejection, multi-step approvals, and file attachments.
 -   **Escalation & Appeals**: Manual escalation, trader appeals, TC reassignment, smart reopening, multi-reviewer approvals, and mediation requests.
 -   **File Attachments**: Multi-file upload with drag-and-drop, error tracking, retries, and authorized download.
--   **Subscription & Payment Management**: Annual subscriptions for traders, committee approval for payment proofs, multiple payment methods, including Yemeni e-wallets (جيب, جوالي, فلوسك, كاش, ون كاش, ياه ماني, ون ماني, موبايل ماني).
+-   **Subscription & Payment Management**: 
+    -   Stripe checkout integration for automated subscription payments (monthly/yearly plans)
+    -   Subscription blocking: traders without active subscriptions cannot submit complaints
+    -   Automatic renewal reminders sent 3 days before expiration
+    -   Manual payment approval for traditional payment methods including Yemeni e-wallets (جيب, جوالي, فلوسك, كاش, ون كاش, ياه ماني, ون ماني, موبايل ماني)
+    -   Subscription status tracking and management
+-   **Business Verification**: Multi-document upload for trader verification (commercial registration, tax card, business license) with approval workflow.
 -   **Admin Management**: CRUD for users, categories, payment methods, SLA configurations, and system settings.
 -   **Category System**: Complaints organized by government entities with cascading selection.
 -   **Export & Reporting**: Export filtered complaints to Excel/CSV, individual complaint PDFs, and analytics data to Excel/CSV/PDF, all with full Arabic RTL support.
@@ -52,6 +61,7 @@ I prefer iterative development with a focus on completing core functionalities f
 -   **Internationalization**: i18next
 -   **ORM**: SQLAlchemy (Python)
 -   **Authentication**: PyJWT, bcrypt
+-   **Payment Processing**: Stripe (for subscription payments)
 -   **Email Service**: SendGrid (via Replit Connector)
 -   **SMS Service**: Twilio (via Replit Connector)
 -   **Charts**: Recharts
@@ -61,3 +71,19 @@ I prefer iterative development with a focus on completing core functionalities f
 -   **Animation**: Framer Motion
 -   **PDF Generation**: ReportLab (Python) with NotoSansArabic.ttf
 -   **Arabic Text Processing**: arabic-reshaper, python-bidi
+
+## Recent Updates (November 2025)
+### Payment Gateway & Subscription Enhancement
+-   ✅ **Stripe Payment Integration**: Full Stripe checkout session creation with webhook handlers for automated payment processing
+-   ✅ **Subscription Blocking**: Middleware enforces active subscription requirement - traders without valid subscriptions cannot submit complaints
+-   ✅ **Automatic Renewal Reminders**: Scheduler job sends notifications 3 days before subscription expiry
+-   ✅ **Business Verification System**: Multi-document upload with status tracking for trader verification
+-   ✅ **Enhanced Audit Trail**: Complete logging of all payment, subscription, and verification events
+-   ✅ **Subscription Status Banner**: Real-time subscription status display with expiry warnings in trader dashboard
+-   ✅ **Payment Success/Cancel Pages**: Dedicated pages for post-checkout user experience
+
+**Environment Variables Required for Stripe:**
+-   `STRIPE_SECRET_KEY`: Your Stripe secret key (from Stripe Dashboard)
+-   `STRIPE_PRICE_ID`: Stripe price ID for subscription product
+-   `STRIPE_WEBHOOK_SECRET`: Webhook signing secret for secure webhook verification
+-   `FRONTEND_URL`: Frontend base URL for Stripe redirect URLs (optional, auto-detected from REPLIT_DOMAINS)
