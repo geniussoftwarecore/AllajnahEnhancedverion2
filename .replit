@@ -113,5 +113,5 @@ packages = ["alsa-lib", "at-spi2-atk", "at-spi2-core", "atk", "cairo", "cargo", 
 
 [deployment]
 deploymentTarget = "vm"
-run = ["bash", "-c", "cd backend && uv run uvicorn main:app --host 0.0.0.0 --port 8000 & cd frontend && npm run preview -- --host 0.0.0.0 --port 5000 --strictPort"]
+run = ["bash", "-c", "cd backend && uv run uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2"]
 build = ["bash", "-c", "cd frontend && npm install && npm run build"]

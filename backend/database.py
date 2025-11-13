@@ -9,10 +9,14 @@ DATABASE_URL = settings.DATABASE_URL
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    pool_recycle=3600,
-    pool_size=20,
-    max_overflow=40,
-    echo=False
+    pool_recycle=1800,
+    pool_size=15,
+    max_overflow=10,
+    echo=False,
+    connect_args={
+        "connect_timeout": 10,
+        "options": "-c statement_timeout=30000"
+    }
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

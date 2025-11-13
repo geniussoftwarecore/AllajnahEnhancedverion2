@@ -32,4 +32,5 @@ dependencies = [
     "python-bidi>=0.6.7",
     "arabic-reshaper>=3.0.0",
     "stripe>=13.2.0",
+    "brotli>=1.2.0",
 ]
