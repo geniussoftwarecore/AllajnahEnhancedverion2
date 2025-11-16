@@ -30,7 +30,7 @@ function Register() {
     password: '',
     first_name: '',
     last_name: '',
-    role: 'trader',
+    role: 'TRADER',
     phone: '',
     whatsapp: '',
     telegram: '',

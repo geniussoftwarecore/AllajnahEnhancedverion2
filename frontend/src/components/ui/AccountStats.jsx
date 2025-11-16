@@ -40,7 +40,7 @@ function AccountStats({ user }) {
       }
     };
 
-    if (user?.role === 'trader') {
+    if (user?.role === 'TRADER') {
       fetchStats();
     } else {
       setStats(prev => ({ ...prev, loading: false }));

@@ -44,7 +44,7 @@ function ComplaintList({ onUpdate, role, embedded = false }) {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [toast, setToast] = useState(null);
   
-  const canUseBulkActions = user?.role === 'technical_committee' || user?.role === 'higher_committee';
+  const canUseBulkActions = user?.role === 'TECHNICAL_COMMITTEE' || user?.role === 'HIGHER_COMMITTEE';
 
   useEffect(() => {
     loadCategories();
@@ -319,7 +319,7 @@ function ComplaintList({ onUpdate, role, embedded = false }) {
             setCurrentPage(1);
           }}
           categories={categories}
-          showPriority={role === 'technical_committee' || role === 'higher_committee'}
+          showPriority={role === 'TECHNICAL_COMMITTEE' || role === 'HIGHER_COMMITTEE'}
           onClearFilters={clearFilters}
         />
       </motion.div>
@@ -385,7 +385,7 @@ function ComplaintList({ onUpdate, role, embedded = false }) {
                 <option value="">تعيين إلى...</option>
                 {committeeUsers.map(u => (
                   <option key={u.id} value={u.id}>
-                    {u.first_name} {u.last_name} ({u.role === 'technical_committee' ? 'لجنة فنية' : 'لجنة عليا'})
+                    {u.first_name} {u.last_name} ({u.role === 'TECHNICAL_COMMITTEE' ? 'لجنة فنية' : 'لجنة عليا'})
                   </option>
                 ))}
               </select>
@@ -621,7 +621,7 @@ function ComplaintList({ onUpdate, role, embedded = false }) {
       subtitle={`إجمالي: ${complaints.length} شكوى`}
     >
       <div className="space-y-6">
-        {user?.role === 'trader' && (
+        {user?.role === 'TRADER' && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}

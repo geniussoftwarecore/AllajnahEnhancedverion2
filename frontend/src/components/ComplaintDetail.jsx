@@ -37,7 +37,7 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
       loadComments();
       loadFeedback();
       loadAttachments();
-      if (user.role !== 'trader') {
+      if (user.role !== 'TRADER') {
         loadCommitteeUsers();
       }
     }
@@ -194,14 +194,14 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
   };
 
   const canReopen = () => {
-    if (user.role !== 'trader') return false;
+    if (user.role !== 'TRADER') return false;
     if (!['resolved', 'rejected'].includes(complaint.status)) return false;
     if (!complaint.can_reopen_until) return false;
     return new Date(complaint.can_reopen_until) > new Date();
   };
 
   const canProvideFeedback = () => {
-    if (user.role !== 'trader') return false;
+    if (user.role !== 'TRADER') return false;
     if (!['resolved', 'rejected'].includes(complaint.status)) return false;
     return !feedback;
   };
@@ -244,7 +244,7 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
   const content = (
     <div>
       {/* Trader Actions for Resolved/Rejected Complaints */}
-      {user.role === 'trader' && ['resolved', 'rejected'].includes(complaint.status) && (
+      {user.role === 'TRADER' && ['resolved', 'rejected'].includes(complaint.status) && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <div className="flex gap-3 flex-wrap">
             {canProvideFeedback() && (
@@ -328,7 +328,7 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
         </div>
       </div>
 
-      {user.role !== 'trader' && (
+      {user.role !== 'TRADER' && (
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h3 className="text-lg font-semibold mb-4">إجراءات اللجنة</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -498,7 +498,7 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
               rows="3"
               placeholder="أضف تعليقاً..."
             />
-            {(user.role === 'technical_committee' || user.role === 'higher_committee') && (
+            {(user.role === 'TECHNICAL_COMMITTEE' || user.role === 'HIGHER_COMMITTEE') && (
               <button
                 onClick={() => setShowQuickReplySelector(true)}
                 className="absolute top-2 left-2 bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded-lg transition-colors"
@@ -508,7 +508,7 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
               </button>
             )}
           </div>
-          {user.role !== 'trader' && (
+          {user.role !== 'TRADER' && (
             <div className="flex items-center">
               <input
                 type="checkbox"

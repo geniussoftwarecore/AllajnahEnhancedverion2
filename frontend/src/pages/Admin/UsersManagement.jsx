@@ -92,9 +92,9 @@ function UsersManagement() {
 
   const getRoleText = (role) => {
     switch (role) {
-      case 'trader': return 'تاجر';
-      case 'technical_committee': return 'اللجنة الفنية';
-      case 'higher_committee': return 'اللجنة العليا';
+      case 'TRADER': return 'تاجر';
+      case 'TECHNICAL_COMMITTEE': return 'اللجنة الفنية';
+      case 'HIGHER_COMMITTEE': return 'اللجنة العليا';
       default: return role;
     }
   };
@@ -155,9 +155,9 @@ function UsersManagement() {
                 className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               >
                 <option value="">الكل</option>
-                <option value="trader">تاجر</option>
-                <option value="technical_committee">اللجنة الفنية</option>
-                <option value="higher_committee">اللجنة العليا</option>
+                <option value="TRADER">تاجر</option>
+                <option value="TECHNICAL_COMMITTEE">اللجنة الفنية</option>
+                <option value="HIGHER_COMMITTEE">اللجنة العليا</option>
               </select>
             </div>
             <div>
@@ -311,7 +311,7 @@ function UserFormModal({ user, onClose, onSubmit, title }) {
     password: '',
     first_name: user?.first_name || '',
     last_name: user?.last_name || '',
-    role: user?.role || 'trader',
+    role: user?.role || 'TRADER',
     phone: user?.phone || '',
     whatsapp: user?.whatsapp || '',
     telegram: user?.telegram || '',
@@ -421,9 +421,9 @@ function UserFormModal({ user, onClose, onSubmit, title }) {
                   required
                   className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                 >
-                  <option value="trader">تاجر</option>
-                  <option value="technical_committee">اللجنة الفنية</option>
-                  <option value="higher_committee">اللجنة العليا</option>
+                  <option value="TRADER">تاجر</option>
+                  <option value="TECHNICAL_COMMITTEE">اللجنة الفنية</option>
+                  <option value="HIGHER_COMMITTEE">اللجنة العليا</option>
                 </select>
               </div>
               <div>

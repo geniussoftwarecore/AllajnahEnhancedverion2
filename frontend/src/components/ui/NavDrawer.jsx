@@ -85,9 +85,9 @@ const NavDrawer = ({ isOpen, onClose }) => {
                   {user?.first_name} {user?.last_name}
                 </p>
                 <p className="text-xs opacity-90">
-                  {user?.role === 'trader' && 'تاجر'}
-                  {user?.role === 'technical_committee' && 'لجنة فنية'}
-                  {user?.role === 'higher_committee' && 'لجنة عليا'}
+                  {user?.role === 'TRADER' && 'تاجر'}
+                  {user?.role === 'TECHNICAL_COMMITTEE' && 'لجنة فنية'}
+                  {user?.role === 'HIGHER_COMMITTEE' && 'لجنة عليا'}
                 </p>
               </div>
             </div>

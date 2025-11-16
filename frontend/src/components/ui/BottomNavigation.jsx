@@ -25,14 +25,14 @@ export default function BottomNavigation({ role }) {
       { path: '/', icon: HomeIcon, activeIcon: HomeIconSolid, label: 'الرئيسية' },
     ];
 
-    if (role === 'higher_committee') {
+    if (role === 'HIGHER_COMMITTEE') {
       return [
         ...commonItems,
         { path: '/admin/users', icon: UserGroupIcon, activeIcon: UserGroupIconSolid, label: 'المستخدمين' },
         { path: '/admin/analytics', icon: ChartBarIcon, activeIcon: ChartBarIconSolid, label: 'التحليلات' },
         { path: '/admin/settings', icon: Cog6ToothIcon, activeIcon: Cog6ToothIconSolid, label: 'الإعدادات' },
       ];
-    } else if (role === 'trader') {
+    } else if (role === 'TRADER') {
       return [
         ...commonItems,
         { path: '/subscription', icon: DocumentTextIcon, activeIcon: DocumentTextIconSolid, label: 'الاشتراك' },

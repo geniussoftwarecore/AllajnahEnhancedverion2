@@ -248,9 +248,9 @@ function UserSettings() {
                     </h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400">{user?.email}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                      {user?.role === 'trader' && 'تاجر'}
-                      {user?.role === 'technical_committee' && 'اللجنة الفنية'}
-                      {user?.role === 'higher_committee' && 'اللجنة العليا'}
+                      {user?.role === 'TRADER' && 'تاجر'}
+                      {user?.role === 'TECHNICAL_COMMITTEE' && 'اللجنة الفنية'}
+                      {user?.role === 'HIGHER_COMMITTEE' && 'اللجنة العليا'}
                     </p>
                   </div>
                 </div>
@@ -429,7 +429,7 @@ function UserSettings() {
               </div>
             </div>
 
-            {user?.role === 'technical_committee' && (
+            {user?.role === 'TECHNICAL_COMMITTEE' && (
               <div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   <BellIcon className="w-6 h-6" />

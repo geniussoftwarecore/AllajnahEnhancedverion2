@@ -39,11 +39,11 @@ function ProfileDropdown() {
 
   const getRoleText = (role) => {
     switch (role) {
-      case 'trader':
+      case 'TRADER':
         return 'تاجر';
-      case 'technical_committee':
+      case 'TECHNICAL_COMMITTEE':
         return 'لجنة فنية';
-      case 'higher_committee':
+      case 'HIGHER_COMMITTEE':
         return 'لجنة عليا';
       default:
         return role;
