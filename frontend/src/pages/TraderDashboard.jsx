@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ResponsivePageShell, StatCard, Alert, ProgressRing, CTAButton, LoadingFallback } from '../components/ui';
 import SubscriptionStatusBanner from '../components/SubscriptionStatusBanner';
 import TrialStatusBanner from '../components/TrialStatusBanner';
+import TrialGuard from '../components/TrialGuard';
 import BusinessVerificationUpload from '../components/BusinessVerificationUpload';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
@@ -12,55 +13,19 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Eye, CreditCard, Bell, Sparkles, TrendingUp, FileText, Clock, CheckCircle, XCircle, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import api from '../api/axios';
 
-function TraderDashboard() {
+function TraderDashboardContent() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const shouldReduceMotion = useReducedMotion();
   const [notification, setNotification] = useState(null);
-  const [trialStatus, setTrialStatus] = useState(null);
-  const [trialLoading, setTrialLoading] = useState(true);
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const checkTrialStatus = async () => {
-      try {
-        const response = await api.get('/trial/status');
-        const status = response.data;
-        setTrialStatus(status);
-        
-        if (status.has_trial && !status.is_active && !status.has_active_subscription) {
-          navigate('/subscription', { replace: true });
-          return;
-        }
-        
-        setTrialLoading(false);
-      } catch (error) {
-        console.error('Failed to fetch trial status:', error);
-        navigate('/subscription', { replace: true });
-      }
-    };
-
-    checkTrialStatus();
-  }, [navigate]);
 
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: recentComplaints = [], isLoading: complaintsLoading } = useRecentComplaints(5);
   const { data: subscription, isLoading: subLoading } = useSubscription();
 
-  const loading = statsLoading || complaintsLoading || trialLoading;
-
-  if (trialLoading) {
-    return (
-      <ResponsivePageShell 
-        title={`مرحباً، ${user?.full_name || 'التاجر'}`}
-        notificationCount={0}
-      >
-        <LoadingFallback message="جاري التحقق من حالة الاشتراك..." />
-      </ResponsivePageShell>
-    );
-  }
+  const loading = statsLoading || complaintsLoading;
 
   const handleWebSocketMessage = useCallback((message) => {
     if (message.type === 'complaint_update' || message.type === 'new_comment') {
@@ -471,6 +436,14 @@ function TraderDashboard() {
         <BusinessVerificationUpload />
       </div>
     </ResponsivePageShell>
+  );
+}
+
+function TraderDashboard() {
+  return (
+    <TrialGuard>
+      <TraderDashboardContent />
+    </TrialGuard>
   );
 }
 

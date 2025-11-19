@@ -82,6 +82,16 @@ I prefer iterative development with a focus on completing core functionalities f
 -   ✅ **Subscription Status Banner**: Real-time subscription status display with expiry warnings in trader dashboard
 -   ✅ **Payment Success/Cancel Pages**: Dedicated pages for post-checkout user experience
 
+### 20-Day Free Trial System
+-   ✅ **Automatic Trial Assignment**: New trader accounts automatically receive a 20-day free trial period
+-   ✅ **Trial Status Tracking**: Database fields (trial_start_date, trial_end_date) track trial period
+-   ✅ **Trial Validation Middleware**: Backend subscription middleware checks both trial and subscription status before allowing access
+-   ✅ **Trial Guard Component**: Frontend TrialGuard component enforces trial validation before dashboard renders
+-   ✅ **Trial Status Banner**: TrialStatusBanner component displays countdown and trial status to traders
+-   ✅ **Trial Status API**: `/trial/status` endpoint provides trial information including days remaining
+-   ✅ **Higher Committee Notifications**: Automatic notifications sent to Higher Committee when new traders register
+-   ✅ **Account Approval Workflow**: Higher Committee must approve new trader accounts before they can use the system
+
 **Environment Variables Required for Stripe:**
 -   `STRIPE_SECRET_KEY`: Your Stripe secret key (from Stripe Dashboard)
 -   `STRIPE_PRICE_ID`: Stripe price ID for subscription product
