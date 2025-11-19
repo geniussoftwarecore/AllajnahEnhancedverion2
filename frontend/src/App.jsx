@@ -70,41 +70,19 @@ function AppRoutes() {
   useEffect(() => {
     const checkSetupStatus = async () => {
       try {
-        // Check sessionStorage first (faster than API call and only lasts current session)
-        const sessionStatus = sessionStorage.getItem('setup_completed');
-        if (sessionStatus === 'true') {
-          setNeedsSetup(false);
-          setSetupLoading(false);
-          return;
-        }
-
-        // Then check localStorage (persists across sessions)
-        const storedStatus = localStorage.getItem('setup_completed');
-        if (storedStatus === 'true') {
-          setNeedsSetup(false);
-          setSetupLoading(false);
-          sessionStorage.setItem('setup_completed', 'true');
-          return;
-        }
-
-        // Only make API call if no cached data available
+        // Always check the API - it's fast and ensures we're never locked out
         const response = await api.get('setup/status');
         const needsSetupValue = response.data.needs_setup;
         setNeedsSetup(needsSetupValue);
         
-        // Cache in both storages
-        const completedValue = (!needsSetupValue).toString();
-        localStorage.setItem('setup_completed', completedValue);
-        sessionStorage.setItem('setup_completed', completedValue);
+        // Update localStorage for reference (not used for gating)
+        localStorage.setItem('setup_completed', (!needsSetupValue).toString());
       } catch (error) {
         console.error('Failed to check setup status:', error);
-        // Fallback to stored status on error
+        // On error, check localStorage as fallback, otherwise default to false (allow login)
         const storedStatus = localStorage.getItem('setup_completed');
-        if (storedStatus === 'true') {
-          setNeedsSetup(false);
-          sessionStorage.setItem('setup_completed', 'true');
-        }
-      } finally {
+        setNeedsSetup(storedStatus === 'false');
+      } finally{
         setSetupLoading(false);
       }
     };
