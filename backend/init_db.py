@@ -16,10 +16,10 @@ def init_db():
         if db.query(Category).count() == 0:
             categories = [
                 Category(
-                    name_ar="الموصفات والمقاييس",
+                    name_ar="المواصفات والمقاييس",
                     name_en="Standards and Measurements",
-                    government_entity="الموصفات والمقاييس",
-                    description_ar="شكاوى متعلقة بالموصفات والمقاييس"
+                    government_entity="المواصفات والمقاييس",
+                    description_ar="شكاوى متعلقة بالمواصفات والمقاييس"
                 ),
                 Category(
                     name_ar="الجمارك",

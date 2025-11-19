@@ -192,22 +192,22 @@ async def startup_event():
             if db.query(Category).count() == 0:
                 print("Adding default categories...")
                 categories = [
-                    # الموصفات والمقاييس
-                    Category(name_ar="سحب عينات متكررة لنفس المنتج", name_en="repeated_sampling_same_product", government_entity="الموصفات والمقاييس"),
-                    Category(name_ar="عدم قبولهم الفحوصات السابقة", name_en="rejection_previous_tests", government_entity="الموصفات والمقاييس"),
-                    Category(name_ar="مبالغة في الاجراءات الشكلية والمعاينة الظاهرية", name_en="excessive_formal_procedures", government_entity="الموصفات والمقاييس"),
-                    Category(name_ar="رفض شهادات المطابقة ونتائج الاختبار", name_en="rejection_conformity_certificates", government_entity="الموصفات والمقاييس"),
-                    Category(name_ar="رفض تقارير اختبار العينات", name_en="rejection_sample_test_reports", government_entity="الموصفات والمقاييس"),
-                    Category(name_ar="التحريز الشامل لجميع محتويات الشاحنة", name_en="comprehensive_seizure_shipment", government_entity="الموصفات والمقاييس"),
-                    Category(name_ar="تأخير الإفراج - الفحص لمدة طويلة", name_en="delayed_release_long_inspection", government_entity="الموصفات والمقاييس"),
-                    Category(name_ar="ارتفاع أجور الفحص", name_en="high_inspection_fees", government_entity="الموصفات والمقاييس"),
-                    Category(name_ar="الإجراءات على منتج سليم بسبب منتج مخالف", name_en="procedures_sound_product_due_defective", government_entity="الموصفات والمقاييس"),
-                    Category(name_ar="تأخير الافراج", name_en="delayed_release", government_entity="الموصفات والمقاييس"),
-                    Category(name_ar="التأخير في نتائج الفحص الظاهر", name_en="delay_visual_inspection_results", government_entity="الموصفات والمقاييس"),
-                    Category(name_ar="تكرار الفحوصات لمنتجات سابقة", name_en="repeated_tests_previous_products", government_entity="الموصفات والمقاييس"),
-                    Category(name_ar="غرامات غير قانونية", name_en="illegal_fines", government_entity="الموصفات والمقاييس"),
-                    Category(name_ar="ابتزاز", name_en="extortion", government_entity="الموصفات والمقاييس"),
-                    Category(name_ar="إلزام المصنعين بمواصفات اختيارية", name_en="mandatory_optional_specifications", government_entity="الموصفات والمقاييس"),
+                    # المواصفات والمقاييس
+                    Category(name_ar="سحب عينات متكررة لنفس المنتج", name_en="repeated_sampling_same_product", government_entity="المواصفات والمقاييس"),
+                    Category(name_ar="عدم قبولهم الفحوصات السابقة", name_en="rejection_previous_tests", government_entity="المواصفات والمقاييس"),
+                    Category(name_ar="مبالغة في الاجراءات الشكلية والمعاينة الظاهرية", name_en="excessive_formal_procedures", government_entity="المواصفات والمقاييس"),
+                    Category(name_ar="رفض شهادات المطابقة ونتائج الاختبار", name_en="rejection_conformity_certificates", government_entity="المواصفات والمقاييس"),
+                    Category(name_ar="رفض تقارير اختبار العينات", name_en="rejection_sample_test_reports", government_entity="المواصفات والمقاييس"),
+                    Category(name_ar="التحريز الشامل لجميع محتويات الشاحنة", name_en="comprehensive_seizure_shipment", government_entity="المواصفات والمقاييس"),
+                    Category(name_ar="تأخير الإفراج - الفحص لمدة طويلة", name_en="delayed_release_long_inspection", government_entity="المواصفات والمقاييس"),
+                    Category(name_ar="ارتفاع أجور الفحص", name_en="high_inspection_fees", government_entity="المواصفات والمقاييس"),
+                    Category(name_ar="الإجراءات على منتج سليم بسبب منتج مخالف", name_en="procedures_sound_product_due_defective", government_entity="المواصفات والمقاييس"),
+                    Category(name_ar="تأخير الافراج", name_en="delayed_release", government_entity="المواصفات والمقاييس"),
+                    Category(name_ar="التأخير في نتائج الفحص الظاهر", name_en="delay_visual_inspection_results", government_entity="المواصفات والمقاييس"),
+                    Category(name_ar="تكرار الفحوصات لمنتجات سابقة", name_en="repeated_tests_previous_products", government_entity="المواصفات والمقاييس"),
+                    Category(name_ar="غرامات غير قانونية", name_en="illegal_fines", government_entity="المواصفات والمقاييس"),
+                    Category(name_ar="ابتزاز", name_en="extortion", government_entity="المواصفات والمقاييس"),
+                    Category(name_ar="إلزام المصنعين بمواصفات اختيارية", name_en="mandatory_optional_specifications", government_entity="المواصفات والمقاييس"),
                     
                     # الجمارك
                     Category(name_ar="اهمال البضائع عند المطابقة", name_en="goods_neglect_during_matching", government_entity="الجمارك"),
