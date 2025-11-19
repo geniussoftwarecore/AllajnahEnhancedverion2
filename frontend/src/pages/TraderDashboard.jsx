@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ResponsivePageShell, StatCard, Alert, ProgressRing, CTAButton, LoadingFallback } from '../components/ui';
 import SubscriptionStatusBanner from '../components/SubscriptionStatusBanner';
+import TrialStatusBanner from '../components/TrialStatusBanner';
 import BusinessVerificationUpload from '../components/BusinessVerificationUpload';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
@@ -101,6 +102,7 @@ function TraderDashboard() {
           </div>
         </div>
 
+        <TrialStatusBanner />
         <SubscriptionStatusBanner />
 
         <div className="card-glass-strong relative overflow-hidden rounded-2xl shadow-2xl border-2 border-primary-200/30 dark:border-primary-700/30 animate-fade-in-up">
