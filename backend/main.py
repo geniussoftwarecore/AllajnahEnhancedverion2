@@ -396,6 +396,8 @@ def register_merchant(
         )
     
     hashed_password = get_password_hash(merchant_data.password)
+    now = datetime.utcnow()
+    
     new_user = User(
         email=merchant_data.email,
         hashed_password=hashed_password,
@@ -407,7 +409,10 @@ def register_merchant(
         telegram=merchant_data.telegram,
         address=merchant_data.address,
         is_active=True,
-        account_status=AccountStatus.PENDING
+        account_status=AccountStatus.APPROVED,
+        approved_at=now,
+        trial_start_date=now,
+        trial_end_date=now + timedelta(days=20)
     )
     
     db.add(new_user)
@@ -415,13 +420,13 @@ def register_merchant(
     db.refresh(new_user)
     
     create_audit_log(db, new_user.id, "MERCHANT_REGISTRATION", "user", new_user.id, 
-                     f"Merchant registration request submitted for {new_user.email}")
+                     f"Merchant registered with 20-day trial: {new_user.email}")
     db.commit()
     
     return {
         "success": True,
-        "message": "تم تقديم طلبك بنجاح. سيتم مراجعته من قبل اللجنة العليا وسيتم إعلامك بالقرار.",
-        "message_en": "Your request has been submitted successfully. It will be reviewed by the Higher Committee and you will be notified of the decision."
+        "message": "تم إنشاء حسابك بنجاح! يمكنك الآن تسجيل الدخول والاستمتاع بفترة تجريبية مجانية لمدة 20 يومًا.",
+        "message_en": "Your account has been created successfully! You can now login and enjoy a free 20-day trial period."
     }
 
 @app.post("/api/admin/users", response_model=UserResponse)

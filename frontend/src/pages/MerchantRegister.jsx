@@ -119,7 +119,7 @@ function MerchantRegister() {
       setSuccess(true);
       
       setTimeout(() => {
-        navigate('/login', { state: { message: 'تم تقديم طلبك بنجاح. سيتم مراجعته قريباً.' } });
+        navigate('/login', { state: { message: 'تم إنشاء حسابك بنجاح! يمكنك الآن تسجيل الدخول والاستمتاع بفترة تجريبية مجانية لمدة 20 يومًا.' } });
       }, 3000);
     } catch (err) {
       const errorMessage = mapBackendError(err, 'ar');
