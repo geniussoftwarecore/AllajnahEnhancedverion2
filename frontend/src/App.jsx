@@ -70,9 +70,17 @@ function AppRoutes() {
   useEffect(() => {
     const checkSetupStatus = async () => {
       try {
+        const storedStatus = localStorage.getItem('setup_completed');
+        if (storedStatus === 'true') {
+          setNeedsSetup(false);
+          setSetupLoading(false);
+          return;
+        }
+
         const response = await api.get('setup/status');
-        setNeedsSetup(response.data.needs_setup);
-        localStorage.setItem('setup_completed', (!response.data.needs_setup).toString());
+        const needsSetupValue = response.data.needs_setup;
+        setNeedsSetup(needsSetupValue);
+        localStorage.setItem('setup_completed', (!needsSetupValue).toString());
       } catch (error) {
         console.error('Failed to check setup status:', error);
         const storedStatus = localStorage.getItem('setup_completed');

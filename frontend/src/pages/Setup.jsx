@@ -324,6 +324,19 @@ function Setup() {
       >
         {loading ? t('setup.submitting') : t('setup.submit')}
       </CTAButton>
+
+      <div className="text-center mt-4">
+        <p className="text-sm text-gray-600">
+          {currentLang === 'ar' ? 'هل تم إعداد النظام بالفعل؟' : 'Already set up?'}
+          {' '}
+          <Link 
+            to="/login" 
+            className="font-medium text-emerald-600 hover:text-emerald-500 transition-colors"
+          >
+            {currentLang === 'ar' ? 'انتقل إلى تسجيل الدخول' : 'Go to Login'}
+          </Link>
+        </p>
+      </div>
     </FormWrapper>
   );
 }
