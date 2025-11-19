@@ -102,18 +102,9 @@ function Login() {
     e.preventDefault();
     setError('');
 
-    const newErrors = {};
-    
-    newErrors.email = validateEmail(formData.email, 'ar');
-    newErrors.password = validateRequired(formData.password, 'ar');
-
-    Object.keys(newErrors).forEach(key => {
-      if (!newErrors[key]) delete newErrors[key];
-    });
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      const summary = getErrorSummary(newErrors, 'ar');
+    // Use existing validateForm function to avoid duplicate code
+    if (!validateForm()) {
+      const summary = getErrorSummary(errors, 'ar');
       setError(summary || 'يرجى تصحيح الأخطاء في النموذج');
       return;
     }
@@ -131,7 +122,7 @@ function Login() {
       resetLoginAttempts();
       
       const redirectTo = searchParams.get('redirect_to') || '/';
-      navigate(redirectTo);
+      navigate(redirectTo, { replace: true });  // Use replace to prevent back button issues
     } catch (err) {
       const errorMessage = mapBackendError(err, 'ar');
       setError(errorMessage);

@@ -62,8 +62,9 @@ function Setup() {
     if (justCompleted) {
       const timer = setTimeout(() => {
         localStorage.setItem('setup_completed', 'true');
+        sessionStorage.setItem('setup_completed', 'true');
         window.location.href = '/login';
-      }, 3000);
+      }, 2000);  // Reduced from 3s to 2s for faster redirect
       return () => clearTimeout(timer);
     }
   }, [justCompleted]);

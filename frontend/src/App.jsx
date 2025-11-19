@@ -70,22 +70,39 @@ function AppRoutes() {
   useEffect(() => {
     const checkSetupStatus = async () => {
       try {
-        const storedStatus = localStorage.getItem('setup_completed');
-        if (storedStatus === 'true') {
+        // Check sessionStorage first (faster than API call and only lasts current session)
+        const sessionStatus = sessionStorage.getItem('setup_completed');
+        if (sessionStatus === 'true') {
           setNeedsSetup(false);
           setSetupLoading(false);
           return;
         }
 
-        const response = await api.get('setup/status');
-        const needsSetupValue = response.data.needs_setup;
-        setNeedsSetup(needsSetupValue);
-        localStorage.setItem('setup_completed', (!needsSetupValue).toString());
-      } catch (error) {
-        console.error('Failed to check setup status:', error);
+        // Then check localStorage (persists across sessions)
         const storedStatus = localStorage.getItem('setup_completed');
         if (storedStatus === 'true') {
           setNeedsSetup(false);
+          setSetupLoading(false);
+          sessionStorage.setItem('setup_completed', 'true');
+          return;
+        }
+
+        // Only make API call if no cached data available
+        const response = await api.get('setup/status');
+        const needsSetupValue = response.data.needs_setup;
+        setNeedsSetup(needsSetupValue);
+        
+        // Cache in both storages
+        const completedValue = (!needsSetupValue).toString();
+        localStorage.setItem('setup_completed', completedValue);
+        sessionStorage.setItem('setup_completed', completedValue);
+      } catch (error) {
+        console.error('Failed to check setup status:', error);
+        // Fallback to stored status on error
+        const storedStatus = localStorage.getItem('setup_completed');
+        if (storedStatus === 'true') {
+          setNeedsSetup(false);
+          sessionStorage.setItem('setup_completed', 'true');
         }
       } finally {
         setSetupLoading(false);
