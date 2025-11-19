@@ -40,7 +40,7 @@ from schemas import (
     ComplaintAppealCreate, ComplaintAppealUpdate, ComplaintAppealResponse,
     ComplaintMediationRequestCreate, ComplaintMediationRequestUpdate, ComplaintMediationRequestResponse,
     ManualEscalationRequest, ReassignmentRequest,
-    NotificationResponse, NotificationListResponse
+    NotificationResponse, NotificationListResponse, TrialStatusResponse
 )
 from auth import (
     get_password_hash, verify_password, create_access_token,
@@ -425,7 +425,7 @@ def register_merchant(
     }
 
 @app.post("/api/admin/users", response_model=UserResponse)
-def create_user(
+async def create_user(
     user_data: UserCreate,
     current_user: User = Depends(require_role(UserRole.HIGHER_COMMITTEE)),
     db: Session = Depends(get_db)
@@ -438,6 +438,8 @@ def create_user(
         )
     
     hashed_password = get_password_hash(user_data.password)
+    now = datetime.utcnow()
+    
     new_user = User(
         email=user_data.email,
         hashed_password=hashed_password,
@@ -449,13 +451,35 @@ def create_user(
         telegram=user_data.telegram,
         address=user_data.address,
         account_status=AccountStatus.APPROVED,
-        approved_at=datetime.utcnow(),
+        approved_at=now,
         approved_by_id=current_user.id
     )
+    
+    if user_data.role == UserRole.TRADER:
+        new_user.trial_start_date = now
+        new_user.trial_end_date = now + timedelta(days=20)
     
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    
+    if user_data.role == UserRole.TRADER:
+        higher_committee_users = db.query(User).filter(
+            User.role == UserRole.HIGHER_COMMITTEE,
+            User.is_active == True
+        ).all()
+        
+        for hc_user in higher_committee_users:
+            await notification_service.create_in_app_notification(
+                db=db,
+                user_id=hc_user.id,
+                notification_type="ACCOUNT_APPROVED",
+                title_ar="تاجر جديد تم إضافته",
+                title_en="New Trader Added",
+                message_ar=f"تم إنشاء حساب تاجر جديد: {new_user.first_name} {new_user.last_name} ({new_user.email}). الفترة التجريبية: 20 يوم.",
+                message_en=f"New trader account created: {new_user.first_name} {new_user.last_name} ({new_user.email}). Trial period: 20 days.",
+                action_url="/admin/merchant-requests"
+            )
     
     return UserResponse.model_validate(new_user)
 
@@ -2687,6 +2711,36 @@ def delete_payment_method(
                      f"Deleted payment method: {payment_method.name_en}")
     
     return {"message": "Payment method deleted successfully"}
+
+@app.get("/api/trial/status", response_model=TrialStatusResponse)
+def get_trial_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    now = datetime.utcnow()
+    has_trial = bool(current_user.trial_start_date and current_user.trial_end_date)
+    is_active = False
+    days_remaining = None
+    
+    if has_trial:
+        is_active = now <= current_user.trial_end_date
+        if is_active:
+            days_remaining = (current_user.trial_end_date - now).days
+    
+    active_subscription = db.query(Subscription).filter(
+        Subscription.user_id == current_user.id,
+        Subscription.status == SubscriptionStatus.ACTIVE,
+        Subscription.end_date > now
+    ).first()
+    
+    return TrialStatusResponse(
+        has_trial=has_trial,
+        is_active=is_active,
+        trial_start_date=current_user.trial_start_date,
+        trial_end_date=current_user.trial_end_date,
+        days_remaining=days_remaining,
+        has_active_subscription=bool(active_subscription)
+    )
 
 @app.get("/api/subscriptions/me", response_model=Optional[SubscriptionResponse])
 def get_my_subscription(

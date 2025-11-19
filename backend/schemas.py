@@ -35,6 +35,8 @@ class UserResponse(BaseModel):
     approved_at: Optional[datetime] = None
     approved_by_id: Optional[int] = None
     rejection_reason: Optional[str] = None
+    trial_start_date: Optional[datetime] = None
+    trial_end_date: Optional[datetime] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     
@@ -651,3 +653,11 @@ class NotificationListResponse(BaseModel):
     total: int
     unread_count: int
     notifications: List[NotificationResponse]
+
+class TrialStatusResponse(BaseModel):
+    has_trial: bool
+    is_active: bool
+    trial_start_date: Optional[datetime] = None
+    trial_end_date: Optional[datetime] = None
+    days_remaining: Optional[int] = None
+    has_active_subscription: bool
