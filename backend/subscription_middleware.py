@@ -11,10 +11,16 @@ def check_active_subscription(user: User, db: Session) -> bool:
     if user.role != UserRole.TRADER:
         return True
     
+    now = datetime.utcnow()
+    
+    if user.trial_start_date and user.trial_end_date:
+        if now <= user.trial_end_date:
+            return True
+    
     active_subscription = db.query(Subscription).filter(
         Subscription.user_id == user.id,
         Subscription.status == SubscriptionStatus.ACTIVE,
-        Subscription.end_date > datetime.utcnow()
+        Subscription.end_date > now
     ).first()
     
     return active_subscription is not None

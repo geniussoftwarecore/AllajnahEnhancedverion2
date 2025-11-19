@@ -131,6 +131,8 @@ class User(Base):
     business_verification_status = Column(SQLEnum(BusinessVerificationStatus), default=BusinessVerificationStatus.PENDING, nullable=True)
     business_verified_at = Column(DateTime, nullable=True)
     business_verified_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    trial_start_date = Column(DateTime, nullable=True)
+    trial_end_date = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
