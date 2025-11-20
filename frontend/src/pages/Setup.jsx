@@ -203,23 +203,44 @@ function Setup() {
   if (setupCompleted) {
     return (
       <FormWrapper
-        title={t('setup.already_configured')}
-        subtitle={t('common.loading')}
+        title={currentLang === 'ar' ? 'النظام جاهز' : 'System Ready'}
+        subtitle={currentLang === 'ar' ? 'يمكنك الآن تسجيل الدخول أو إنشاء حساب جديد' : 'You can now login or create a new account'}
         icon={SparklesIcon}
       >
         <Alert
-          type="success"
-          message={t('setup.alreadyCompleted')}
+          type="info"
+          message={currentLang === 'ar' ? 'تم إعداد النظام بالفعل. اختر أحد الخيارات أدناه:' : 'The system is already set up. Choose an option below:'}
         />
-        <Link to="/login">
-          <CTAButton
-            variant="primary"
-            size="lg"
-            fullWidth
-          >
-            {t('setup.goToLogin')}
-          </CTAButton>
-        </Link>
+        
+        <div className="space-y-3">
+          <Link to="/login">
+            <CTAButton
+              variant="primary"
+              size="lg"
+              fullWidth
+            >
+              {currentLang === 'ar' ? 'تسجيل الدخول (لديك حساب)' : 'Login (I have an account)'}
+            </CTAButton>
+          </Link>
+          
+          <Link to="/register-merchant">
+            <CTAButton
+              variant="secondary"
+              size="lg"
+              fullWidth
+            >
+              {currentLang === 'ar' ? 'إنشاء حساب تاجر جديد' : 'Create New Merchant Account'}
+            </CTAButton>
+          </Link>
+        </div>
+        
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+          <p className="text-sm text-blue-900 text-center">
+            {currentLang === 'ar' 
+              ? '💡 إذا كنت تاجراً جديداً، اضغط على "إنشاء حساب تاجر جديد"' 
+              : '💡 If you are a new merchant, click "Create New Merchant Account"'}
+          </p>
+        </div>
       </FormWrapper>
     );
   }

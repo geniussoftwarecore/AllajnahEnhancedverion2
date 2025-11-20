@@ -210,13 +210,18 @@ function Login() {
         </div>
       </div>
 
-      <div className="text-center">
-        <Link 
-          to="/register-merchant" 
-          className="text-primary-600 hover:text-primary-700 font-medium transition-all duration-200 inline-flex items-center gap-2 hover:gap-3 group"
-        >
-          <span className="text-gray-600">تاجر جديد؟</span>
-          <span className="font-bold group-hover:underline decoration-2 underline-offset-4">سجل هنا</span>
+      <div className="bg-gradient-to-r from-primary-50 to-green-50 p-4 rounded-lg">
+        <p className="text-sm text-gray-700 text-center mb-3">
+          💡 ليس لديك حساب؟ قم بالتسجيل كتاجر جديد
+        </p>
+        <Link to="/register-merchant">
+          <CTAButton
+            variant="secondary"
+            size="md"
+            fullWidth
+          >
+            إنشاء حساب تاجر جديد
+          </CTAButton>
         </Link>
       </div>
     </FormWrapper>
