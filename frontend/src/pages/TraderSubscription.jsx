@@ -62,12 +62,24 @@ function TraderSubscription() {
   };
 
   const getPaymentStatusText = (status) => {
-    switch (status) {
+    const statusLower = status?.toLowerCase();
+    switch (statusLower) {
       case 'pending': return 'قيد المراجعة';
       case 'approved': return 'موافق عليه';
       case 'rejected': return 'مرفوض';
       default: return status;
     }
+  };
+  
+  const getPaymentMethodText = (method) => {
+    const methodMap = {
+      'bank_transfer': 'تحويل بنكي',
+      'credit_card': 'بطاقة ائتمان',
+      'e_wallet': 'محفظة إلكترونية',
+      'cash': 'نقداً',
+      'stripe': 'بطاقة ائتمان (Stripe)'
+    };
+    return methodMap[method] || method;
   };
 
   const isExpiredOrExpiring = () => {
@@ -249,16 +261,16 @@ function TraderSubscription() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-success-600 dark:text-success-400">
                         {Number(payment.amount).toFixed(2)} ريال
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{payment.method}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{getPaymentMethodText(payment.method)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-sm ${getPaymentStatusColor(payment.status)}`}>
                           {getPaymentStatusText(payment.status)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                        {new Date(payment.created_at).toLocaleDateString('ar')}
+                        {new Date(payment.created_at).toLocaleDateString('ar-SA')}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{payment.approval_notes || '-'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate" title={payment.approval_notes}>{payment.approval_notes || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -285,9 +297,11 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     method: 'bank_transfer',
     proof: null,
+    proofPreview: null,
     walletType: '',
     walletName: '',
-    walletNumber: ''
+    walletNumber: '',
+    referenceNumber: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -302,13 +316,38 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
     { value: 'mobilemoney', label: 'موبايل ماني' }
   ];
 
+  const SUBSCRIPTION_AMOUNT = 200.00;
+  const DEFAULT_PAYMENT_METHOD_ID = 1;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (formData.method === 'e_wallet') {
+      if (!formData.walletType || !formData.walletName || !formData.walletNumber) {
+        toast.error('يرجى إكمال جميع معلومات المحفظة الإلكترونية');
+        return;
+      }
+      if (!formData.proof) {
+        toast.error('يرجى رفع إثبات الدفع للمحفظة الإلكترونية');
+        return;
+      }
+    }
+    
+    if (formData.method === 'bank_transfer' && !formData.proof && !formData.referenceNumber) {
+      toast.warning('يُنصح برفع إثبات الدفع أو إدخال رقم المرجع للتحويل البنكي');
+    }
+    
     setLoading(true);
 
     try {
       const formDataToSend = new FormData();
+      formDataToSend.append('payment_method_id', DEFAULT_PAYMENT_METHOD_ID.toString());
+      formDataToSend.append('amount', SUBSCRIPTION_AMOUNT.toFixed(2));
       formDataToSend.append('method', formData.method);
+      
+      if (formData.referenceNumber) {
+        formDataToSend.append('reference_number', formData.referenceNumber);
+      }
       
       if (formData.method === 'e_wallet') {
         const walletDetails = {
@@ -334,6 +373,22 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
       toast.error(err.response?.data?.detail || 'حدث خطأ أثناء تقديم الدفع');
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('حجم الملف يجب أن يكون أقل من 10 ميجابايت');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, proof: file, proofPreview: reader.result });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -366,7 +421,8 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="p-3 sm:p-4 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 rounded-lg border border-primary-200 dark:border-primary-700">
             <p className="text-xs text-primary-700 dark:text-primary-300 mb-0.5 font-semibold">المبلغ المطلوب</p>
-            <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">200.00 ريال</p>
+            <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">{SUBSCRIPTION_AMOUNT.toFixed(2)} ريال</p>
+            <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">رسوم الاشتراك السنوي</p>
           </div>
 
           <div>
@@ -440,6 +496,21 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
             </>
           )}
 
+          {formData.method !== 'e_wallet' && (
+            <div>
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                رقم المرجع <span className="text-gray-500 text-xs">(اختياري)</span>
+              </label>
+              <input
+                type="text"
+                value={formData.referenceNumber}
+                onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
+                placeholder="رقم العملية أو المرجع (إن وجد)"
+                className="w-full px-3 py-2 sm:py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all"
+              />
+            </div>
+          )}
+
           <div>
             <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
               إثبات الدفع {formData.method === 'e_wallet' && <span className="text-red-500">*</span>}
@@ -447,8 +518,8 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
             </label>
             <input
               type="file"
-              accept="image/*"
-              onChange={(e) => setFormData({ ...formData, proof: e.target.files[0] })}
+              accept="image/*,.pdf"
+              onChange={handleFileChange}
               className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900 dark:file:text-primary-300"
               required={formData.method === 'e_wallet'}
             />
@@ -456,6 +527,16 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
               <p className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">
                 يرجى رفع صورة توضح عملية الدفع من محفظتك إلى الرقم المحدد أعلاه
               </p>
+            )}
+            {formData.proofPreview && (
+              <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">معاينة المرفق:</p>
+                <img 
+                  src={formData.proofPreview} 
+                  alt="معاينة" 
+                  className="max-h-32 rounded border border-gray-200 dark:border-gray-700"
+                />
+              </div>
             )}
           </div>
 

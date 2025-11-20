@@ -70,6 +70,17 @@ function PaymentsReview() {
       default: return status;
     }
   };
+  
+  const getPaymentMethodText = (method) => {
+    const methodMap = {
+      'bank_transfer': 'تحويل بنكي',
+      'credit_card': 'بطاقة ائتمان',
+      'e_wallet': 'محفظة إلكترونية',
+      'cash': 'نقداً',
+      'stripe': 'بطاقة ائتمان (Stripe)'
+    };
+    return methodMap[method] || method;
+  };
 
   if (loading) return <LoadingFallback message="جاري تحميل الدفعات..." />;
 
@@ -177,7 +188,7 @@ function PaymentsReview() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600 dark:text-green-400">
                       {Number(payment.amount).toFixed(2)} ريال
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{payment.method}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{getPaymentMethodText(payment.method)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(payment.status)}`}>
                         {getStatusText(payment.status)}
@@ -244,8 +255,14 @@ function PaymentsReview() {
                     </div>
                     <div className="p-3 bg-gradient-to-br from-gray-50 to-indigo-50 dark:from-gray-700 dark:to-indigo-900 rounded-lg">
                       <p className="text-sm text-gray-600 dark:text-gray-400">طريقة الدفع</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{selectedPayment.method}</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{getPaymentMethodText(selectedPayment.method)}</p>
                     </div>
+                    {selectedPayment.reference_number && (
+                      <div className="p-3 bg-gradient-to-br from-gray-50 to-yellow-50 dark:from-gray-700 dark:to-yellow-900 rounded-lg">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">رقم المرجع</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{selectedPayment.reference_number}</p>
+                      </div>
+                    )}
                     <div className="p-3 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-700 dark:to-blue-900 rounded-lg">
                       <p className="text-sm text-gray-600 dark:text-gray-400">الحالة</p>
                       <span className={`inline-block px-3 py-1.5 rounded-full text-xs font-bold shadow-md ${getStatusColor(selectedPayment.status)}`}>

@@ -8,8 +8,11 @@ from sqlalchemy import func, or_, and_, text
 from typing import List, Optional
 import os
 import shutil
+import logging
 from datetime import datetime, timedelta
 from slowapi.errors import RateLimitExceeded
+
+logger = logging.getLogger(__name__)
 
 from database import get_db
 from models import (
