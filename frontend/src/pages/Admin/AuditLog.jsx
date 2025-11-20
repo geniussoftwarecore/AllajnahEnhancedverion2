@@ -19,6 +19,10 @@ function AuditLog() {
   const { data: logs = [], isLoading: loading } = useAuditLogs(filters);
   const totalPages = useMemo(() => Math.ceil(logs.length / filters.limit) || 1, [logs.length, filters.limit]);
 
+  const loadLogs = () => {
+    queryClient.invalidateQueries({ queryKey: ['auditLogs'] });
+  };
+
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
     setFilters({ ...filters, offset: (newPage - 1) * filters.limit });
