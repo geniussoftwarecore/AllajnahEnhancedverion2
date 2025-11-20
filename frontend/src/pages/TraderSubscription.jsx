@@ -338,43 +338,43 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4" onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         onClick={(e) => e.stopPropagation()}
-        className="card-glass-strong p-8 max-w-lg w-full border-2 border-primary-200 dark:border-primary-700"
+        className="card-glass-strong p-4 sm:p-6 max-w-md w-full border-2 border-primary-200 dark:border-primary-700 max-h-[95vh] overflow-y-auto"
       >
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-md">
-              <CreditCard className="w-6 h-6 text-white" />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-md">
+              <CreditCard className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
               دفعة جديدة
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="p-5 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 rounded-xl border border-primary-200 dark:border-primary-700">
-            <p className="text-sm text-primary-700 dark:text-primary-300 mb-1 font-semibold">المبلغ المطلوب</p>
-            <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">200.00 ريال</p>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="p-3 sm:p-4 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 rounded-lg border border-primary-200 dark:border-primary-700">
+            <p className="text-xs text-primary-700 dark:text-primary-300 mb-0.5 font-semibold">المبلغ المطلوب</p>
+            <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">200.00 ريال</p>
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">طريقة الدفع</label>
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">طريقة الدفع</label>
             <select
               value={formData.method}
               onChange={(e) => setFormData({ ...formData, method: e.target.value, walletType: '', walletName: '', walletNumber: '' })}
-              className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all font-medium"
+              className="w-full px-3 py-2 sm:py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all"
             >
               <option value="bank_transfer">تحويل بنكي</option>
               <option value="credit_card">بطاقة ائتمان</option>
@@ -385,20 +385,20 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
 
           {formData.method === 'e_wallet' && (
             <>
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-700 dark:text-blue-300 font-semibold">
+              <div className="p-2.5 sm:p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">
                   📱 قم باختيار المحفظة الإلكترونية وإدخال معلومات الحساب الذي ستقوم بالدفع إليه
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                   نوع المحفظة الإلكترونية <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.walletType}
                   onChange={(e) => setFormData({ ...formData, walletType: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all font-medium"
+                  className="w-full px-3 py-2 sm:py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all"
                   required
                 >
                   <option value="">اختر المحفظة</option>
@@ -411,7 +411,7 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                   اسم صاحب المحفظة <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -419,13 +419,13 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
                   value={formData.walletName}
                   onChange={(e) => setFormData({ ...formData, walletName: e.target.value })}
                   placeholder="أدخل الاسم الكامل لصاحب المحفظة"
-                  className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all font-medium"
+                  className="w-full px-3 py-2 sm:py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                   رقم المحفظة <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -433,7 +433,7 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
                   value={formData.walletNumber}
                   onChange={(e) => setFormData({ ...formData, walletNumber: e.target.value })}
                   placeholder="أدخل رقم المحفظة (مثال: 777123456)"
-                  className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all font-medium"
+                  className="w-full px-3 py-2 sm:py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all"
                   required
                 />
               </div>
@@ -441,7 +441,7 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
           )}
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
               إثبات الدفع {formData.method === 'e_wallet' && <span className="text-red-500">*</span>}
               {formData.method !== 'e_wallet' && <span className="text-gray-500 text-xs">(اختياري)</span>}
             </label>
@@ -449,22 +449,22 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
               type="file"
               accept="image/*"
               onChange={(e) => setFormData({ ...formData, proof: e.target.files[0] })}
-              className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900 dark:file:text-primary-300"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white transition-all file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900 dark:file:text-primary-300"
               required={formData.method === 'e_wallet'}
             />
             {formData.method === 'e_wallet' && (
-              <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+              <p className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">
                 يرجى رفع صورة توضح عملية الدفع من محفظتك إلى الرقم المحدد أعلاه
               </p>
             )}
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-2 sm:gap-3 pt-2">
             <CTAButton
               type="button"
               onClick={onClose}
               variant="secondary"
-              size="md"
+              size="sm"
               fullWidth
             >
               إلغاء
@@ -472,7 +472,7 @@ function PaymentModal({ subscription, onClose, onSuccess }) {
             <CTAButton
               type="submit"
               variant="primary"
-              size="md"
+              size="sm"
               fullWidth
               loading={loading}
               disabled={loading}
