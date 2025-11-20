@@ -92,6 +92,14 @@ I prefer iterative development with a focus on completing core functionalities f
 -   ✅ **Higher Committee Notifications**: Automatic notifications sent to Higher Committee when new traders register
 -   ✅ **Account Approval Workflow**: Higher Committee must approve new trader accounts before they can use the system
 
+### Complaint Workflow & Escalation (November 20, 2025)
+-   ✅ **API Response Standardization**: Updated `/api/complaints` endpoint to return structured pagination data `{complaints: [...], total, page, page_size}` for better scalability
+-   ✅ **Defensive Frontend Handling**: ComplaintList and dashboards handle both old array format and new structured response for backward compatibility
+-   ✅ **TC Escalation Controls**: Technical Committee members can escalate assigned complaints to Higher Committee via dedicated button in ComplaintDetail
+-   ✅ **Escalation Dialog**: Modal interface requires TC to provide reasoning before escalating complaints
+-   ✅ **Manual Escalation API**: `/api/complaints/{id}/manual-escalate` endpoint processes escalations with audit trail
+-   ✅ **Role-Based Visibility**: Escalation button only appears for TC members who are assigned to the complaint and when status is not already escalated
+
 **Environment Variables Required for Stripe:**
 -   `STRIPE_SECRET_KEY`: Your Stripe secret key (from Stripe Dashboard)
 -   `STRIPE_PRICE_ID`: Stripe price ID for subscription product
