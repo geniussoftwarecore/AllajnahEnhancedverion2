@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ResponsivePageShell, StatCard, Alert, ProgressRing, CTAButton, LoadingFallback } from '../components/ui';
@@ -10,6 +10,7 @@ import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
 import { useDashboardStats, useRecentComplaints, useSubscription } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
+import api from '../api/axios';
 import { Plus, Eye, CreditCard, Bell, Sparkles, TrendingUp, FileText, Clock, CheckCircle, XCircle, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
@@ -19,6 +20,7 @@ function TraderDashboardContent() {
   const { user } = useAuth();
   const shouldReduceMotion = useReducedMotion();
   const [notification, setNotification] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const queryClient = useQueryClient();
 
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
@@ -26,6 +28,19 @@ function TraderDashboardContent() {
   const { data: subscription, isLoading: subLoading } = useSubscription();
 
   const loading = statsLoading || complaintsLoading;
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const response = await api.get('/notifications', { params: { skip: 0, limit: 1 } });
+      setUnreadCount(response.data.unread_count || 0);
+    } catch (error) {
+      console.error('Failed to fetch notification count:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount]);
 
   const handleWebSocketMessage = useCallback((message) => {
     if (message.type === 'complaint_update' || message.type === 'new_comment') {
@@ -37,7 +52,10 @@ function TraderDashboardContent() {
       queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
       queryClient.invalidateQueries({ queryKey: ['complaints', 'recent'] });
     }
-  }, [queryClient]);
+    if (message.type === 'notification') {
+      fetchUnreadCount();
+    }
+  }, [queryClient, fetchUnreadCount]);
 
   const { isConnected } = useWebSocket(handleWebSocketMessage);
 
@@ -72,7 +90,7 @@ function TraderDashboardContent() {
     return (
       <ResponsivePageShell 
         title={`مرحباً، ${user?.full_name || 'التاجر'}`}
-        notificationCount={0}
+        notificationCount={unreadCount}
       >
         <LoadingFallback message="جاري تحميل لوحة التحكم..." />
       </ResponsivePageShell>
@@ -82,7 +100,7 @@ function TraderDashboardContent() {
   return (
     <ResponsivePageShell 
       title={`مرحباً، ${user?.full_name || 'التاجر'}`}
-      notificationCount={notification ? 1 : 0}
+      notificationCount={unreadCount}
     >
       <div className="space-y-6">
         {notification && (

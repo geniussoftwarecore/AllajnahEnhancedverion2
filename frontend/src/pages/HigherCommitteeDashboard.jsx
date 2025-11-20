@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ResponsivePageShell, StatCard, CTAButton, Alert, ProgressRing, LoadingFallback, AdminNavMenu } from '../components/ui';
@@ -6,6 +6,7 @@ import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
 import { useDashboardStats, useEscalatedComplaints } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
+import api from '../api/axios';
 import { 
   DocumentTextIcon, 
   ClockIcon, 
@@ -58,12 +59,26 @@ function HigherCommitteeDashboard() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [notification, setNotification] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [activeTab, setActiveTab] = useState('overview');
 
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: recentComplaints = [], isLoading: complaintsLoading } = useEscalatedComplaints(10);
   
   const loading = statsLoading || complaintsLoading;
+
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const response = await api.get('/notifications', { params: { skip: 0, limit: 1 } });
+      setUnreadCount(response.data.unread_count || 0);
+    } catch (error) {
+      console.error('Failed to fetch notification count:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount]);
 
   const handleWebSocketMessage = useCallback((message) => {
     if (message.type === 'complaint_update' || message.type === 'new_complaint' || message.type === 'new_comment') {
@@ -75,7 +90,10 @@ function HigherCommitteeDashboard() {
       queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
       queryClient.invalidateQueries({ queryKey: ['complaints', 'escalated'] });
     }
-  }, [queryClient]);
+    if (message.type === 'notification') {
+      fetchUnreadCount();
+    }
+  }, [queryClient, fetchUnreadCount]);
 
   const { isConnected } = useWebSocket(handleWebSocketMessage);
 
@@ -113,7 +131,7 @@ function HigherCommitteeDashboard() {
       <ResponsivePageShell 
         title="لوحة اللجنة العليا"
         subtitle="إدارة شاملة للنظام"
-        notificationCount={0}
+        notificationCount={unreadCount}
       >
         <LoadingFallback message="جاري تحميل لوحة التحكم..." />
       </ResponsivePageShell>
@@ -124,7 +142,7 @@ function HigherCommitteeDashboard() {
     <ResponsivePageShell 
       title="لوحة اللجنة العليا"
       subtitle={`مرحباً، ${user?.full_name || 'عضو اللجنة العليا'}`}
-      notificationCount={notification ? 1 : 0}
+      notificationCount={unreadCount}
     >
       <div className="space-y-6">
         {notification && (

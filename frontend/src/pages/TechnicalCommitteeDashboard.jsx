@@ -1,10 +1,11 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResponsivePageShell, StatCard, QuickActionCard, ChartCard, FilterBar, Alert, SkeletonDashboard } from '../components/ui';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
 import { useDashboardStats, useCategories, useComplaints } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
+import api from '../api/axios';
 import { debounce } from '../utils/debounce';
 import { 
   DocumentPlusIcon, 
@@ -24,6 +25,7 @@ function TechnicalCommitteeDashboard() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [notification, setNotification] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
@@ -44,6 +46,19 @@ function TechnicalCommitteeDashboard() {
   const complaints = complaintsData?.complaints || [];
   const loading = statsLoading;
 
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const response = await api.get('/notifications', { params: { skip: 0, limit: 1 } });
+      setUnreadCount(response.data.unread_count || 0);
+    } catch (error) {
+      console.error('Failed to fetch notification count:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount]);
+
   const handleWebSocketMessage = useCallback((message) => {
     if (message.type === 'complaint_update' || message.type === 'new_complaint' || message.type === 'new_comment') {
       setNotification({
@@ -54,7 +69,10 @@ function TechnicalCommitteeDashboard() {
       queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
       queryClient.invalidateQueries({ queryKey: ['complaints'] });
     }
-  }, [queryClient]);
+    if (message.type === 'notification') {
+      fetchUnreadCount();
+    }
+  }, [queryClient, fetchUnreadCount]);
 
   const { isConnected } = useWebSocket(handleWebSocketMessage);
 
@@ -113,7 +131,7 @@ function TechnicalCommitteeDashboard() {
     return (
       <ResponsivePageShell 
         title={`مرحباً، ${user?.full_name || 'عضو اللجنة'}`}
-        notificationCount={0}
+        notificationCount={unreadCount}
       >
         <SkeletonDashboard />
       </ResponsivePageShell>
@@ -123,7 +141,7 @@ function TechnicalCommitteeDashboard() {
   return (
     <ResponsivePageShell 
       title={`مرحباً، ${user?.full_name || 'عضو اللجنة'}`}
-      notificationCount={notification ? 1 : 0}
+      notificationCount={unreadCount}
     >
       <div className="space-y-6">
         {notification && (
