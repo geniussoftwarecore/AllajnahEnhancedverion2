@@ -72,6 +72,7 @@ export const useComplaints = (filters = {}) => {
     },
     staleTime: 1 * 60 * 1000,
     enabled: !!user,
+    select: (data) => data,
   });
 };
 

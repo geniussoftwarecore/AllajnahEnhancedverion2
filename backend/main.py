@@ -25,7 +25,7 @@ from models import (
 )
 from schemas import (
     UserCreate, UserLogin, UserResponse, Token, UserUpdate, PasswordReset, ProfileUpdate, ChangePasswordRequest, EmailUpdateRequest,
-    ComplaintCreate, ComplaintUpdate, ComplaintResponse,
+    ComplaintCreate, ComplaintUpdate, ComplaintResponse, ComplaintsListResponse,
     CommentCreate, CommentResponse,
     AttachmentResponse, CategoryResponse, CategoryCreate, CategoryUpdate, DashboardStats, AnalyticsData,
     SubscriptionCreate, SubscriptionResponse,
@@ -864,7 +864,7 @@ async def create_complaint(
     
     return ComplaintResponse.model_validate(new_complaint)
 
-@app.get("/api/complaints", response_model=List[ComplaintResponse])
+@app.get("/api/complaints", response_model=ComplaintsListResponse)
 def get_complaints(
     status: Optional[ComplaintStatus] = None,
     category_id: Optional[int] = None,
@@ -906,9 +906,16 @@ def get_complaints(
             )
         )
     
+    total = query.count()
     offset = (page - 1) * page_size
     complaints = query.order_by(Complaint.created_at.desc()).offset(offset).limit(page_size).all()
-    return complaints
+    
+    return ComplaintsListResponse(
+        complaints=complaints,
+        total=total,
+        page=page,
+        page_size=page_size
+    )
 
 @app.get("/api/complaints/{complaint_id}", response_model=ComplaintResponse)
 def get_complaint(

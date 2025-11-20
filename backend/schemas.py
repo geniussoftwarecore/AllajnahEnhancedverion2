@@ -160,6 +160,12 @@ class ComplaintResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class ComplaintsListResponse(BaseModel):
+    complaints: List['ComplaintResponse']
+    total: int = 0
+    page: int = 1
+    page_size: int = 50
+
 class CommentCreate(BaseModel):
     complaint_id: int
     content: str

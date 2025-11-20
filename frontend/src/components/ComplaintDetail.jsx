@@ -23,6 +23,8 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, isLoading: false });
   const [showQuickReplySelector, setShowQuickReplySelector] = useState(false);
   const [attachments, setAttachments] = useState([]);
+  const [showEscalationDialog, setShowEscalationDialog] = useState(false);
+  const [escalationReason, setEscalationReason] = useState('');
 
   useEffect(() => {
     if (!propComplaint && id) {
@@ -176,6 +178,26 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
     } catch (error) {
       console.error('Error starting work:', error);
       alert(error.response?.data?.detail || 'فشل في البدء بالعمل');
+    }
+  };
+
+  const handleEscalate = async () => {
+    if (!escalationReason.trim()) {
+      alert('يرجى إدخال سبب التصعيد');
+      return;
+    }
+
+    try {
+      await api.post(`/complaints/${complaint.id}/manual-escalate`, {
+        reason: escalationReason
+      });
+      alert('تم تصعيد الشكوى للجنة العليا بنجاح');
+      setShowEscalationDialog(false);
+      setEscalationReason('');
+      loadComplaintData();
+    } catch (error) {
+      console.error('Error escalating complaint:', error);
+      alert(error.response?.data?.detail || 'فشل في تصعيد الشكوى');
     }
   };
 
@@ -416,6 +438,21 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
               </div>
             </div>
           )}
+
+          {/* Escalation Button for Technical Committee */}
+          {user.role === 'TECHNICAL_COMMITTEE' && complaint.assigned_to_id === user.id && complaint.status !== 'escalated' && (
+            <div className="mt-6 border-t pt-4">
+              <button
+                onClick={() => setShowEscalationDialog(true)}
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                تصعيد الشكوى للجنة العليا
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -530,6 +567,46 @@ function ComplaintDetail({ complaint: propComplaint, onBack, role, embedded = fa
           </button>
         </div>
       </div>
+
+      {/* Escalation Dialog */}
+      {showEscalationDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4">تصعيد الشكوى للجنة العليا</h2>
+            <p className="text-gray-600 mb-6">
+              يرجى توضيح سبب التصعيد للجنة العليا:
+            </p>
+            
+            <textarea
+              value={escalationReason}
+              onChange={(e) => setEscalationReason(e.target.value)}
+              rows={4}
+              placeholder="اكتب سبب التصعيد هنا..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg mb-4"
+            />
+            
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEscalationDialog(false);
+                  setEscalationReason('');
+                }}
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                onClick={handleEscalate}
+                className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+              >
+                تأكيد التصعيد
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Feedback Modal */}
       {showFeedbackModal && (
