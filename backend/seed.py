@@ -22,7 +22,7 @@ def seed_database():
         print("Creating users...")
         admin = User(
             email="admin@allajnah.com",
-            hashed_password=get_password_hash("admin123"),
+            hashed_password=get_password_hash("Admin@123"),
             first_name="Admin",
             last_name="User",
             role=UserRole.HIGHER_COMMITTEE,
@@ -33,7 +33,7 @@ def seed_database():
         
         tech1 = User(
             email="tech@allajnah.com",
-            hashed_password=get_password_hash("tech123"),
+            hashed_password=get_password_hash("Tech@123"),
             first_name="Technical",
             last_name="Committee",
             role=UserRole.TECHNICAL_COMMITTEE,
@@ -44,7 +44,7 @@ def seed_database():
         
         trader1 = User(
             email="trader1@example.com",
-            hashed_password=get_password_hash("trader123"),
+            hashed_password=get_password_hash("Trader@123"),
             first_name="Ahmed",
             last_name="Mohammed",
             role=UserRole.TRADER,
@@ -55,7 +55,7 @@ def seed_database():
         
         trader2 = User(
             email="trader2@example.com",
-            hashed_password=get_password_hash("trader123"),
+            hashed_password=get_password_hash("Trader@123"),
             first_name="Fatima",
             last_name="Ali",
             role=UserRole.TRADER,
@@ -260,16 +260,16 @@ def seed_database():
         print("="*50)
         print("Admin:")
         print("  Email: admin@allajnah.com")
-        print("  Password: admin123")
+        print("  Password: Admin@123")
         print("\nTechnical Committee:")
         print("  Email: tech@allajnah.com")
-        print("  Password: tech123")
+        print("  Password: Tech@123")
         print("\nTrader 1:")
         print("  Email: trader1@example.com")
-        print("  Password: trader123")
+        print("  Password: Trader@123")
         print("\nTrader 2:")
         print("  Email: trader2@example.com")
-        print("  Password: trader123")
+        print("  Password: Trader@123")
         print("="*50)
         
     except Exception as e:
